@@ -6,10 +6,10 @@ The `master` branch should be left untouched and we can contribute to its change
 
 ## Branch names conventions
 
-feat_* - for features
-fix_* - for corrections
-docs_* - for documentation
-chore_* - for maintenance stuff
+feat_* - for features  
+fix_* - for corrections  
+docs_* - for documentation  
+chore_* - for maintenance stuff  
 
 ## Game feedback and discussions
 
