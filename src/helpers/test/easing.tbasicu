@@ -1,0 +1,220 @@
+﻿
+' For Bézier see: 
+' https://en.wikipedia.org/wiki/File:Bezier_curve.svg
+' https://en.wikipedia.org/wiki/Bézier_curve
+' http://www.freevbcode.com/ShowCode.asp?ID=2609
+' https://stackoverflow.com/questions/5634460/quadratic-bézier-curve-calculate-points
+' 
+
+'[todo] add linked Bezier shapes support (Bezier points list)
+'[todo] Cleanup
+
+'[] O2 optimization possible
+
+Uses "STAT" 'Stat_CloneArray could be part of the core ARRAY keywords ( ARRAY ASSIGN, ARRAY FILL ... ), as well as Stat_CopyArray.
+
+
+Begin Const ' Equates for signalShape
+  %Ease_linear
+  %Ease_quadractic
+  %Ease_cubic
+  %Ease_beziercubic
+End Const
+
+
+Type points ' 
+  x as Currency
+  y as Currency
+end type
+Type coefficients ' 
+  c1 as points
+  c2 as points
+  c3 as points
+end type
+Type coefficients2
+  a as Currency
+  b as Currency
+  c as Currency
+  d as Currency
+end type
+
+Type easing 
+
+
+  
+  initdone as boolean ' true after first init
+  signalShape as integer ' Shape of the easing, DEFAULT = 0 (LINEAR)
+  reverse as Boolean ' True for right-left-mirrored easing, DEFAULT = False
+  fullValue as Currency ' 100% output value, DEFAULT = 1
+  startValue as Currency ' 0% output value, DEFAULT = 0
+  duration as Currency ' stretch / shrink, DEFAULT = 1
+  BezierPoints as Integer ' count of Bezier control points 
+  Bezier() as points ' Store Bezier control points
+  coef as coefficients
+  coef2 as coefficients2
+ 
+
+  Function init(signalShape as integer = 0, reverse as boolean = FALSE, startValue as Currency = 0, fullValue as Currency = 1, duration as Currency = 1, Optional Bezier() as points) as Boolean 
+             printL "4.x : " & Bezier(4).x
+             printL "3.x : " & Bezier(3).x
+             printL "2.x : " & Bezier(2).x
+             printL "1.x : " & Bezier(1).x
+  waitkey
+
+    if signalShape >= 0 and signalShape <= 3 and duration > 0 then
+      me.signalShape = signalShape
+      me.reverse = reverse
+      me.fullValue = fullValue
+      me.startValue = startValue
+      me.duration = duration
+      select case signalShape
+      case 0 ' linear
+        me.initdone = true
+      case 1 ' quadratic
+        me.initdone = true
+      case 2 ' cubic
+        me.initdone = true
+      case 3 ' cubic bezier
+      
+      ' Function_CParams return how many parameters were passed, we need to check how many *Optional* parameters were passed
+      ' note: default values can be checked anyway
+      
+        'if Function_CParams <> 1 then 'Optional parameter was not provided
+        '  me.initdone = FALSE 
+        if 1=2 then 'temporary workaround for cparam
+        else
+          me.BezierPoints = ubound(Bezier)
+          if me.BezierPoints < 2 then 'Beziers needs at least two control points
+            me.initdone = FALSE
+          else
+            if me.BezierPoints = 2 Then ' P1=P0 and P2=P3 
+              redim me.Bezier(4)
+              ARRAY ASSIGN me.Bezier = Bezier(1), Bezier(1), Bezier(2), Bezier(2)
+            Elseif me.BezierPoints = 3 Then ' arbitrarily P2=P3
+              redim me.Bezier(4)
+              ARRAY ASSIGN me.Bezier = Bezier(1), Bezier(2), Bezier(3), Bezier(3)
+            Else ' four points or more. 
+              redim me.Bezier(me.BezierPoints)
+              'Stat_CloneArray(Bezier, me.Bezier) ' Do not work, why ?
+              for j as integer = 1 to me.BezierPoints 'workaround for clonearray -> do not work either
+                me.Bezier(j) = Bezier(j)
+              next
+              
+             printL me.BezierPoints
+             printL "4.x : " & me.Bezier(4).x
+             printL "3.x : " & me.Bezier(3).x
+             printL "2.x : " & me.Bezier(2).x
+             printL "1.x : " & me.Bezier(1).x
+  waitkey
+  
+              me.coef.c3.x = 3 * (me.Bezier(2).x - me.Bezier(1).x)
+              me.coef.c2.x = 3 * (me.Bezier(3).x - me.Bezier(2).x) - me.coef.c3.x
+              me.coef.c1.x = me.Bezier(4).x - me.Bezier(1).x - me.coef.c3.x - me.coef.c2.x
+              me.coef.c3.y = 3 * (me.Bezier(2).y - me.Bezier(1).y)
+              me.coef.c2.y = 3 * (me.Bezier(3).y - me.Bezier(2).y) - me.coef.c3.y
+              me.coef.c1.y = me.Bezier(4).y - me.Bezier(1).y - me.coef.c3.y - me.coef.c2.y
+              
+              me.coef2.a = me.Bezier(4).x - 3*me.Bezier(3).x + 3*me.Bezier(2).x - me.Bezier(1).x
+              me.coef2.b = 3*me.Bezier(3).x - 6*me.Bezier(2).x + 3*me.Bezier(1).x
+              me.coef2.c = 3*me.Bezier(2).x - 3*me.Bezier(1).x
+            endif
+          me.initdone = true
+          endif
+        endif
+      end Select
+    else
+      me.initdone = false
+    endif
+    if me.initdone then 
+      return true
+    else
+      return false
+    endif
+  end function
+   
+
+
+  function ease(timePos as Currency) as Currency
+    dim eased as currency
+    if timePos < 0 or timePos > me.duration or not me.initdone then
+      'parameter is invalid
+      eased = 0
+    else
+    
+      if me.reverse then timePos = me.duration - timePos
+      me.signalShape=3
+      select case me.signalShape
+      case 0 ' linear        
+        eased = me.startValue + me.fullValue*timePos/me.duration
+      case 1 ' quadratic
+        eased = me.startValue + me.fullValue*Pow2(timePos/me.duration)
+      case 2 ' cubic
+        eased = me.startValue + me.fullValue*Pow3(timePos/me.duration)
+      case 3 ' cubic bezier
+              dim t as Currency
+              me.coef2.d = me.Bezier(1).x-timePos
+              t =  solve(me.coef2)
+              eased = me.coef.c1 * Pow3(t) + me.coef.c2 * Pow2(t) + me.coef.c3 * t + me.Bezier(1).x
+      end select
+    endif
+    
+    return eased
+    
+  end function
+  
+end type
+
+function solve(coefs as coefficients2) as Currency 
+
+
+  dim a as Currency value = coefs.a
+  dim b as Currency value = coefs.b
+  dim c as Currency value = coefs.c
+  dim d as Currency value = coefs.d
+  
+  printL a
+  waitkey
+  
+  dim f as Currency VALUE = (3*c/a-Pow2(b)/Pow2(a))/3
+  dim g as Currency VALUE = (2*Pow3(b)/Pow3(a)-9*b*c/Pow2(a)+27*d/a)/27
+  dim h as Currency VALUE = Pow2(g)/4 + Pow3(f)/27
+  
+  dim m, n, k, x as Currency
+
+  if h > 0 then
+      m = sqr(h) - g/2
+      if m < 0 then 
+        k = -1 
+      else 
+        k = 1
+      endif
+      m = k*pow(m*k,1/3)
+      n = -sqr(h) - g/2
+      if n < 0 then 
+        k = -1 
+      else 
+        k = 1
+      endif
+      x = m + k*pow(n*k,1/3) - b/(3*a)
+  else 
+      m = sqr(Pow2(g)/4)-h)
+      if m < 0 then 
+        k = -1 
+      else 
+        k = 1
+      endif
+      x = 2*(k*pow(m*k,1/3)*cos(ArcCos(-g/(2*m))/3))-(b/(3*a))
+  endif
+  
+  if f+g+h=0 then
+    if d<0 then 
+      d = -d
+      x = pow(d/a,1/3) 
+    Else
+      x = pow(d/a,1/3)
+      x = -x
+    endif
+  endif
+  
+  return x
+end function
