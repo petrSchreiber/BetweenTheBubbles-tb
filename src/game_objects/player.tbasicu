@@ -1,0 +1,245 @@
+﻿uses "math"
+
+#include once "game_context.tbasicu"
+
+#include once "logger_ps.tbasicu"
+
+type goPlayer
+    logger as LoggerPS
+
+    scene  as Int32
+    entity as Int32
+    
+    attachedBubblePtr as UInt32
+    contextPtr as UInt32
+    
+    thrustImpulse as Float32
+    
+    energy as Float32
+    
+    spin as Float32
+    thrust as float32
+    
+    function init(scene as int32, optional attachedBubblePtr as uint32 = 0, contextPtr as uint32)
+        if %LOGGERPS then me.logger.initialize("GameObject: Player")
+        
+        me.scene  = scene
+        me.entity = tbgl_entityGetFreeID(scene)
+        me.energy = 5
+        me.contextPtr = contextPtr
+        
+        dWord data = varptr(me)
+         
+        tbgl_entityCreateFuncSlot(me.scene, me.entity, 0, "goPlayer_render")
+        
+        if attachedBubblePtr then me.setBubblePtr(attachedBubblePtr)
+        
+        tbgl_entitySetUserData(me.scene, me.entity, data)
+    end function
+                        
+    function _destroy()
+        tbgl_entityDestroy(me.scene, me.entity)
+    end function
+
+    '
+
+    function setPos(x as Float32, y as Float32)
+      tbgl_entitysetpos(me.scene, me.entity, x, y, 0)
+    end function
+    
+   
+    function setBubblePtr(attachedBubblePtr as uint32)
+      me.attachedBubblePtr = attachedBubblePtr
+
+      if me.attachedBubblePtr then
+        if %LOGGERPS then me.logger.write("Got attached to bubble at " + me.attachedBubblePtr)
+        
+        dim bubble as goBubble at attachedBubblePtr
+        
+        float32 px, py, pz, bx, by, bz
+        tbgl_entityGetPos(me.scene, me.entity, px, py, pz)
+        tbgl_entityGetPos(bubble.scene, bubble.entity, bx, by, bz)
+        float32 angle = -ATAN2(py-by, px-bx)
+         
+        tbgl_entitySetRot(bubble.scene, bubble.entity, -angle)
+        tbgl_entityAttach(me.scene, me.entity, bubble.entity, %TBGL_RESET)
+        tbgl_entitySetPos(me.scene, me.entity, bubble.getRadius, 0, 0)
+      Else
+        tbgl_entityDetach(me.scene, me.entity, %TBGL_PRESERVE)
+        
+        if %LOGGERPS then me.logger.write("Got detached from bubble")
+      end if
+      
+    end function
+    
+    function getBubblePtr() as uint32
+      return me.attachedBubblePtr
+    end function
+    
+    ' ENERGY
+    
+    function alterEnergy(energyGain as Float32)
+      dim context as GameContext at me.contextPtr
+      
+      me.energy += energyGain / context.frameRate
+      if me.energy <= 0 then me.energy = 0
+      if me.energy >= 100 then me.energy = 100
+    end function
+    
+    ' MOVEMENT
+    
+    function trySpin(angle as Float32)
+      
+      dim context as GameContext at me.contextPtr
+      me.spin += angle / context.frameRate
+      
+      if abs(me.spin) > 90 then me.spin = sgn(me.spin) * 90
+    end function
+
+    function tryFadeSpin(brake as Float32)
+      
+      if me.spin = 0 then exit function
+      
+      int32 sgnBefore = sgn(me.spin)
+      dim context as GameContext at me.contextPtr
+      me.spin -= sgn(sgnBefore) * abs(brake) / context.frameRate
+      int32 sgnAfter = sgn(me.spin)
+      
+      if sgnBefore <> sgnAfter then me.spin = 0
+    end function
+
+    function tryThrust(boost as Float32)
+      dim context as GameContext at me.contextPtr
+      me.thrust += boost / context.frameRate
+      
+      if me.thrust > 10 then me.thrust = 10
+      me.thrustImpulse = true
+      
+      me.alterEnergy(-1)
+    end function
+
+    function tryFadeThrust(brake as Float32)
+      dim context as GameContext at me.contextPtr
+      me.thrust -= brake / context.frameRate
+      
+      if me.thrust < 0 then
+        me.thrust = 0
+        me.thrustImpulse = false
+      end if
+    end function
+    
+end type
+
+function goPlayer_render()
+
+  dim element as tbgl_tEntityIdentifier at tbgl_callingEntity
+  dim data    as goPlayer at peek(dWord, tbgl_entityGetUserDataPointer(element.scene, element.entity))
+  dim context as GameContext at data.contextPtr
+  
+  if data.attachedBubblePtr then
+    dim bubble as goBubble at data.attachedBubblePtr
+    tbgl_entitySetPos(data.scene, data.entity, bubble.getRadius, 0, 0)
+  end if
+
+  ' Representation of the bug
+  tbgl_pushStateProtect %TBGL_DEPTH
+
+    ' Head
+    tbgl_pushColor 0, 0, 0
+    tbgl_beginPoly %GL_POLYGON
+      
+        tbgl_vertex 0.00, 0.25
+        tbgl_vertex 0.20, 0.40
+        tbgl_vertex 0.60, 0.30
+        
+        tbgl_vertex 0.60,-0.30
+        tbgl_vertex 0.20,-0.40
+        tbgl_vertex 0.00,-0.25
+      
+    tbgl_endPoly
+    tbgl_popColor
+
+    
+    ' Body
+    tbgl_pushColor 0, 0, 0
+    tbgl_beginPoly %GL_POLYGON
+        tbgl_vertex 0.60, 0.30
+        tbgl_vertex 1.40, 0.50
+        tbgl_vertex 2.00, 0.20
+        
+        tbgl_vertex 2.00,-0.20
+        tbgl_vertex 1.40,-0.50
+        tbgl_vertex 0.60,-0.30
+      
+    tbgl_endPoly
+    tbgl_popColor
+    
+    ' Energy bar
+    float32 offsetX = 0.65 + data.energy / 100 * 1.2 
+    
+    tbgl_pushColor 0, 255, 0
+    tbgl_beginPoly %GL_QUADS
+        tbgl_vertex    0.65, 0.15
+        tbgl_vertex    0.65,-0.15
+        tbgl_vertex offsetX,-0.15
+        tbgl_vertex offsetX, 0.15
+    tbgl_endPoly
+    tbgl_popColor
+    
+    tbgl_pushColor iif(data.energy > 5 or data.attachedBubblePtr <> 0, 255, 128 + sin((context.gameTime*1000)/(100-((int(5-data.energy))*10)))*100), 0, 0
+    tbgl_beginPoly %GL_QUADS      
+        tbgl_vertex offsetX, 0.15
+        tbgl_vertex offsetX,-0.15
+        tbgl_vertex    1.85,-0.15
+        tbgl_vertex    1.85, 0.15
+    tbgl_endPoly
+    tbgl_popColor
+    
+    ' Legs
+    int32 legPair
+    float32 leftAnim 
+    float32 rightAnim 
+    if data.thrustImpulse then
+      leftAnim = iif(data.thrustImpulse, sin(context.gameTime*10)*10, 0)
+      rightAnim = iif(data.thrustImpulse, sin(context.gameTime*10)*10, 0)
+    else
+      if data.attachedBubblePtr = 0 then
+        leftAnim = sin(context.gameTime*10)*10*(data.spin/25)
+        rightAnim = -sin(context.gameTime*10)*10*(data.spin/25)
+      end if
+    end if
+
+    tbgl_pushColor 0, 0, 0
+      
+      for legPair = 1 to 3
+        tbgl_pushMatrix
+          tbgl_translate 0.6 + legPair * 0.3, 0.2
+          tbgl_rotate 70 - legPair * 10 + leftAnim
+
+          tbgl_beginPoly %GL_QUADS
+            tbgl_vertex 0.00, 0.00
+            tbgl_vertex 0.5 + legPair * 0.25, 0.00
+            tbgl_vertex 0.5 + legPair * 0.25, 0.20
+            tbgl_vertex 0.00, 0.10
+          tbgl_endPoly
+        tbgl_popMatrix
+
+        tbgl_pushMatrix
+          tbgl_translate 0.6 + legPair * 0.3, -0.2
+          tbgl_rotate -70 + legPair * 10 - rightAnim
+
+          tbgl_beginPoly %GL_QUADS
+            tbgl_vertex 0.00, 0.00
+            tbgl_vertex 0.5 + legPair * 0.25, 0.00
+            tbgl_vertex 0.5 + legPair * 0.25,-0.20
+            tbgl_vertex 0.00,-0.10
+          tbgl_endPoly
+        tbgl_popMatrix
+
+      next
+
+    tbgl_popColor
+  
+  tbgl_popStateProtect
+  
+end function

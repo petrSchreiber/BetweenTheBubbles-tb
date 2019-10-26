@@ -1,0 +1,34 @@
+﻿type GameContext
+  screenWindow  as UInt32
+  screenWidth   as UInt32
+  screenHeight  as UInt32
+  screenStart   as float32
+  
+  gameTime      as Float64 ' ms
+  frameRate     as Float64
+  
+  gameRunning   as int32
+  
+  function _create(hWindow as UInt32)
+    hiResTimer_Init
+
+    me.setWindow(hWindow)
+    
+    me.gameRunning = TRUE
+  end function
+  
+  function setWindow(hWindow as UInt32)
+    me.screenWindow = hWindow
+    tbgl_getWindowClient(me.screenWindow, me.screenWidth, me.screenHeight)
+  end function
+
+  function startFrame()
+    me.gameTime  = hiResTimer_Get / 1000000
+    me.frameRate = tbgl_getFrameRate
+  end function
+
+  function isGameRunning() as int32
+    return me.gameRunning and tbgl_isWindow(me.screenWindow)
+  end function
+
+end type

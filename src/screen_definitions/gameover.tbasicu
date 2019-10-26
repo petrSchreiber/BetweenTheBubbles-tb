@@ -1,0 +1,100 @@
+﻿#include once "../ui/textitem.tbasicu"
+
+type ScreenGameOver
+
+  contextPtr as UInt32
+  proposedScreenChange        as string
+  proposedScreenChangeReason  as string
+
+  titleFont   as UInt32
+  menuFont    as UInt32
+  
+  titleText   as TextItem
+  reasonText  as TextItem
+  backText    as TextItem
+ 
+  function prepare(contextPtr as UInt32, optional screenChangeReason as string)
+    me.contextPtr = contextPtr
+    dim context as GameContext at me.contextPtr
+    
+    tbgl_backColor 0, 0, 0
+
+    me.titleFont = tbgl_fontHandle("Arial", context.screenHeight/22)
+    tbgl_buildFont(me.titleFont, 1)
+    
+    me.titleText.put("GAME OVER", 1)
+    
+    me.menuFont = tbgl_fontHandle("Arial", context.screenHeight/30)
+    tbgl_buildFont(me.menuFont, 2)
+    
+    me.reasonText.put(screenChangeReason, 2)
+    me.backText.put("[B]ack to menu", 2)
+    
+  end function
+
+  function cleanup()
+    tbgl_backColor 0, 0, 0
+
+    tbgl_killFont(2)
+    tbgl_killFont(1)
+  end function
+
+  '
+
+  function handleInput()
+    dim context as GameContext at me.contextPtr
+
+    if tbgl_getWindowKeyOnce(context.screenWindow, %VK_B) then me.proposedScreenChange = "title"
+  end function
+
+  function render()
+    dim context as GameContext at me.contextPtr
+
+    tbgl_clearFrame
+    
+      me.titleText.render(context.screenWidth/2 - me.titleText.width/2, context.screenHeight*0.75 - me.titleText.height/2)
+      
+      me.reasonText.render(context.screenWidth/2 - me.reasonText.width/2, context.screenHeight*0.5 - me.reasonText.height/2)
+      me.backText.render(context.screenWidth/2 - me.backText.width/2, context.screenHeight*0.4 - me.backText.height/2)
+      
+    tbgl_drawFrame
+  end function
+
+  function changeTo() as string
+    return me.proposedScreenChange
+  end function
+  
+  function changeReason() as string
+    return me.proposedScreenChangeReason
+  end function
+
+end type
+
+dim uScreenGameOver as ScreenGameOver
+
+function screen_gameOver_prepare(context as UInt32, screenChangeReason as string)
+  reset uScreenGameOver
+  uScreenGameOver.prepare(context, screenChangeReason)
+end function
+
+function screen_gameOver_cleanup()
+  uScreenGameOver.cleanup()
+end function
+
+'
+
+function screen_gameOver_handleInput()
+  uScreenGameOver.handleInput()
+end function
+
+function screen_gameOver_render()
+  uScreenGameOver.render()
+end function
+
+function screen_gameOver_changeTo() as string
+  return uScreenGameOver.changeTo()
+end function
+
+function screen_gameOver_changeReason() as string
+  return uScreenGameOver.changeReason()
+end function

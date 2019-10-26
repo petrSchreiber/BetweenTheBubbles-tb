@@ -1,0 +1,80 @@
+﻿#include once "logger_ps.tbasicu"
+
+type ScreenManager
+  
+  screenCurrent as string
+  
+  metadataPtr   as dword
+  
+  logger as LoggerPS
+  
+  function _create(metadataPtr as dword)
+    me.metadataPtr = metadataPtr
+
+    #if %LOGGERPS
+    me.logger.initialize("ScreenManager")
+    #endif
+
+  end function
+  
+  function set_current_screen(screenName as string, optional reasonForChange as string)
+  
+    #if %LOGGERPS : me.logger.openSection("BEGIN " + Function_Name) : #endif
+    
+    #if %LOGGERPS : me.logger.write(strformat$("called with (""{1}"", ""{2}"")", screenName, reasonForChange)) : #endif
+    
+    #if %LOGGERPS : me.logger.write(strformat$("current screen is ""{1}""", me.screenCurrent)) : #endif
+    if me.screenCurrent then
+      string cleanupFunction = StrFormat$("screen_{1}_cleanup", me.screenCurrent)
+      #if %LOGGERPS : me.logger.openSection("BEGIN call to " + cleanupFunction) : #endif
+
+      call cleanupFunction()
+      
+      #if %LOGGERPS : me.logger.closeSection("END call to " + cleanupFunction) : #endif
+    end if
+
+    me.screenCurrent = screenName
+    
+    dim context as GameContext at me.metadataPtr
+    context.screenStart = context.gameTime
+    
+    string prepareFunction = StrFormat$("screen_{1}_prepare", me.screenCurrent)
+    #if %LOGGERPS : me.logger.openSection("BEGIN call to " + prepareFunction) : #endif
+
+    call prepareFunction(me.metadataPtr, reasonForChange)
+
+    #if %LOGGERPS : me.logger.closeSection("END call to " + prepareFunction) : #endif
+    
+    #if %LOGGERPS : me.logger.write(strformat$("screen changed to ""{1}""", me.screenCurrent)) : #endif
+
+    #if %LOGGERPS : me.logger.closeSection("END " + Function_Name) : #endif
+
+  end function
+  
+  function process_screen()
+    
+    string handleInputFunction = StrFormat$("screen_{1}_handleInput", me.screenCurrent)
+    string renderFunction = StrFormat$("screen_{1}_render", me.screenCurrent)
+    string screenChangeToFunction = StrFormat$("screen_{1}_changeTo", me.screenCurrent)
+    string screenChangeReasonFunction = StrFormat$("screen_{1}_changeReason", me.screenCurrent)
+    
+    string result
+    
+    ' -- Process common tasks for screen
+    call handleInputFunction()
+    call renderFunction()
+    
+    ' -- Check if it is necessary to switch screen
+    string newScreen
+    call screenChangeToFunction() to newScreen
+    
+    string newScreenReason
+    call screenChangeReasonFunction() to newScreenReason
+        
+    if len(newScreen) then
+      me.set_current_screen(newScreen, newScreenReason)
+    end if
+
+  end function
+  
+end type

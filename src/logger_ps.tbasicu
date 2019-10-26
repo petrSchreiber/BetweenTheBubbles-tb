@@ -1,0 +1,56 @@
+﻿#if %LOGGERPS = true
+uses "console"
+console_SetTitle("Logger PS")
+#endif
+
+type LoggerPS
+
+  loggerName as string
+  indent     as int32
+  
+  function initialize(optional loggerName as string)
+    me.loggerName = loggerName
+  end function
+
+  function openSection(message as string)
+    me.write(message)
+    me.indent += 1
+  end function
+
+  function closeSection(message as string)
+    me.indent -= 1
+    me.write(message)
+  end function
+  
+  function beginPart()
+    print  strformat$("{1} {2} ", date$, time$) in 15
+    print "["
+    print me.loggerName in 14
+    print "] "
+    print  $SPC(me.indent)
+  end function
+    
+  function writePart(message as string)
+    print message
+  end function
+
+  function endPart()
+    printl
+  end function
+
+  function write(message as string)
+    me.beginPart()
+    me.writePart(message)
+    me.endPart()
+  end function
+
+  function writeError(message as string)
+    me.beginPart()
+    print message in 12
+    me.endPart()
+    printl "Press any key to quit..." in 15
+    waitkey
+    stop
+  end function
+
+end type

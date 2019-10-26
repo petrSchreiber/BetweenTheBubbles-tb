@@ -1,0 +1,13 @@
+﻿type BoundingRectangle
+  minX as float32
+  minY as float32
+  maxX as float32
+  maxY as float32
+  
+  function initialize(minX as float32, minY as float32, maxX as float32, maxY as float32)
+    me.minX = minX
+    me.maxX = maxX
+    me.minY = minY
+    me.maxY = maxY
+  end function
+end type

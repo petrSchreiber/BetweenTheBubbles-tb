@@ -1,0 +1,114 @@
+﻿#include once "game_context.tbasicu"
+
+type goBubble
+    scene  as Int32
+    entity as Int32
+    
+    contextPtr as UInt32
+    
+    capacity  as Float32
+    initialCapacity  as Float32
+    
+    spin      as int32
+    
+    dirX      as float32
+    dirY      as float32
+    
+    timeOfBoom as float64
+    
+    function init(scene as int32, capacity as Float32, contextPtr as uint32)
+        int32 firstTime = (me.entity = 0)
+        me.scene  = scene
+        if firstTime then me.entity = tbgl_entityGetFreeID(scene)
+        
+        me.contextPtr = contextPtr
+
+        me.capacity = capacity
+        me.initialCapacity = capacity
+        
+        me.spin = iif(rnd > 0.5, -1, 1)
+        
+        float32 angle = rndf(0, m_pi*2)
+        me.dirX = cos(angle)
+        me.dirY = sin(angle)
+        
+        me.timeOfBoom = 0
+        
+        dWord data = varptr(me)
+        
+        if firstTime then
+          tbgl_entityCreateFuncSlot(me.scene, me.entity, 0, "goBubble_render")
+          tbgl_entitySetUserData(me.scene, me.entity, data)
+        end if
+    end function
+                        
+    function release()
+      me.capacity = 0
+      tbgl_entityDestroy(me.scene, me.entity)
+    end function
+    
+    function isGone() as int32
+        dim context as GameContext at me.contextPtr
+        
+        return me.capacity <= 0 or (me.timeOfBoom <> 0 and (context.gameTime - me.timeOfBoom) > 0.5)
+    end function
+
+    function goBoom()
+      dim context as GameContext at me.contextPtr
+      if me.timeOfBoom = 0 then
+        me.capacity = 0
+        me.timeOfBoom = context.gameTime
+      end if
+    end function
+
+    '
+
+    function setPos(x as Float32, y as Float32)
+      tbgl_entitysetpos(me.scene, me.entity, x, y, 0)
+    end function
+    
+    function getRadius() as Float32
+      return sqr(me.capacity / m_pi) / 5
+    end function
+
+end type
+
+function goBubble_render()
+
+  dim element as tbgl_tEntityIdentifier at tbgl_callingEntity
+  dim data    as goBubble at peek(dWord, tbgl_entityGetUserDataPointer(element.scene, element.entity))
+  dim context as GameContext at data.contextPtr
+  
+  tbgl_pushStateProtect %TBGL_DEPTH
+  
+    if data.timeOfBoom = 0 then
+    
+      tbgl_pushColor 224, 224, 255
+        tbgl_nGon(0, 0, data.getRadius(), 36)
+      tbgl_popColor
+
+      tbgl_pushColor 196, 196, 255
+        tbgl_nGon(data.getRadius() * 0.05, 0, data.getRadius() * 0.9, 36)
+      tbgl_popColor
+
+      tbgl_pushColor 224, 224, 255
+        tbgl_nGon(data.getRadius * 0.5, 0, data.getRadius()/4, 36)
+      tbgl_popColor
+
+      
+    else
+
+      for i as int32 = 1 to 6
+        tbgl_pushMatrix
+          tbgl_rotate i * 360/6
+          tbgl_translate ((context.gameTime - data.timeOfBoom)*25, 0)
+          
+          tbgl_line(0, 0, 1, 0)
+        tbgl_popMatrix
+      next
+      
+    end if
+    
+  tbgl_popStateProtect
+  
+end function

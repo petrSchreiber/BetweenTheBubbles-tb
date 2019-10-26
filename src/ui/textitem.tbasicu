@@ -1,0 +1,23 @@
+﻿type TextItem
+  message as string
+
+  fontSlot  as Float32
+  width   as Float32
+  height  as Float32
+  
+  function Put(message as string, optional fontSlot as int32 = 1)
+    me.message = message
+    me.fontSlot= fontSlot
+    
+    tbgl_setActiveFont me.fontSlot
+    tbgl_getFontTextSize(me.message, me.width, me.height)
+    tbgl_setActiveFont 1
+  end function
+  
+  function Render(x as Float32, y as Float32)
+    tbgl_setActiveFont me.fontSlot
+    tbgl_printFont(me.message, x, y)
+    tbgl_setActiveFont 1
+  end function
+
+end type

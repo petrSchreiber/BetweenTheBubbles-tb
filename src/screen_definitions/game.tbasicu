@@ -1,0 +1,284 @@
+﻿uses "tbgl"
+
+#include once "../ui/textitem.tbasicu"
+
+#include once "../game_objects/player.tbasicu"
+#include once "../game_objects/bubble.tbasicu"
+
+#include once "../game_systems/director_for_bubbles.tbasicu"
+
+#include once "../building_blocks/bounding_rectangle.tbasicu"
+
+#include once "logger_ps.tbasicu"
+
+type ScreenGame
+
+  contextPtr as UInt32
+  proposedScreenChange        as string
+  proposedScreenChangeReason  as string
+  
+  logger as LoggerPS
+  uiFont  as UInt32
+ 
+  endText as TextItem
+  controlText as TextItem
+  energyText as TextItem
+  
+  scene as uint32
+  
+  camera as uint32
+  
+  player as goPlayer
+  
+  thrustPressed as int32
+  
+  bubbleDirector as DirectorForBubbles
+
+  function prepare(contextPtr as UInt32, optional screenChangeReason as string)
+  
+    if %LOGGERPS then me.logger.initialize("Screen: Game")
+    
+    if %LOGGERPS then me.logger.openSection("BEGIN " + function_name)
+    
+    me.contextPtr = contextPtr
+    dim context as GameContext at me.contextPtr
+    
+    tbgl_backColor 128, 128, 255
+    
+    ' UI
+    me.uiFont = tbgl_fontHandle("Arial", context.screenHeight/30)
+    tbgl_buildFont(me.uiFont)
+    
+    me.controlText.Put("[Arrows] for control")
+    me.endText.Put("[Q]uit")
+    
+    if %LOGGERPS then me.logger.write("Initialized texts...")
+
+    ' SCENE
+    me.scene = 1
+    tbgl_sceneCreate(me.scene)
+    me.camera = tbgl_entityGetFreeID(me.scene)
+    tbgl_entityCreateCamera(me.scene, me.camera)
+      tbgl_entitySetPos(me.scene, me.camera, 0, 0, 50)
+      tbgl_entitySetTargetPos(me.scene, me.camera, 0, 0, 0)
+    
+    me.bubbleDirector.initialize(me.scene, me.camera, varptr(me.player), contextPtr)
+    dim boundingArea as BoundingRectangle
+    
+    float32 aspectRatio = context.screenWidth / context.screenHeight
+    boundingArea.initialize(-20.6 * aspectRatio, -20.6, 20.6 * aspectRatio, 20.6)
+    me.bubbleDirector.spawnBubbles(16, 150, boundingArea)
+    
+    if %LOGGERPS then me.logger.write("Initialized scene...")
+    
+    me.player.init(me.scene, varptr(me.bubbleDirector.bubble(1)), me.contextPtr)
+
+    if %LOGGERPS then me.logger.write("Initialized player...")
+    
+    if %LOGGERPS then me.logger.closeSection("END " + function_name)
+    
+  end function
+
+  function cleanup()
+    tbgl_backColor 0, 0, 0
+
+    tbgl_sceneDestroy(me.scene)
+    
+    tbgl_killFont(1)
+  end function
+
+  '
+
+  function handleInput()
+    dim context as GameContext at me.contextPtr
+    
+    if tbgl_getWindowKeyState(context.screenWindow, %VK_LEFT) then
+      me.player.trySpin(45)
+    elseif tbgl_getWindowKeyState(context.screenWindow, %VK_RIGHT) then
+      me.player.trySpin(-45)
+    else
+      me.player.tryFadeSpin(90)
+    end if
+
+    if tbgl_getWindowKeyState(context.screenWindow, %VK_UP) and me.player.energy > 0 then
+      me.thrustPressed = true
+      me.player.tryThrust(10)
+      if me.player.getBubblePtr() then
+        dim bubble as goBubble at me.player.getBubblePtr()
+        bubble.goBoom()
+        me.player.setBubblePtr(0)
+      end if
+      tbgl_entityDetach(me.player.scene, me.player.entity, %TBGL_PRESERVE)
+    else
+      me.thrustPressed = false
+      me.player.tryFadeThrust(20)
+    end if
+    
+    if tbgl_getWindowKeyOnce(context.screenWindow, %VK_Q) then me.proposedScreenChange = "title"
+  end function
+  
+  function makeCameraFollowThePlayer()
+    dim context as GameContext at me.contextPtr
+    
+    float32 px, py, pz
+    float32 cx, cy, cz
+    
+    tbgl_entityGetPos(me.player.scene, me.player.entity, px, py, pz, %TRUE)
+    tbgl_entityGetPos(me.scene, me.camera, cx, cy, cz)
+    
+    tbgl_entityMove(me.scene, me.camera, (px-cx)/context.framerate, (py-cy)/context.framerate, 0)
+  end function
+
+  function makeElementsFlow()
+    dim context as GameContext at me.contextPtr
+    float32 px, py, pz
+    
+    ' PLAYER
+    tbgl_entityMove(me.player.scene, me.player.entity, (me.player.energy/25)/context.frameRate, 0)
+        
+    me.bubbleDirector.directBubbles()
+    
+  end function
+
+  function makePlayerStickToBubbleIfIdle()
+    dim context as GameContext at me.contextPtr
+    
+    float32 px, py, pz, bx, by, bz
+    
+    
+      tbgl_entityGetpos(me.player.scene, me.player.entity, px, py, pz)
+        
+      for i as int32 = 1 to me.bubbleDirector.bubbleTotalCount
+        tbgl_entityGetpos(me.bubbleDirector.bubble(i).scene, me.bubbleDirector.bubble(i).entity, bx, by, bz)
+        
+        if dist(px, py, bx, by) < me.bubbleDirector.bubble(i).getRadius() Then
+          if me.thrustPressed = false and me.player.getBubblePtr() = 0 then
+            me.player.setBubblePtr(varptr(me.bubbleDirector.bubble(i)))
+          else
+            me.bubbleDirector.bubble(i).goBoom()
+          end if
+        end if
+      next
+    
+  end function
+  
+  function makePlayerSwimIfThrustIsPressed()
+    dim context as GameContext at me.contextPtr
+    
+    if me.player.getBubblePtr() = 0 and me.player.thrustImpulse and me.player.energy > 0 Then
+      tbgl_entitypush(me.player.scene, me.player.entity, -me.player.thrust/context.frameRate, 0)
+    end if
+  end function
+  
+  function makePlayerGetEnergyFromBubble()
+    dim context as GameContext at me.contextPtr
+    
+    uint32 bubblePtr
+    if Assign(me.player.getBubblePtr(), bubblePtr) and me.player.energy < 100 Then
+      dim bubble as goBubble at bubblePtr
+      bubble.capacity -= 10/context.frameRate
+      
+      me.player.alterEnergy(1)
+      
+      if bubble.capacity <= 0 Then
+        bubble.capacity = 0
+        
+        me.player.setBubblePtr(0)
+        
+        me.bubbleDirector.refurbishBubbleByPtr(varptr(bubble))
+      end if
+    end If
+  end function
+  
+  function makePlayerHandleEnergy()
+    dim context as GameContext at me.contextPtr
+    
+    me.player.alterEnergy(-0.25)
+  end function
+
+  function makePlayerHandleSpin()
+    dim context as GameContext at me.contextPtr
+    
+    if me.player.getBubblePtr() = 0 and me.player.spin Then
+      tbgl_entityturn(me.player.scene, me.player.entity, me.player.spin/context.FrameRate)
+    end if
+  end function
+  
+  function render()
+    me.makeElementsFlow()
+    
+    dim context as GameContext at me.contextPtr
+
+    me.makePlayerStickToBubbleIfIdle()
+    me.makePlayerGetEnergyFromBubble()
+    
+    me.makePlayerSwimIfThrustIsPressed()
+    
+    me.makePlayerHandleEnergy()
+    me.makePlayerHandleSpin()
+
+    if me.player.energy < 5 and me.player.attachedBubblePtr = 0 then
+      me.energyText.Put("Find a bubble, quick! Oxygen " + format$(me.player.energy, "0.0") + "%")
+    end if
+    
+    tbgl_clearFrame
+      
+      tbgl_sceneRender(me.scene)
+      
+      tbgl_pushStateProtect %TBGL_DEPTH
+        me.endText.render(0, context.screenHeight - me.endText.height)
+        me.controlText.render(context.screenWidth - me.controlText.width, context.screenHeight - me.endText.height)
+
+        if me.player.energy < 5 and me.player.attachedBubblePtr = 0 then
+          me.energyText.render(context.screenWidth/2 - me.energyText.width/2, context.screenHeight*0.02)
+        end if
+      tbgl_popStateProtect
+      
+    tbgl_drawFrame
+    
+    me.makeCameraFollowThePlayer()
+    
+    if me.player.energy <= 0 Then
+      me.proposedScreenChange = "gameover"
+      me.proposedScreenChangeReason = "You ran out of energy after " + format$(context.gameTime - context.screenStart, "0.##") + " seconds."
+    end if
+  end function
+
+  function changeTo() as string
+    return me.proposedScreenChange
+  end function
+
+  function changeReason() as string
+    return me.proposedScreenChangeReason
+  end function
+
+end type
+
+dim uScreenGame as ScreenGame
+
+function screen_game_prepare(context as UInt32, screenChangeReason as string)
+  reset uScreenGame
+  uScreenGame.prepare(context, screenChangeReason)
+end function
+
+function screen_game_cleanup()
+  uScreenGame.cleanup()
+end function
+
+'
+
+function screen_game_handleInput()
+  uScreenGame.handleInput()
+end function
+
+function screen_game_render()
+  uScreenGame.render()
+end function
+
+function screen_game_changeTo() as string
+  return uScreenGame.changeTo()
+end function
+
+function screen_game_changeReason() as string
+  return uScreenGame.changeReason()
+end function

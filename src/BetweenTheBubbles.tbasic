@@ -1,0 +1,38 @@
+﻿' [+] New inifinte bubbleverse!
+' [+] Turning while speeding possible
+' [+] Bubble reborn elsewhere, if drained or if merged
+' [+] Player starts with some minimal energy
+' [+] Player can pop the bubbles
+
+%LOGGERPS = true
+
+uses "tbgl"
+
+#include "game_context.tbasicu"
+#include "screen_manager.tbasicu"
+
+#include "screen_definitions/title.tbasicu"
+#include "screen_definitions/game.tbasicu"
+#include "screen_definitions/gameover.tbasicu"
+
+function tbMain()
+
+  dword hWin = tbgl_createWindowEx("Between the Bubbles", 720, 720, 32, %TBGL_WS_WINDOWED | %TBGL_WS_DONTSIZE | %TBGL_WS_CLOSEBOX)
+  tbgl_showWindow
+  
+  dim context as GameContext(hWin)
+  dim sm as ScreenManager(varptr(context))
+  
+  sm.set_current_screen("title")
+  
+  while context.isGameRunning()
+
+    context.startFrame()
+    
+    sm.process_screen()
+
+  wend
+  
+  tbgl_destroyWindow
+
+end function

@@ -1,0 +1,207 @@
+﻿#include once "../building_blocks/bounding_rectangle.tbasicu"
+#include once "logger_ps.tbasicu"
+
+#include once "../game_objects/bubble.tbasicu"
+
+type DirectorForBubbles
+  logger as LoggerPS
+  
+  scene      as uint32
+  camera     as uint32
+    
+  playerPtr  as uint32
+  contextPtr as uint32
+  
+  bubble(64) as goBubble
+  bubbleTotalCount as uint32
+  boundingArea as BoundingRectangle
+  singleBubbleMaxEnergy as uint32
+  
+  
+  function initialize(scene as uint32, camera as uint32, playerPtr as uint32, contextPtr as UInt32)
+    me.scene = scene
+    me.camera = camera
+    me.contextPtr = contextPtr
+    me.playerPtr = playerPtr
+    
+    if %LOGGERPS then me.logger.initialize("Director: Bubbles")
+  end function
+  
+  function spawnBubbles(totalCount as uint32, maxBubbleEnergy as uint32, boundingArea as BoundingRectangle)
+    if totalCount > ubound(me.bubble) then
+      me.logger.writeError("Sorry, I can't handle more than " + ubound(me.bubble) + " bubble(s)")
+      exit function
+    end if
+
+    me.bubbleTotalCount = totalCount
+    me.singleBubbleMaxEnergy = maxBubbleEnergy
+    me.boundingArea = boundingArea
+
+    ' Energy management
+    float32 bubbleEnergy(me.bubbleTotalCount)
+    array fill bubbleEnergy() with 100 ' Initially all at 50
+
+    int32 indexDonor, indexAcceptor
+    float32 amountTaken
+    for i as int32 = 1 to ubound(bubbleEnergy)
+      indexDonor    = rnd(1, ubound(bubbleEnergy))
+      indexAcceptor = rnd(1, ubound(bubbleEnergy))
+      
+      if indexDonor = indexAcceptor or bubbleEnergy(indexDonor) <= 10 or bubbleEnergy(indexAcceptor) >= me.singleBubbleMaxEnergy then iterate for
+      
+      amountTaken = rnd(1, bubbleEnergy(indexDonor)-10)
+      amountTaken = min(amountTaken, me.singleBubbleMaxEnergy - bubbleEnergy(indexAcceptor))
+      
+      bubbleEnergy(indexAcceptor) += amountTaken
+      bubbleEnergy(indexDonor) -= amountTaken
+    next
+    
+    if %LOGGERPS then me.logger.write("Bubble energies: " + join$(bubbleEnergy, ", "))
+    for i as int32 = 1 to me.bubbleTotalCount
+      me.bubble(i).init(me.scene, bubbleEnergy(i), me.contextPtr)
+      me.bubble(i).setPos(rndf(boundingArea.minX, boundingArea.maxX), rndf(boundingArea.minY, boundingArea.maxY))
+    next
+  end function
+  
+  function bounceBubbles(firstBubbleId as uint32, secondBubbleId as uint32, midpointX as float32, midpointY as float32, overlap as float32, bx as float32, by as float32, bz as float32, b2x as float32, b2y as float32, b2z as float32)    
+    float32 d1x = (bx - midpointX)/dist(bx, by, midpointX, midpointY)
+    float32 d1y = (by - midpointY)/dist(bx, by, midpointX, midpointY)
+    me.bubble(firstBubbleId).dirX = d1x
+    me.bubble(firstBubbleId).dirY = d1y
+
+    float32 d2x = (b2x - midpointX)/dist(b2x, b2y, midpointX, midpointY)
+    float32 d2y = (b2y - midpointY)/dist(b2x, b2y, midpointX, midpointY)
+    me.bubble(secondBubbleId).dirX = d2x
+    me.bubble(secondBubbleId).dirY = d2y
+    
+    tbgl_entityMove(me.scene, me.bubble(firstBubbleId).entity, d1x * overlap/2, d1y * overlap/2)
+    tbgl_entityMove(me.scene, me.bubble(secondBubbleId).entity, d2x * overlap/2, d2y * overlap/2)
+    
+    if %LOGGERPS then me.logger.write(" Bubble #" + firstBubbleId + " and bubble #" + secondBubbleId + " bounced")
+  end function
+  
+  function getCurrentTotalEnergy() as float32
+    float32 result
+    for i as int32 = 1 to me.bubbleTotalCount
+      result += me.bubble(i).capacity
+    next
+    
+    return result
+  end function
+  
+  function refurbishBubble(bubbleId as uint32)
+    if %LOGGERPS then me.logger.write(" Refurbishing bubble " + bubbleId)
+    me.refurbishBubbleByPtr(varptr(me.bubble(bubbleId)))
+  end function
+  
+  function refurbishBubbleByPtr(bubblePtr as uint32)
+    float32 cx, cy, cz
+    tbgl_entityGetPos(me.scene, me.camera, cx, cy, cz)
+    
+    dim bubble as goBubble at bubblePtr
+    
+    float32 bx = cx+rndf(me.boundingArea.minX, me.boundingArea.maxX)
+    float32 by = cy+me.boundingArea.minY
+    float32 bz
+    
+    tbgl_entitySetPos(me.scene, bubble.entity, bx, by, 0)
+    bubble.init(me.scene, bubble.initialCapacity, me.contextPtr)
+    tbgl_entityMove(me.scene, bubble.entity, 0, -bubble.getRadius()*0.95, 0)
+    
+    if %LOGGERPS then me.logger.write(" Refurbished bubble at " + bubblePtr)
+  end function  
+  
+  function mergeBubbles(firstBubbleId as uint32, secondBubbleId as uint32, midpointX as float32, midpointY as float32, bx as float32, by as float32, bz as float32, b2x as float32, b2y as float32, b2z as float32)
+    dim player as goPlayer at me.playerPtr
+
+    ' Second blown
+    me.bubble(secondBubbleId).capacity += me.bubble(firstBubbleId).capacity
+    tbgl_entitysetPos(me.scene, me.bubble(secondBubbleId).entity, midpointX, midpointY, b2z)
+    
+    ' First repositioned
+    me.refurbishBubble(firstBubbleId)
+    
+    if %LOGGERPS then me.logger.write(" Bubble #" + secondBubbleId + " boosted to " + format$(me.bubble(secondBubbleId).capacity, "#.00") + " while bubble #" + firstBubbleId + " got reborn")
+    
+    if player.attachedBubblePtr = varptr(me.bubble(firstBubbleId)) then
+      player.setBubblePtr(varptr(me.bubble(secondBubbleId)))
+      if %LOGGERPS then me.logger.write(" Player reattached")
+    end if
+
+  end function
+
+  function directBubbles()
+    dim context as GameContext at me.contextPtr
+   
+    float32 midpointX, midpointY, bx, by, bz, b2x, b2y, b2z, distance, overlap
+    
+    for i as int32 = 1 to me.bubbleTotalCount
+      if me.bubble(i).isGone() then
+        ' BUBBLE REFURBISHING
+        if me.bubble(i).timeOfBoom <> 0 and (context.gameTime - me.bubble(i).timeOfBoom) > 5 then
+          me.refurbishBubble(i)
+        end if
+        iterate for
+      end if
+
+      ' BUBBLE REBIRTH
+      tbgl_entityTurn(me.scene, me.bubble(i).entity, me.bubble(i).spin * 45/context.frameRate)
+      tbgl_entityMove(me.scene, me.bubble(i).entity, me.bubble(i).dirX * (me.bubble(i).capacity/100)/context.frameRate, me.bubble(i).dirY * (me.bubble(i).capacity/100)/context.frameRate)
+      tbgl_entityGetPos(me.scene, me.bubble(i).entity, bx, by, bz)
+
+      me.handleScreenPositionOverflow(bx, by, me.bubble(i).getRadius())
+
+      tbgl_entitySetPos(me.scene, me.bubble(i).entity, bx, by, bz)
+            
+      ' BUBBLE MERGING OR BOUNCING
+      for j as int32 = i+1 to me.bubbleTotalCount
+        if me.bubble(j).capacity = 0 then iterate for
+        
+        tbgl_entityGetPos(me.scene, me.bubble(j).entity, b2x, b2y, b2z)
+        
+        if assign(dist(bx, by, b2x, b2y), distance) < me.bubble(i).getRadius() + me.bubble(j).getRadius() then
+          overlap = abs(distance - me.bubble(i).getRadius() - me.bubble(j).getRadius())
+          
+          midpointX = bx + (b2x-bx)/distance * (me.bubble(i).getRadius() - overlap/2)
+          midpointY = by + (b2y-by)/distance * (me.bubble(i).getRadius() - overlap/2)
+        
+          if me.bubble(j).capacity + me.bubble(i).capacity > me.singleBubbleMaxEnergy then
+            me.bounceBubbles(i, j, midpointX, midpointY, overlap, bx, by, bz, b2x, b2y, b2z)
+          else
+            me.mergeBubbles(i, j, midpointX, midpointY, bx, by, bz, b2x, b2y, b2z)
+          end if
+        end if
+      next
+      
+    next
+  end function
+  
+  function handleScreenPositionOverflow(byref x as float32, byref y as float32, optional boundingSphereRadius as float32 = 0)
+    float32 cx, cy, cz
+    tbgl_entityGetPos(me.scene, me.camera, cx, cy, cz)
+    
+    float32 objectTop = y + boundingSphereRadius
+    float32 objectBottom = y - boundingSphereRadius
+    float32 objectLeft = x - boundingSphereRadius
+    float32 objectRight = x + boundingSphereRadius
+    
+    float32 screenTop = cy + me.boundingArea.maxY
+    float32 screenBottom = cy + me.boundingArea.minY
+    float32 screenLeft = cx + me.boundingArea.minX
+    float32 screenRight = cx + me.boundingArea.maxX
+    
+    if objectLeft > screenRight then
+      x = screenLeft - boundingSphereRadius
+    elseif objectRight < screenLeft then
+      x = screenRight + boundingSphereRadius
+    end if
+
+    if objectBottom > screenTop then
+      y = screenBottom - boundingSphereRadius
+    elseif objectTop < screenBottom then
+      y = screenTop + boundingSphereRadius
+    end if
+    
+  end function
+
+end type
