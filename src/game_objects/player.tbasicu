@@ -1,8 +1,8 @@
 ﻿uses "math"
 
-#include once "game_context.tbasicu"
+#include once "../game_context.tbasicu"
 
-#include once "logger_ps.tbasicu"
+#include once "../logger_ps.tbasicu"
 
 type goPlayer
     logger as LoggerPS
