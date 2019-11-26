@@ -33,12 +33,12 @@ type ScreenLanguage
     me.menuFont = tbgl_fontHandle("Arial", metadata.screenHeight/40)
     tbgl_buildFont(me.menuFont, 2)
     
-    me.enText.put("[E]nglish", 2)
-    me.frText.put("[F]rançais", 2)
-    me.czText.put("[Č]eština", 2)
-    me.itText.put("[I]taliano", 2)
-    me.deText.put("[D]eutsch", 2)
-    me.esText.put("E[s]pañol", 2)
+    me.enText.put(i18nh("[E]nglish","Keep language name in target language"), 2)
+    me.frText.put(i18nh("[F]rançais","Keep language name in target language"), 2)
+    me.czText.put(i18nh("[Č]eština","Keep language name in target language"), 2)
+    me.itText.put(i18nh("[I]taliano","Keep language name in target language"), 2)
+    me.deText.put(i18nh("[D]eutsch","Keep language name in target language"), 2)
+    me.esText.put(i18nh("E[s]pañol","Keep language name in target language"), 2)
 
     
   end function

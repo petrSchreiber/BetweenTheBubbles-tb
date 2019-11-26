@@ -24,9 +24,9 @@ I18N.Load(APP_ScriptPath, $ALLLANGUAGES_FILENAME)
 Function i18nh(stringValue as string, Optional stringComment as String) as String
   Dim tempTXT as String = I18N.GetText(XMLEscape(stringValue))
   If tempTXT = "" then
-    Return stringValue
+    Return Utf8ToAnsi$(stringValue)
   else
-    Return XMLUnescapePartially(tempTXT)
+    Return Utf8ToAnsi$(XMLUnescapePartially(tempTXT))
   endif
 end function
 

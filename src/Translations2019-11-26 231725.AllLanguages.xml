@@ -33,14 +33,14 @@
 	<Sentence key="You ran out of energy after " lang="cz-CZ"></Sentence>
 	<Sentence key="You ran out of energy after " lang="de-DE"></Sentence>
 	<Sentence key="You ran out of energy after " lang="es-ES"></Sentence>
-	<Sentence key="You ran out of energy after " lang="fr-FR">Vous étiez à cours d'énergie après</Sentence>
+	<Sentence key="You ran out of energy after " lang="fr-FR">Vous étiez à cours d'énergie après </Sentence>
 	<Sentence key="You ran out of energy after " lang="it-IT"></Sentence>
 
 	<Sentence key=" seconds." lang="en-GB"> seconds.</Sentence>
 	<Sentence key=" seconds." lang="cz-CZ"></Sentence>
 	<Sentence key=" seconds." lang="de-DE"></Sentence>
 	<Sentence key=" seconds." lang="es-ES"></Sentence>
-	<Sentence key=" seconds." lang="fr-FR">secondes.</Sentence>
+	<Sentence key=" seconds." lang="fr-FR"> secondes.</Sentence>
 	<Sentence key=" seconds." lang="it-IT"></Sentence>
 
 
@@ -70,54 +70,6 @@
 	<Sentence key="Language selection - [ESC] to cancel." lang="es-ES"></Sentence>
 	<Sentence key="Language selection - [ESC] to cancel." lang="fr-FR">Sélection de la langue - [ESC] pour annuler.</Sentence>
 	<Sentence key="Language selection - [ESC] to cancel." lang="it-IT"></Sentence>
-
-	<!-->Keep language name in target language<-->
-	<Sentence key="[E]nglish" lang="en-GB">[E]nglish</Sentence>
-	<Sentence key="[E]nglish" lang="cz-CZ">[E]nglish</Sentence>
-	<Sentence key="[E]nglish" lang="de-DE">[E]nglish</Sentence>
-	<Sentence key="[E]nglish" lang="es-ES">[E]nglish</Sentence>
-	<Sentence key="[E]nglish" lang="fr-FR">[E]nglish</Sentence>
-	<Sentence key="[E]nglish" lang="it-IT">[E]nglish</Sentence>
-
-	<!-->Keep language name in target language<-->
-	<Sentence key="[F]rançais" lang="en-GB">[F]rançais</Sentence>
-	<Sentence key="[F]rançais" lang="cz-CZ">[F]rançais</Sentence>
-	<Sentence key="[F]rançais" lang="de-DE">[F]rançais</Sentence>
-	<Sentence key="[F]rançais" lang="es-ES">[F]rançais</Sentence>
-	<Sentence key="[F]rançais" lang="fr-FR">[F]rançais</Sentence>
-	<Sentence key="[F]rançais" lang="it-IT">[F]rançais</Sentence>
-
-	<!-->Keep language name in target language<-->
-	<Sentence key="[Č]eština" lang="en-GB">[Č]eština</Sentence>
-	<Sentence key="[Č]eština" lang="cz-CZ">[Č]eština</Sentence>
-	<Sentence key="[Č]eština" lang="de-DE">[Č]eština</Sentence>
-	<Sentence key="[Č]eština" lang="es-ES">[Č]eština</Sentence>
-	<Sentence key="[Č]eština" lang="fr-FR">[Č]eština</Sentence>
-	<Sentence key="[Č]eština" lang="it-IT">[Č]eština</Sentence>
-
-	<!-->Keep language name in target language<-->
-	<Sentence key="[I]taliano" lang="en-GB">[I]taliano</Sentence>
-	<Sentence key="[I]taliano" lang="cz-CZ">[I]taliano</Sentence>
-	<Sentence key="[I]taliano" lang="de-DE">[I]taliano</Sentence>
-	<Sentence key="[I]taliano" lang="es-ES">[I]taliano</Sentence>
-	<Sentence key="[I]taliano" lang="fr-FR">[I]taliano</Sentence>
-	<Sentence key="[I]taliano" lang="it-IT">[I]taliano</Sentence>
-
-	<!-->Keep language name in target language<-->
-	<Sentence key="[D]eutsch" lang="en-GB">[D]eutsch</Sentence>
-	<Sentence key="[D]eutsch" lang="cz-CZ">[D]eutsch</Sentence>
-	<Sentence key="[D]eutsch" lang="de-DE">[D]eutsch</Sentence>
-	<Sentence key="[D]eutsch" lang="es-ES">[D]eutsch</Sentence>
-	<Sentence key="[D]eutsch" lang="fr-FR">[D]eutsch</Sentence>
-	<Sentence key="[D]eutsch" lang="it-IT">[D]eutsch</Sentence>
-
-	<!-->Keep language name in target language<-->
-	<Sentence key="E[s]pañol" lang="en-GB">E[s]pañol</Sentence>
-	<Sentence key="E[s]pañol" lang="cz-CZ">E[s]pañol</Sentence>
-	<Sentence key="E[s]pañol" lang="de-DE">E[s]pañol</Sentence>
-	<Sentence key="E[s]pañol" lang="es-ES">E[s]pañol</Sentence>
-	<Sentence key="E[s]pañol" lang="fr-FR">E[s]pañol</Sentence>
-	<Sentence key="E[s]pañol" lang="it-IT">E[s]pañol</Sentence>
 
 
 
