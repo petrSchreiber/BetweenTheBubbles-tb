@@ -99,7 +99,9 @@ type ScreenGame
     else
       me.player.tryFadeSpin(90)
     end if
-
+    
+    '[todo] Here manage key release 
+    
     if tbgl_getWindowKeyState(context.screenWindow, %VK_UP) and me.player.energy > 0 then
       me.thrustPressed = true
       me.player.tryThrust(10)
@@ -282,3 +284,4 @@ end function
 function screen_game_changeReason() as string
   return uScreenGame.changeReason()
 end function
+ 
