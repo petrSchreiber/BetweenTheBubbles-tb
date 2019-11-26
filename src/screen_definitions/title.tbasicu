@@ -1,4 +1,4 @@
-﻿#include once "../ui/textitem.tbasicu"
+#include once "../ui/textitem.tbasicu"
 
 type ScreenTitle
 
@@ -41,7 +41,7 @@ type ScreenTitle
     tbgl_killFont(1)
   end function
 
-  '
+'
 
   function handleInput()
     dim metadata as GameContext at me.contextPtr
