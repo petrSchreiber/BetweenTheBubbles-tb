@@ -49,8 +49,8 @@ type ScreenGame
     me.uiFont = tbgl_fontHandle("Arial", context.screenHeight/30)
     tbgl_buildFont(me.uiFont)
     
-    me.controlText.Put("[Arrows] for control")
-    me.endText.Put("[Q]uit")
+    me.controlText.Put(i18nh("[Arrows] for control"))
+    me.endText.Put(i18nh("[Q]uit"))
     
     if %LOGGERPS then me.logger.write("Initialized texts...")
 
@@ -218,7 +218,7 @@ type ScreenGame
     me.makePlayerHandleSpin()
 
     if me.player.energy < 5 and me.player.attachedBubblePtr = 0 then
-      me.energyText.Put("Find a bubble, quick! Oxygen " + format$(me.player.energy, "0.0") + "%")
+      me.energyText.Put(i18nh("Find a bubble, quick! Oxygen ") + format$(me.player.energy, "0.0") + "%")
     end if
     
     tbgl_clearFrame
@@ -240,7 +240,7 @@ type ScreenGame
     
     if me.player.energy <= 0 Then
       me.proposedScreenChange = "gameover"
-      me.proposedScreenChangeReason = "You ran out of energy after " + format$(context.gameTime - context.screenStart, "0.##") + " seconds."
+      me.proposedScreenChangeReason = i18nh("You ran out of energy after ") + format$(context.gameTime - context.screenStart, "0.##") + i18nh(" seconds.")
     end if
   end function
 
@@ -282,3 +282,4 @@ end function
 function screen_game_changeReason() as string
   return uScreenGame.changeReason()
 end function
+ 

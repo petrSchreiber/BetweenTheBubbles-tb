@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<i18n>
+
+
+<!-->**************************************************************************************<-->
+<!-->  *****  T:\_DEV\GIT\BetweenTheBubbles-tb\src\screen_definitions/game.tbasicu  *****  <-->
+<!-->**************************************************************************************<-->
+
+
+	<Sentence key="[Arrows] for control" lang="en-GB">[Arrows] for control</Sentence>
+	<Sentence key="[Arrows] for control" lang="cz-CZ"></Sentence>
+	<Sentence key="[Arrows] for control" lang="de-DE"></Sentence>
+	<Sentence key="[Arrows] for control" lang="es-ES"></Sentence>
+	<Sentence key="[Arrows] for control" lang="fr-FR">[Flèches] pour diriger</Sentence>
+	<Sentence key="[Arrows] for control" lang="it-IT"></Sentence>
+
+	<Sentence key="[Q]uit" lang="en-GB">[Q]uit</Sentence>
+	<Sentence key="[Q]uit" lang="cz-CZ"></Sentence>
+	<Sentence key="[Q]uit" lang="de-DE"></Sentence>
+	<Sentence key="[Q]uit" lang="es-ES"></Sentence>
+	<Sentence key="[Q]uit" lang="fr-FR">[Q]uitter</Sentence>
+	<Sentence key="[Q]uit" lang="it-IT"></Sentence>
+
+	<Sentence key="Find a bubble, quick! Oxygen " lang="en-GB">Find a bubble, quick! Oxygen </Sentence>
+	<Sentence key="Find a bubble, quick! Oxygen " lang="cz-CZ"></Sentence>
+	<Sentence key="Find a bubble, quick! Oxygen " lang="de-DE"></Sentence>
+	<Sentence key="Find a bubble, quick! Oxygen " lang="es-ES"></Sentence>
+	<Sentence key="Find a bubble, quick! Oxygen " lang="fr-FR">Trouvez une bulle, vite! Oxygène</Sentence>
+	<Sentence key="Find a bubble, quick! Oxygen " lang="it-IT"></Sentence>
+
+	<!-->me.proposedScreenChangeReason = i18nh("You ran out of energy after ") + format$(context.gameTime - context.screenStart, "0.##") + i18nh(" seconds.")<-->
+	<Sentence key="You ran out of energy after " lang="en-GB">You ran out of energy after </Sentence>
+	<Sentence key="You ran out of energy after " lang="cz-CZ"></Sentence>
+	<Sentence key="You ran out of energy after " lang="de-DE"></Sentence>
+	<Sentence key="You ran out of energy after " lang="es-ES"></Sentence>
+	<Sentence key="You ran out of energy after " lang="fr-FR">Vous étiez à cours d'énergie après </Sentence>
+	<Sentence key="You ran out of energy after " lang="it-IT"></Sentence>
+
+	<Sentence key=" seconds." lang="en-GB"> seconds.</Sentence>
+	<Sentence key=" seconds." lang="cz-CZ"></Sentence>
+	<Sentence key=" seconds." lang="de-DE"></Sentence>
+	<Sentence key=" seconds." lang="es-ES"></Sentence>
+	<Sentence key=" seconds." lang="fr-FR"> secondes.</Sentence>
+	<Sentence key=" seconds." lang="it-IT"></Sentence>
+
+
+
+<!-->******************************************************************************************<-->
+<!-->  *****  T:\_DEV\GIT\BetweenTheBubbles-tb\src\screen_definitions/gameover.tbasicu  *****  <-->
+<!-->******************************************************************************************<-->
+
+
+	<Sentence key="[B]ack to menu" lang="en-GB">[B]ack to menu</Sentence>
+	<Sentence key="[B]ack to menu" lang="cz-CZ"></Sentence>
+	<Sentence key="[B]ack to menu" lang="de-DE"></Sentence>
+	<Sentence key="[B]ack to menu" lang="es-ES"></Sentence>
+	<Sentence key="[B]ack to menu" lang="fr-FR">[B] Retour au menu</Sentence>
+	<Sentence key="[B]ack to menu" lang="it-IT"></Sentence>
+
+
+
+<!-->******************************************************************************************<-->
+<!-->  *****  T:\_DEV\GIT\BetweenTheBubbles-tb\src\screen_definitions/language.tbasicu  *****  <-->
+<!-->******************************************************************************************<-->
+
+
+	<Sentence key="Language selection - [ESC] to cancel." lang="en-GB">Language selection - [ESC] to cancel.</Sentence>
+	<Sentence key="Language selection - [ESC] to cancel." lang="cz-CZ"></Sentence>
+	<Sentence key="Language selection - [ESC] to cancel." lang="de-DE"></Sentence>
+	<Sentence key="Language selection - [ESC] to cancel." lang="es-ES"></Sentence>
+	<Sentence key="Language selection - [ESC] to cancel." lang="fr-FR">Sélection de la langue - [ESC] pour annuler.</Sentence>
+	<Sentence key="Language selection - [ESC] to cancel." lang="it-IT"></Sentence>
+
+
+
+<!-->***************************************************************************************<-->
+<!-->  *****  T:\_DEV\GIT\BetweenTheBubbles-tb\src\screen_definitions/title.tbasicu  *****  <-->
+<!-->***************************************************************************************<-->
+
+
+	<Sentence key="[P]lay" lang="en-GB">[P]lay</Sentence>
+	<Sentence key="[P]lay" lang="cz-CZ"></Sentence>
+	<Sentence key="[P]lay" lang="de-DE"></Sentence>
+	<Sentence key="[P]lay" lang="es-ES"></Sentence>
+	<Sentence key="[P]lay" lang="fr-FR">[P] Jouer</Sentence>
+	<Sentence key="[P]lay" lang="it-IT"></Sentence>
+
+	<Sentence key="[Q]uit" lang="en-GB">[Q]uit</Sentence>
+	<Sentence key="[Q]uit" lang="cz-CZ"></Sentence>
+	<Sentence key="[Q]uit" lang="de-DE"></Sentence>
+	<Sentence key="[Q]uit" lang="es-ES"></Sentence>
+	<Sentence key="[Q]uit" lang="fr-FR">[Q]uitter</Sentence>
+	<Sentence key="[Q]uit" lang="it-IT"></Sentence>
+
+	<Sentence key="[L]anguage" lang="en-GB">[L]anguage</Sentence>
+	<Sentence key="[L]anguage" lang="cz-CZ"></Sentence>
+	<Sentence key="[L]anguage" lang="de-DE"></Sentence>
+	<Sentence key="[L]anguage" lang="es-ES"></Sentence>
+	<Sentence key="[L]anguage" lang="fr-FR">[L]angues</Sentence>
+	<Sentence key="[L]anguage" lang="it-IT"></Sentence>
+
+</i18n>
