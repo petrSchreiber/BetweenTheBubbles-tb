@@ -1,4 +1,4 @@
-﻿uses "tbgl"
+uses "tbgl"
 
 #include once "../ui/textitem.tbasicu"
 
@@ -90,7 +90,9 @@ type ScreenGame
   '
 
   function handleInput()
-    dim context as GameContext at me.contextPtr
+  
+    Static keyPressedPreviously as Boolean
+    Local context as GameContext at me.contextPtr
     
     if tbgl_getWindowKeyState(context.screenWindow, %VK_LEFT) then
       me.player.trySpin(45)
@@ -100,23 +102,44 @@ type ScreenGame
       me.player.tryFadeSpin(90)
     end if
     
-    '[todo] Here manage key release 
-    
     if tbgl_getWindowKeyState(context.screenWindow, %VK_UP) and me.player.energy > 0 then
-      me.thrustPressed = true
-      me.player.tryThrust(10)
-      if me.player.getBubblePtr() then
-        dim bubble as goBubble at me.player.getBubblePtr()
-        bubble.goBoom()
-        me.player.setBubblePtr(0)
-      end if
-      tbgl_entityDetach(me.player.scene, me.player.entity, %TBGL_PRESERVE)
-    else
-      me.thrustPressed = false
-      me.player.tryFadeThrust(20)
-    end if
-    
+      if me.player.thrustImpulse Then 'The bug is already swimming
+        me.player.tryThrust
+      Else
+        if me.player.tryCharge(20) Then 'The bug is fully charged
+          if me.player.getBubblePtr() then
+            dim bubble as goBubble at me.player.getBubblePtr()
+            bubble.goBoom()
+            me.player.setBubblePtr(0)
+          end if
+          me.player.tryThrust
+          me.thrustPressed = %TRUE
+          tbgl_entityDetach(me.player.scene, me.player.entity, %TBGL_PRESERVE)
+        endif
+        keyPressedPreviously = %TRUE
+      endif
+    Else
+      if keyPressedPreviously = %TRUE Then 'Key was just released
+        keyPressedPreviously = %FALSE
+        if me.player.getBubblePtr() then
+          dim bubble as goBubble at me.player.getBubblePtr()
+          bubble.goBoom()
+          me.player.setBubblePtr(0)
+        end if
+        me.player.tryThrust
+        me.thrustPressed = %TRUE
+        tbgl_entityDetach(me.player.scene, me.player.entity, %TBGL_PRESERVE)
+      elseif me.player.thrustImpulse Then 'The bug is already swimming
+        if me.player.tryThrust Then 'The bug' speed is low enough to not burst the bubbles
+          me.thrustPressed = %FALSE
+        endif
+      Else ' Idle
+        me.thrustPressed = %FALSE
+      endif
+    endif
+
     if tbgl_getWindowKeyOnce(context.screenWindow, %VK_Q) then me.proposedScreenChange = "title"
+    
   end function
   
   function makeCameraFollowThePlayer()
@@ -284,4 +307,3 @@ end function
 function screen_game_changeReason() as string
   return uScreenGame.changeReason()
 end function
- 
