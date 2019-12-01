@@ -1,4 +1,4 @@
-﻿uses "tbgl"
+uses "tbgl"
 
 #include once "../ui/textitem.tbasicu"
 
@@ -33,6 +33,9 @@ type ScreenGame
   thrustPressed as int32
   
   bubbleDirector as DirectorForBubbles
+  
+  monitor as difficultyMonitor
+  
 
   function prepare(contextPtr as UInt32, optional screenChangeReason as string)
   
@@ -42,6 +45,12 @@ type ScreenGame
     
     me.contextPtr = contextPtr
     dim context as GameContext at me.contextPtr
+    
+    #If %MONITOR then
+  
+      monitor.prepare(me.contextPtr)
+    
+    #EndIf
     
     tbgl_backColor 128, 128, 255
     

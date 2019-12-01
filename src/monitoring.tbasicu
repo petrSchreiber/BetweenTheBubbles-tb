@@ -1,0 +1,55 @@
+#include once "logger_ps.tbasicu"
+
+Type difficultyMonitor
+
+  contextPtr as dword
+  logger as LoggerPS
+  difficulty as double
+  frequency as Double
+  
+  function Prepare(contextPtr as dword)
+
+    me.contextPtr = contextPtr
+
+    #if %LOGGERPS
+      me.logger.initialize("difficultyMonitor")
+    #endif
+  
+  end function
+  
+  Function Rate
+  
+    Local context as GameContext at me.contextPtr
+    LOCAL x, y, z, distance, difficulty, capacity AS Double
+    
+    tbgl_entityGetPos(uScreenGame.player.scene,uScreenGame.player.entity,x,y,z,%TRUE) 'Absolute Player position
+    
+    for i as integer = 1 to uScreenGame.bubbleDirector.bubbleTotalCount
+      capacity = uScreenGame.bubbleDirector.bubble(i).capacity ' Bubble capacity
+      if capacity = 0 then iterate for
+      distance = tbgl_entityGetDistancePos(uScreenGame.player.scene,uScreenGame.bubbleDirector.bubble(i).entity,x,y,z) ' Bubble---Player Distance
+      me.difficulty += POW3*(1/capacity) * POW2(distance) ' One far big bubble is easier to catch than many close little ones 
+    next
+    
+  end function
+  
+  Function Monitor
+  ' if frequency ok then rate
+  ' if frequency ok then store
+  end function
+
+
+  Function Store
+  ' to file ? 
+  ' biff or what ?
+  
+  end function
+  
+  Function ExportToFile
+  ' when screenchange or maxtime
+  
+  end function
+
+
+  
+end type

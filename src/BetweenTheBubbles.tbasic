@@ -1,15 +1,17 @@
-﻿' [+] New inifinte bubbleverse!
+' [+] New inifinte bubbleverse!
 ' [+] Turning while speeding possible
 ' [+] Bubble reborn elsewhere, if drained or if merged
 ' [+] Player starts with some minimal energy
 ' [+] Player can pop the bubbles
 
 %LOGGERPS = true
+%MONITOR = %TRUE
 
 uses "tbgl"
 
 #include "game_context.tbasicu"
 #include "screen_manager.tbasicu"
+#Include "monitoring.tbasicu"
 
 #include "screen_definitions/title.tbasicu"
 #include "screen_definitions/game.tbasicu"
