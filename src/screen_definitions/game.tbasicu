@@ -191,7 +191,7 @@ type ScreenGame
     dim context as GameContext at me.contextPtr
     
     if me.player.getBubblePtr() = 0 and me.player.thrustImpulse and me.player.energy > 0 Then
-      tbgl_entitypush(me.player.scene, me.player.entity, -me.player.thrust/context.frameRate, 0)
+      tbgl_entitypush(me.player.scene, me.player.entity, -me.player.thrust, 0)
     end if
   end function
   
