@@ -160,7 +160,7 @@ type goPlayer
         function = %TRUE
       endif
       oldGameTime = context.gametime ' store current time for diff calculation
-      easeCache = (me.easeSimple(temps, currentCharge , currentThrustDuration) + crumb)
+      easeCache = (me.easeSimple(temps, currentCharge , currentThrustDuration) + crumb)/context.frameRate
       crumb = frac(easeCache) ' maybe not useful in the end ?
       me.thrust = fix(easeCache)
       me.thrustImpulse = %TRUE
