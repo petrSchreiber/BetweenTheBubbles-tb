@@ -8,7 +8,9 @@ Uses "Biff"
 Type monitorData
   temps as Double
   difficulty as Double
-  framerate as integer
+  meanFrameRate as dword
+  meanDistance as Double
+  meanCapacity as double
 end type
 
 
@@ -22,16 +24,21 @@ Type difficultyMonitor
   tempsStore as Double
   rateCount as DWord
   '[t] can't use undimensioned array conjointly with " Local context as GameContext at me.contextPtr "
-  storage() as monitorData
+  storage(200000) as monitorData
   mesuresCount as DWord
+  oneData as monitorData
+  gamesessionStartTime as double
   
   function Prepare(contextPtr as dword)
 
     me.contextPtr = contextPtr
+    Local context as GameContext at me.contextPtr
 
     #if %LOGGERPS
       me.logger.initialize("difficultyMonitor")
     #endif
+    
+    me.gamesessionStartTime = context.gameTime
     
     redim me.storage(10)
     me.mesuresCount = 0
@@ -52,17 +59,26 @@ Type difficultyMonitor
   
   Function Rate()
   
-    LOCAL x, y, z, distance, difficulty, capacity AS Double
+    LOCAL x, y, z, distance, difficulty, capacity, counter AS Double
+    Local context as GameContext at me.contextPtr
+    Local totalDistance, totalCapacity as Double
     
     tbgl_entityGetPos(uScreenGame.player.scene,uScreenGame.player.entity,x,y,z,%TRUE) 'Absolute Player position
     
     for i as integer = 1 to uScreenGame.bubbleDirector.bubbleTotalCount
       capacity = uScreenGame.bubbleDirector.bubble(i).capacity ' Bubble capacity
       if capacity = 0 then iterate for
+      incr counter
       distance = tbgl_entityGetDistancePos(uScreenGame.player.scene,uScreenGame.bubbleDirector.bubble(i).entity,x,y,z) ' Bubble---Player Distance
-      me.difficulty += POW3(1/capacity) * POW2(distance) ' One far big bubble is easier to catch than many close little ones 
+      totalDistance += distance
+      totalCapacity += capacity
+      me.oneData.difficulty += POW3(1/capacity) * POW2(distance) ' One far big bubble is easier to catch than many close little ones 
     next
     
+    me.oneData.meanFrameRate += context.framerate
+    me.oneData.meandistance += totalDistance / counter
+    me.oneData.meanCapacity += totalCapacity / counter
+    counter = 0 
   end function
   
   Function Monitor()
@@ -101,11 +117,22 @@ Type difficultyMonitor
     incr me.mesuresCount
     Local toStore as monitorData
     if me.mesuresCount > ubound(me.storage) Then
-      redim preserve me.storage(me.mesuresCount+100)
+      Decr me.mesuresCount
+      me.ExportToFile
+      me.mesuresCount = 1
     endif
-    toStore.temps = currentTime
-    toStore.difficulty =  me.difficulty / me.rateCount
+    toStore.temps = currentTime - me.gamesessionStartTime
+    toStore.difficulty = me.oneData.difficulty / me.rateCount
+    toStore.meanCapacity = me.oneData.meanCapacity / me.rateCount
+    toStore.meanDistance = me.oneData.meanDistance / me.rateCount
+    toStore.meanFrameRate = me.oneData.meanframeRate / me.rateCount
+    
     me.storage(me.mesuresCount) = toStore
+    
+    me.oneData.difficulty = 0
+    me.oneData.meanCapacity = 0
+    me.oneData.meanDistance =0
+    me.oneData.meanframeRate = 0
     
     '[t] Shame, following syntax does not work.
     'me.storage(me.mesuresCount).temps = currentTime
@@ -117,14 +144,22 @@ Type difficultyMonitor
   Function ExportToFile()
     If Not me.mesuresCount > 0 then Return
     Local OutFile as String
-    Local toWrite as monitoData
+    Local toWrite as monitorData
     
     OutFile = APP_ScriptPath & remove$(DateTime$,":") & ".xls"
     BIFF_CreateFile(OutFile)
+    BIFF_WriteText("Time(s)",1,1)
+    BIFF_WriteText("FrameRate",1,2)
+    BIFF_WriteText("Mean capacity",1,3)
+    BIFF_WriteText("Mean distance",1,4)
+    BIFF_WriteText("Difficulty",1,5)
     for i as dword = 1 to me.mesuresCount
       toWrite = me.Storage(i)
-      BIFF_WriteNumber(toWrite.temps,i,1) ' Time
-      BIFF_WriteNumber(toWrite.difficulty,i,2) ' Difficulty
+      BIFF_WriteNumber(toWrite.temps,1+i,1) ' Time
+      BIFF_WriteNumber(toWrite.meanFrameRate,1+i,2) ' FrameRate
+      BIFF_WriteNumber(toWrite.meanCapacity,1+i,3) ' Capacity
+      BIFF_WriteNumber(toWrite.meanDistance,1+i,4) ' Distance
+      BIFF_WriteNumber(toWrite.difficulty,1+i,5) ' Difficulty
     next
     BIFF_CloseFile 
   end function

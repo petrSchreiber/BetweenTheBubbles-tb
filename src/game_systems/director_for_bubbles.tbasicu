@@ -1,4 +1,4 @@
-﻿#include once "../building_blocks/bounding_rectangle.tbasicu"
+#include once "../building_blocks/bounding_rectangle.tbasicu"
 #include once "../logger_ps.tbasicu"
 
 #include once "../game_objects/bubble.tbasicu"
@@ -12,7 +12,7 @@ type DirectorForBubbles
   playerPtr  as uint32
   contextPtr as uint32
   
-  bubble(64) as goBubble
+  bubble(32) as goBubble
   bubbleTotalCount as uint32
   boundingArea as BoundingRectangle
   singleBubbleMaxEnergy as uint32
