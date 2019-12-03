@@ -4,7 +4,7 @@
 ' [+] Player starts with some minimal energy
 ' [+] Player can pop the bubbles
 
-%LOGGERPS = true
+%LOGGERPS = %FALSE'true
 %MONITOR = %TRUE
 
 uses "tbgl"

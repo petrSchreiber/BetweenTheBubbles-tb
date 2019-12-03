@@ -42,15 +42,16 @@ type ScreenGame
     if %LOGGERPS then me.logger.initialize("Screen: Game")
     
     if %LOGGERPS then me.logger.openSection("BEGIN " + function_name)
+    '[breakpoint] <Any note here. Breakpoint will be set to line following this statement>
     
     me.contextPtr = contextPtr
     dim context as GameContext at me.contextPtr
     
-    #If %MONITOR then
+    If %MONITOR then
   
-      monitor.prepare(me.contextPtr)
+      me.monitor.prepare(me.contextPtr)
     
-    #EndIf
+    EndIf
     
     tbgl_backColor 128, 128, 255
     
@@ -123,7 +124,10 @@ type ScreenGame
       me.player.tryFadeThrust(20)
     end if
     
-    if tbgl_getWindowKeyOnce(context.screenWindow, %VK_Q) then me.proposedScreenChange = "title"
+    if tbgl_getWindowKeyOnce(context.screenWindow, %VK_Q) then
+      me.monitor.close
+      me.proposedScreenChange = "title"
+    endif
   end function
   
   function makeCameraFollowThePlayer()
@@ -247,7 +251,11 @@ type ScreenGame
     
     me.makeCameraFollowThePlayer()
     
+    'If %MONITOR then uDifficultyMonitor.Monitor
+    If %MONITOR then me.monitor.Monitor
+    
     if me.player.energy <= 0 Then
+      me.monitor.Close
       me.proposedScreenChange = "gameover"
       me.proposedScreenChangeReason = "You ran out of energy after " + format$(context.gameTime - context.screenStart, "0.##") + " seconds."
     end if

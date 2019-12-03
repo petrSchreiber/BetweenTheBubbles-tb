@@ -2,8 +2,8 @@ Uses "Biff"
 
 #include once "logger_ps.tbasicu"
 
-%DIFFICULTY_MONITOR_RATE = 500 'ms
-%DIFFICULTY_STORE_RATE = 2000 ' ms (averageing)
+%DIFFICULTY_MONITOR_RATE = 0.5 's
+%DIFFICULTY_STORE_RATE = 2 ' s (averaging)
 
 Type monitorData
   temps as Double
@@ -17,10 +17,11 @@ Type difficultyMonitor
   contextPtr as dword
   logger as LoggerPS
   difficulty as double
-  frequency as Double
   oldTime as Double ' to calculate time diff between two calls
-  tempsMonitor, tempsStore as Double
+  tempsMonitor as double
+  tempsStore as Double
   rateCount as DWord
+  '[t] can't use undimensioned array conjointly with " Local context as GameContext at me.contextPtr "
   storage() as monitorData
   mesuresCount as DWord
   
@@ -32,12 +33,24 @@ Type difficultyMonitor
       me.logger.initialize("difficultyMonitor")
     #endif
     
-    redim storage(10)
-    mesuresCount = 0
+    redim me.storage(10)
+    me.mesuresCount = 0
   
   end function
   
-  Function Rate
+  Function Close()
+  
+    Local context as GameContext at me.contextPtr
+    Local currentTime as double = context.gameTime
+  
+    me.Store(currentTime)
+    me.exportToFile
+    Redim me.storage(1)
+    
+  end function
+
+  
+  Function Rate()
   
     LOCAL x, y, z, distance, difficulty, capacity AS Double
     
@@ -47,15 +60,16 @@ Type difficultyMonitor
       capacity = uScreenGame.bubbleDirector.bubble(i).capacity ' Bubble capacity
       if capacity = 0 then iterate for
       distance = tbgl_entityGetDistancePos(uScreenGame.player.scene,uScreenGame.bubbleDirector.bubble(i).entity,x,y,z) ' Bubble---Player Distance
-      me.difficulty += POW3*(1/capacity) * POW2(distance) ' One far big bubble is easier to catch than many close little ones 
+      me.difficulty += POW3(1/capacity) * POW2(distance) ' One far big bubble is easier to catch than many close little ones 
     next
     
   end function
   
-  Function Monitor
-
+  Function Monitor()
+'[breakpoint] <Any note here. Breakpoint will be set to line following this statement>
+'[t] on second pass me.contextPtr is lost (reset to 0 , why ? I think it's because storage() was redim. )
     Local context as GameContext at me.contextPtr
-    Local currentTime as double = 1000 * context.gameTime
+    Local currentTime as double = context.gameTime
     
     if me.oldTime = 0 Then 'First pass
       me.tempsMonitor = 0
@@ -82,23 +96,37 @@ Type difficultyMonitor
   end function
 
 
-  Function Store(currentTime as double) 
+  Function Store(currentTime as double)
+    if not me.rateCount > 0 then return
     incr me.mesuresCount
-    if me.mesuresCount > ubound(storage) Then
-      redim preserve storage(mesuresCount+100)
+    Local toStore as monitorData
+    if me.mesuresCount > ubound(me.storage) Then
+      redim preserve me.storage(me.mesuresCount+100)
     endif
+    toStore.temps = currentTime
+    toStore.difficulty =  me.difficulty / me.rateCount
+    me.storage(me.mesuresCount) = toStore
     
-    storage(me.mesuresCount).temps = currentTime
-    storage(me.mesuresCount).difficulty = me.difficulty / me.rateCount
+    '[t] Shame, following syntax does not work.
+    'me.storage(me.mesuresCount).temps = currentTime
+    'me.storage(me.mesuresCount).difficulty = me.difficulty / me.rateCount
+    
     me.rateCount = 0
+  end function
+  
+  Function ExportToFile()
+    If Not me.mesuresCount > 0 then Return
+    Local OutFile as String
+    Local toWrite as monitoData
     
+    OutFile = APP_ScriptPath & remove$(DateTime$,":") & ".xls"
+    BIFF_CreateFile(OutFile)
+    for i as dword = 1 to me.mesuresCount
+      toWrite = me.Storage(i)
+      BIFF_WriteNumber(toWrite.temps,i,1) ' Time
+      BIFF_WriteNumber(toWrite.difficulty,i,2) ' Difficulty
+    next
+    BIFF_CloseFile 
   end function
-  
-  Function ExportToFile
-  ' when screenchange or maxtime
-  
-  end function
-
-
   
 end type
