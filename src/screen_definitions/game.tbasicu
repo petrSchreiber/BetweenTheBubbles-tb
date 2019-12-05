@@ -107,20 +107,14 @@ type ScreenGame
         me.player.tryThrust
       Else
         if me.player.tryCharge Then 'The bug is fully charged
-          me.quitTheBubble
-          me.player.tryThrust
-          me.thrustPressed = %TRUE
-          tbgl_entityDetach(me.player.scene, me.player.entity, %TBGL_PRESERVE)
+          me.goForth
         endif
         keyPressedPreviously = %TRUE
       endif
     Else
       if keyPressedPreviously = %TRUE Then 'Key was just released
         keyPressedPreviously = %FALSE
-        me.quitTheBubble
-        me.player.tryThrust
-        me.thrustPressed = %TRUE
-        tbgl_entityDetach(me.player.scene, me.player.entity, %TBGL_PRESERVE)
+        me.goForth
       elseif me.player.thrustImpulse Then 'The bug is already swimming
         if me.player.tryThrust Then 'The bug' speed is low enough to not burst the bubbles
           me.thrustPressed = %FALSE
@@ -140,7 +134,15 @@ type ScreenGame
       bubble.goBoom()
       me.player.setBubblePtr(0)
     end if
+    tbgl_entityDetach(me.player.scene, me.player.entity, %TBGL_PRESERVE)
   end function
+  
+  Function goForth()
+    me.thrustPressed = %TRUE
+    me.quitTheBubble
+    me.player.tryThrust
+  end function
+
   
   function makeCameraFollowThePlayer()
     dim context as GameContext at me.contextPtr

@@ -1,8 +1,8 @@
 uses "math"
 
 #include once "game_context.tbasicu"
-
 #include once "logger_ps.tbasicu"
+#include Once "..\game_systems\time_me.tbasicu"
     
 type goPlayer
     logger as LoggerPS
@@ -21,7 +21,8 @@ type goPlayer
     thrust as float32
     
     charge as Float32
-    chargeStartTime as Double
+    tryChargeChronos as HowTime
+    tryThrustChronos as HowTime
 
     temps as Double ' how much time Bug's travel is in process
     oldGameTime as Double ' to calculate time diff between two calls
@@ -38,6 +39,9 @@ type goPlayer
         me.entity = tbgl_entityGetFreeID(scene)
         me.energy = %START_ENERGY
         me.contextPtr = contextPtr
+        
+        me.tryChargeChronos.context(contextPtr)
+        me.tryThrustChronos.context(contextPtr)
         
         dWord data = varptr(me)
          
@@ -118,21 +122,17 @@ type goPlayer
       
       if sgnBefore <> sgnAfter then me.spin = 0
     end function
-
+  
   function tryCharge() as Boolean
  
-    Local context as GameContext at me.contextPtr
-    
-    if me.chargeStartTime = 0 Then 'First pass
-      me.chargeStartTime = context.gameTime
-    end if
-    
-    me.charge = context.gameTime - me.chargeStartTime
-    me.alterEnergy(-1/context.framerate)
+    me.tryChargeChronos.raz
+
+    me.charge = me.tryChargeChronos.elapsedSinceStart
+    me.alterEnergy(-1/me.tryChargeChronos.framerate)
     
     if me.charge >= %MAXCHARGEDURATION Then ' Charge is full
       me.charge = %MAXCHARGEDURATION
-      me.chargeStartTime = 0 ' reset charging time (for charge full)
+      me.tryChargeChronos.unlock ' reset charging time (for charge full)
       return %TRUE ' launching jump
     Else
       return %FALSE
@@ -143,14 +143,13 @@ type goPlayer
   Function tryThrust() as Boolean
   
     Local easeCache as Double
-    Local context as GameContext at me.contextPtr
     
-    if me.oldGameTime = 0 Then ' First pass
-      me.temps = 0
+    if not me.tryThrustChronos.locked then
+      me.tryThrustChronos.raz
       me.currentCharge = %MAXCHARGE * me.charge / %MAXCHARGEDURATION
-      me.currentThrustDuration = %THRUSTDURATION * me.Charge / %MAXCHARGEDURATION
+      me.currentThrustDuration = %THRUSTDURATION * me.charge / %MAXCHARGEDURATION
     Else ' Already in travel
-      me.temps += 1000*(context.gametime-me.oldGameTime)
+      me.temps += me.tryThrustChronos.elapsedSinceLastCall
     end if
 
     if me.temps > me.currentThrustDuration then ' end of travel reached
@@ -158,21 +157,26 @@ type goPlayer
       me.charge = 0
       me.temps = 0
       me.currentThrustDuration = 0
-      me.oldGameTime = 0
+      me.tryThrustChronos.unlock
       me.thrustImpulse = %FALSE
     elseif me.currentThrustDuration > 0 then
       if me.thrust < %MIN_BURST_SPEED Then ' speed is low enough to not burst bubbles
         function = %TRUE
       endif
-      me.oldGameTime = context.gametime ' store current time for diff calculation
+      'me.oldGameTime = context.gametime ' store current time for diff calculation
       easeCache = (me.easeSimple(me.temps, me.currentCharge , me.currentThrustDuration) + me.crumb)
       me.crumb = frac(easeCache) ' maybe not useful in the end ?
       me.thrust = fix(easeCache)
       me.thrustImpulse = %TRUE
     endif
 
-    
   end function
+  
+  Function tryBreak() as boolean
+  
+  
+  end function
+
 
   function easeSimple(temps as double, fullValue as Double, fullTime as Double)
   'While fix of https://github.com/DirectuX/easingtest is not ready
