@@ -3,9 +3,6 @@ uses "math"
 #include once "game_context.tbasicu"
 
 #include once "logger_ps.tbasicu"
-
-    %MAXCHARGE = 25 'Can't put this in the Type definition
-    %THRUSTDURATION = 5000 ' ms
     
 type goPlayer
     logger as LoggerPS
@@ -24,6 +21,7 @@ type goPlayer
     thrust as float32
     
     charge as Float32
+    chargeStartTime as Double
 
     temps as Double ' how much time Bug's travel is in process
     oldGameTime as Double ' to calculate time diff between two calls
@@ -31,12 +29,14 @@ type goPlayer
     currentCharge as Double ' how much is this jump charged
     crumb as Double
     
+
+    
     function init(scene as int32, optional attachedBubblePtr as uint32 = 0, contextPtr as uint32)
         if %LOGGERPS then me.logger.initialize("GameObject: Player")
         
         me.scene  = scene
         me.entity = tbgl_entityGetFreeID(scene)
-        me.energy = 5
+        me.energy = %START_ENERGY
         me.contextPtr = contextPtr
         
         dWord data = varptr(me)
@@ -119,20 +119,25 @@ type goPlayer
       if sgnBefore <> sgnAfter then me.spin = 0
     end function
 
-  function tryCharge(quantity as Float32) as Boolean
-   
+  function tryCharge() as Boolean
+ 
     Local context as GameContext at me.contextPtr
     
-    me.charge += quantity/context.framerate ' Charge for jump
+    if me.chargeStartTime = 0 Then 'First pass
+      me.chargeStartTime = context.gameTime
+    end if
+    
+    me.charge = context.gameTime - me.chargeStartTime
     me.alterEnergy(-1/context.framerate)
     
-    if me.charge >= %MAXCHARGE Then ' Charge is full
-      me.charge = %MAXCHARGE
+    if me.charge >= %MAXCHARGEDURATION Then ' Charge is full
+      me.charge = %MAXCHARGEDURATION
+      me.chargeStartTime = 0 ' reset charging time (for charge full)
       return %TRUE ' launching jump
     Else
       return %FALSE
     EndIf
-    
+  
   end function
   
   Function tryThrust() as Boolean
@@ -142,8 +147,8 @@ type goPlayer
     
     if me.oldGameTime = 0 Then ' First pass
       me.temps = 0
-      me.currentCharge = me.charge
-      me.currentThrustDuration = %THRUSTDURATION * me.currentCharge / %MAXCHARGE
+      me.currentCharge = %MAXCHARGE * me.charge / %MAXCHARGEDURATION
+      me.currentThrustDuration = %THRUSTDURATION * me.Charge / %MAXCHARGEDURATION
     Else ' Already in travel
       me.temps += 1000*(context.gametime-me.oldGameTime)
     end if
@@ -155,8 +160,8 @@ type goPlayer
       me.currentThrustDuration = 0
       me.oldGameTime = 0
       me.thrustImpulse = %FALSE
-    else
-      if me.thrust < 6 Then ' speed is low enough to not burst bubbles
+    elseif me.currentThrustDuration > 0 then
+      if me.thrust < %MIN_BURST_SPEED Then ' speed is low enough to not burst bubbles
         function = %TRUE
       endif
       me.oldGameTime = context.gametime ' store current time for diff calculation

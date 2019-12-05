@@ -106,12 +106,8 @@ type ScreenGame
       if me.player.thrustImpulse Then 'The bug is already swimming
         me.player.tryThrust
       Else
-        if me.player.tryCharge(20) Then 'The bug is fully charged
-          if me.player.getBubblePtr() then
-            dim bubble as goBubble at me.player.getBubblePtr()
-            bubble.goBoom()
-            me.player.setBubblePtr(0)
-          end if
+        if me.player.tryCharge Then 'The bug is fully charged
+          me.quitTheBubble
           me.player.tryThrust
           me.thrustPressed = %TRUE
           tbgl_entityDetach(me.player.scene, me.player.entity, %TBGL_PRESERVE)
@@ -121,11 +117,7 @@ type ScreenGame
     Else
       if keyPressedPreviously = %TRUE Then 'Key was just released
         keyPressedPreviously = %FALSE
-        if me.player.getBubblePtr() then
-          dim bubble as goBubble at me.player.getBubblePtr()
-          bubble.goBoom()
-          me.player.setBubblePtr(0)
-        end if
+        me.quitTheBubble
         me.player.tryThrust
         me.thrustPressed = %TRUE
         tbgl_entityDetach(me.player.scene, me.player.entity, %TBGL_PRESERVE)
@@ -140,6 +132,14 @@ type ScreenGame
 
     if tbgl_getWindowKeyOnce(context.screenWindow, %VK_Q) then me.proposedScreenChange = "title"
     
+  end function
+  
+  Function quitTheBubble()
+    if me.player.getBubblePtr() then
+      dim bubble as goBubble at me.player.getBubblePtr()
+      bubble.goBoom()
+      me.player.setBubblePtr(0)
+    end if
   end function
   
   function makeCameraFollowThePlayer()

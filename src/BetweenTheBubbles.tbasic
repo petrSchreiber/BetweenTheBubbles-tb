@@ -8,6 +8,8 @@
 
 uses "tbgl"
 
+#Include "init.tbasicu"
+
 #include "game_context.tbasicu"
 #include "screen_manager.tbasicu"
 
