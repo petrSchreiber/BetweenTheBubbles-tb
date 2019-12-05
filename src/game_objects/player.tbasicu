@@ -16,7 +16,7 @@ type goPlayer
     attachedBubblePtr as UInt32
     contextPtr as UInt32
     
-    thrustImpulse as Float32
+    thrustImpulse as boolean
     
     energy as Float32
     
@@ -25,6 +25,11 @@ type goPlayer
     
     charge as Float32
 
+    temps as Double ' how much time Bug's travel is in process
+    oldGameTime as Double ' to calculate time diff between two calls
+    currentThrustDuration as Double ' how much time will travel last
+    currentCharge as Double ' how much is this jump charged
+    crumb as Double
     
     function init(scene as int32, optional attachedBubblePtr as uint32 = 0, contextPtr as uint32)
         if %LOGGERPS then me.logger.initialize("GameObject: Player")
@@ -132,36 +137,31 @@ type goPlayer
   
   Function tryThrust() as Boolean
   
-    static temps as Double ' how much time Bug's travel is in process
-    Static oldGameTime as Double ' to calculate time diff between two calls
-    Static currentThrustDuration as Double ' how much time will travel last
-    Static currentCharge as Double ' how much is this jump charged
-    Static crumb as Double
     Local easeCache as Double
     Local context as GameContext at me.contextPtr
     
-    if oldGameTime = 0 Then ' First pass
-      temps = 0
-      currentCharge = me.charge
-      currentThrustDuration = %THRUSTDURATION * currentCharge / %MAXCHARGE
+    if me.oldGameTime = 0 Then ' First pass
+      me.temps = 0
+      me.currentCharge = me.charge
+      me.currentThrustDuration = %THRUSTDURATION * me.currentCharge / %MAXCHARGE
     Else ' Already in travel
-      temps += 1000*(context.gametime-oldGameTime)
+      me.temps += 1000*(context.gametime-me.oldGameTime)
     end if
 
-    if temps > currentThrustDuration then ' end of travel reached
+    if me.temps > me.currentThrustDuration then ' end of travel reached
       me.thrust = 0
       me.charge = 0
-      temps = 0
-      currentThrustDuration = 0
-      oldGameTime = 0
+      me.temps = 0
+      me.currentThrustDuration = 0
+      me.oldGameTime = 0
       me.thrustImpulse = %FALSE
     else
       if me.thrust < 6 Then ' speed is low enough to not burst bubbles
         function = %TRUE
       endif
-      oldGameTime = context.gametime ' store current time for diff calculation
-      easeCache = (me.easeSimple(temps, currentCharge , currentThrustDuration) + crumb)
-      crumb = frac(easeCache) ' maybe not useful in the end ?
+      me.oldGameTime = context.gametime ' store current time for diff calculation
+      easeCache = (me.easeSimple(me.temps, me.currentCharge , me.currentThrustDuration) + me.crumb)
+      me.crumb = frac(easeCache) ' maybe not useful in the end ?
       me.thrust = fix(easeCache)
       me.thrustImpulse = %TRUE
     endif
