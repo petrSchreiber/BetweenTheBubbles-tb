@@ -1,9 +1,15 @@
 #Region "player"
     
-    %START_ENERGY = 5 ' energy affected to the Pilgrim at the begining
-    %MAXCHARGE = 25 'arbitrary unit    upper limit for jump charge 
-    %THRUSTDURATION = 5 ' s
-    %MAXCHARGEDURATION = 2 's
-    %MIN_BURST_SPEED = 10 ' The Pilgrim speed over which bubbles burst
+    %START_ENERGY = 5 ' energy affected to the Pilgrim at the begining (arbitrary unit, out of 100)   default: 5
+    
+    %MAXCHARGE = 25 ' upper limit for jump charge (arbitrary unit)   default: 25
+    %MAXCHARGEDURATION = 2 's    default: 2
+    %CHARGEPROGRESSIVENESS = 4 '    exponential charge inverse progressiveness default: 4
+    
+    %THRUSTDURATION = 5 ' upper limit for travel time (s)   default: 5
+    %MIN_BURST_SPEED = 10 ' The Pilgrim speed over which bubbles burst (arbitrary unit)   default: 10
+    
+    %MAXBREAKDURATION = 1 ' s default: 1
+    %MAXBREAKPOWER = %MAXCHARGE '   default: %MAXCHARGE
 
 #EndRegion

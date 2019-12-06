@@ -20,17 +20,20 @@ type goPlayer
     spin as Float32
     thrust as float32
     
-    charge as Float32
+    charge as Float32 ' how much is accumulated while preparing the jump
     tryChargeChronos as HowTime
-    tryThrustChronos as HowTime
 
-    temps as Double ' how much time Bug's travel is in process
+    temps as Double ' how much time the Pilgrim's travel is in process
     oldGameTime as Double ' to calculate time diff between two calls
     currentThrustDuration as Double ' how much time will travel last
     currentCharge as Double ' how much is this jump charged
     crumb as Double
+    tryThrustChronos as HowTime
     
-
+    tempsBreak as Double ' how much time the Pilgrim's braking is in process
+    currentBreakDuration as Double ' how much time will braking last
+    currentBreak as Double ' how much Thrust is it to brake
+    tryBreakChronos as HowTime
     
     function init(scene as int32, optional attachedBubblePtr as uint32 = 0, contextPtr as uint32)
         if %LOGGERPS then me.logger.initialize("GameObject: Player")
@@ -40,8 +43,9 @@ type goPlayer
         me.energy = %START_ENERGY
         me.contextPtr = contextPtr
         
-        me.tryChargeChronos.context(contextPtr)
+        me.tryChargeChronos.context(contextPtr) ' in this precise UDT context, I don't now how to use _create to pass the value 
         me.tryThrustChronos.context(contextPtr)
+        me.tryBreakChronos.context(contextPtr)
         
         dWord data = varptr(me)
          
@@ -131,6 +135,7 @@ type goPlayer
     me.alterEnergy(-1/me.tryChargeChronos.framerate)
     
     if me.charge >= %MAXCHARGEDURATION Then ' Charge is full
+      if %LOGGERPS then me.logger.write("Full charge reached")
       me.charge = %MAXCHARGEDURATION
       me.tryChargeChronos.unlock ' reset charging time (for charge full)
       return %TRUE ' launching jump
@@ -146,15 +151,15 @@ type goPlayer
     
     if not me.tryThrustChronos.locked then
       me.tryThrustChronos.raz
-      me.currentCharge = %MAXCHARGE * me.charge / %MAXCHARGEDURATION
+      me.currentCharge = %MAXCHARGE * Pow((me.charge)/(%MAXCHARGEDURATION),(1/%CHARGEPROGRESSIVENESS))
       me.currentThrustDuration = %THRUSTDURATION * me.charge / %MAXCHARGEDURATION
+      me.tryChargeChronos.unlock
     Else ' Already in travel
       me.temps += me.tryThrustChronos.elapsedSinceLastCall
     end if
 
     if me.temps > me.currentThrustDuration then ' end of travel reached
       me.thrust = 0
-      me.charge = 0
       me.temps = 0
       me.currentThrustDuration = 0
       me.tryThrustChronos.unlock
@@ -163,7 +168,6 @@ type goPlayer
       if me.thrust < %MIN_BURST_SPEED Then ' speed is low enough to not burst bubbles
         function = %TRUE
       endif
-      'me.oldGameTime = context.gametime ' store current time for diff calculation
       easeCache = (me.easeSimple(me.temps, me.currentCharge , me.currentThrustDuration) + me.crumb)
       me.crumb = frac(easeCache) ' maybe not useful in the end ?
       me.thrust = fix(easeCache)
@@ -174,6 +178,28 @@ type goPlayer
   
   Function tryBreak() as boolean
   
+    if not me.tryBreakChronos.locked then
+      me.tryBreakChronos.raz
+      me.currentBreak = me.thrustImpulse
+      me.currentBreakDuration = %MAXBREAKDURATION * me.currentBreak / %MAXBREAKPOWER
+    Else ' Already breaking
+      me.tempsBreak += me.tryBreakChronos.elapsedSinceLastCall ' [o] can be simplified by use of Chronos
+    end if
+    
+    if me.tempsBreak > me.currentBreakDuration then ' end of travel reached
+      me.thrust = 0
+      me.currentBreak = 0
+      me.tempsBreak = 0
+      me.currentBreakDuration = 0
+      me.tryBreakChronos.unlock
+      me.thrustImpulse = %FALSE
+    elseif me.currentBreakDuration > 0 then
+      if me.thrust < %MIN_BURST_SPEED Then ' speed is low enough to not burst bubbles
+        function = %TRUE
+      endif
+      
+    
+    endif
   
   end function
 
