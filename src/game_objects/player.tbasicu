@@ -29,11 +29,12 @@ type goPlayer
     currentCharge as Double ' how much is this jump charged
     crumb as Double
     tryThrustChronos as HowTime
+    burstSafeSpeed as Boolean
     
-    tempsBreak as Double ' how much time the Pilgrim's braking is in process
-    currentBreakDuration as Double ' how much time will braking last
-    currentBreak as Double ' how much Thrust is it to brake
-    tryBreakChronos as HowTime
+    tempsBrake as Double ' how much time the Pilgrim's braking is in process
+    currentBrakeDuration as Double ' how much time will braking last
+    currentBrake as Double ' how much Thrust is it to brake
+    tryBrakeChronos as HowTime
     
     function init(scene as int32, optional attachedBubblePtr as uint32 = 0, contextPtr as uint32)
         if %LOGGERPS then me.logger.initialize("GameObject: Player")
@@ -45,7 +46,9 @@ type goPlayer
         
         me.tryChargeChronos.context(contextPtr) ' in this precise UDT context, I don't now how to use _create to pass the value 
         me.tryThrustChronos.context(contextPtr)
-        me.tryBreakChronos.context(contextPtr)
+        me.tryBrakeChronos.context(contextPtr)
+        
+        me.burstSafeSpeed = %TRUE
         
         dWord data = varptr(me)
          
@@ -101,8 +104,8 @@ type goPlayer
       dim context as GameContext at me.contextPtr
       
       me.energy += energyGain / context.frameRate
-      if me.energy <= 0 then me.energy = 0
-      if me.energy >= 100 then me.energy = 100
+      if me.energy <= %MINENERGY then me.energy = %MINENERGY
+      if me.energy >= %MAXENERGY then me.energy = %MAXENERGY
     end function
     
     ' MOVEMENT
@@ -165,9 +168,7 @@ type goPlayer
       me.tryThrustChronos.unlock
       me.thrustImpulse = %FALSE
     elseif me.currentThrustDuration > 0 then
-      if me.thrust < %MIN_BURST_SPEED Then ' speed is low enough to not burst bubbles
-        function = %TRUE
-      endif
+      if me.thrust < %MIN_BURST_SPEED Then function = %TRUE ' speed is low enough to not burst bubbles
       easeCache = (me.easeSimple(me.temps, me.currentCharge , me.currentThrustDuration) + me.crumb)
       me.crumb = frac(easeCache) ' maybe not useful in the end ?
       me.thrust = fix(easeCache)
@@ -175,25 +176,27 @@ type goPlayer
     endif
 
   end function
+'[todo] First lvl : The Pilgrim brake to a stop between each jump. (charge - jump - charge - jump ...)
+'       Feat unlock : the Pilgrim can tie each jump to the previous (like swimming : charge - jump and charge while gliding along - jump and charge while gliding along - jump and charge while gliding along)
   
-  Function tryBreak() as boolean
+  Function tryBrake() as boolean
   
-    if not me.tryBreakChronos.locked then
-      me.tryBreakChronos.raz
-      me.currentBreak = me.thrustImpulse
-      me.currentBreakDuration = %MAXBREAKDURATION * me.currentBreak / %MAXBREAKPOWER
-    Else ' Already breaking
-      me.tempsBreak += me.tryBreakChronos.elapsedSinceLastCall ' [o] can be simplified by use of Chronos
+    if not me.tryBrakeChronos.locked then
+      me.tryBrakeChronos.raz
+      me.currentBrake = me.thrustImpulse
+      me.currentBrakeDuration = %MAXBRAKEDURATION * me.currentBrake / %MAXBRAKEPOWER
+    Else ' Already braking
+      me.tempsBrake += me.tryBrakeChronos.elapsedSinceLastCall ' [o] can be simplified by use of Chronos
     end if
     
-    if me.tempsBreak > me.currentBreakDuration then ' end of travel reached
+    if me.tempsBrake > me.currentBrakeDuration then ' end of travel reached
       me.thrust = 0
-      me.currentBreak = 0
-      me.tempsBreak = 0
-      me.currentBreakDuration = 0
-      me.tryBreakChronos.unlock
+      me.currentBrake = 0
+      me.tempsBrake = 0
+      me.currentBrakeDuration = 0
+      me.tryBrakeChronos.unlock
       me.thrustImpulse = %FALSE
-    elseif me.currentBreakDuration > 0 then
+    elseif me.currentBrakeDuration > 0 then
       if me.thrust < %MIN_BURST_SPEED Then ' speed is low enough to not burst bubbles
         function = %TRUE
       endif
@@ -253,7 +256,14 @@ function goPlayer_render()
 
     
     ' Body
-    tbgl_pushColor 0, 0, 0
+    'tbgl_pushColor 0, 0, 0
+    
+    if uScreenGame.Player.burstSafeSpeed = %TRUE Then
+      tbgl_pushColor 0, 0, 0
+    Else
+      tbgl_pushColor 128, 0, 0
+    end if
+
     tbgl_beginPoly %GL_POLYGON
         tbgl_vertex 0.60, 0.30
         tbgl_vertex 1.40, 0.50

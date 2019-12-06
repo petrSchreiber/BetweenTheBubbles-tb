@@ -94,6 +94,8 @@ type ScreenGame
     Static keyPressedPreviously as Boolean
     Local context as GameContext at me.contextPtr
     
+    me.player.burstSafeSpeed = %TRUE
+    
     if tbgl_getWindowKeyState(context.screenWindow, %VK_LEFT) then
       me.player.trySpin(45)
     elseif tbgl_getWindowKeyState(context.screenWindow, %VK_RIGHT) then
@@ -103,21 +105,26 @@ type ScreenGame
     end if
     
     if tbgl_getWindowKeyState(context.screenWindow, %VK_UP) and me.player.energy > 0 then
+      keyPressedPreviously = %TRUE
       if me.player.thrustImpulse Then 'The bug is already swimming
-        me.player.tryThrust
+        if not me.player.tryThrust Then
+          me.player.burstSafeSpeed = %FALSE
+        endif
       Else
         if me.player.tryCharge Then 'The bug is fully charged
           me.goForth
         endif
-        keyPressedPreviously = %TRUE
       endif
     Else
       if keyPressedPreviously = %TRUE Then 'Key was just released
+      if %LOGGERPS then me.logger.write("UP key released")
         keyPressedPreviously = %FALSE
         me.goForth
       elseif me.player.thrustImpulse Then 'The bug is already swimming
         if me.player.tryThrust Then 'The bug' speed is low enough to not burst the bubbles
           me.thrustPressed = %FALSE
+        Else
+          me.player.burstSafeSpeed = %FALSE
         endif
       Else ' Idle
         me.thrustPressed = %FALSE
@@ -134,7 +141,7 @@ type ScreenGame
       bubble.goBoom()
       me.player.setBubblePtr(0)
     end if
-    tbgl_entityDetach(me.player.scene, me.player.entity, %TBGL_PRESERVE)
+    tbgl_entityDetach(me.player.scene, me.player.entity, %TBGL_PRESERVE) ' duplicate ? already in player.tbasicu
   end function
   
   Function goForth()
@@ -179,7 +186,8 @@ type ScreenGame
         tbgl_entityGetpos(me.bubbleDirector.bubble(i).scene, me.bubbleDirector.bubble(i).entity, bx, by, bz)
         
         if dist(px, py, bx, by) < me.bubbleDirector.bubble(i).getRadius() Then
-          if me.thrustPressed = false and me.player.getBubblePtr() = 0 then
+          'if me.thrustPressed = false and me.player.getBubblePtr() = 0 then
+          if me.player.burstSafeSpeed = %TRUE and me.player.getBubblePtr() = 0 then
             me.player.setBubblePtr(varptr(me.bubbleDirector.bubble(i)))
           else
             me.bubbleDirector.bubble(i).goBoom()
