@@ -35,6 +35,7 @@ type goPlayer
     currentBrakeDuration as Double ' how much time will braking last
     currentBrake as Double ' how much Thrust is it to brake
     tryBrakeChronos as HowTime
+    recharge as Boolean
     
     function init(scene as int32, optional attachedBubblePtr as uint32 = 0, contextPtr as uint32)
         if %LOGGERPS then me.logger.initialize("GameObject: Player")
@@ -197,11 +198,11 @@ type goPlayer
       me.tryBrakeChronos.unlock
       me.thrustImpulse = %FALSE
     elseif me.currentBrakeDuration > 0 then
-      if me.thrust < %MIN_BURST_SPEED Then ' speed is low enough to not burst bubbles
-        function = %TRUE
-      endif
-      
-    
+      if me.thrust < %MIN_BURST_SPEED Then function = %TRUE ' speed is low enough to not burst bubbles
+      easeCache = me.currentBrake * Pow((me.currentBrakeDuration-me.tempsBrake)/(me.currentBrakeDuration),(2)) + me.crumb
+      me.crumb = frac(easeCache) ' maybe not useful in the end ?
+      me.thrust = fix(easeCache)
+      me.thrustImpulse = %TRUE 
     endif
   
   end function

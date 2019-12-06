@@ -33,6 +33,8 @@ type ScreenGame
   thrustPressed as int32
   
   bubbleDirector as DirectorForBubbles
+  
+  rechargeChronos as HowTime
 
   function prepare(contextPtr as UInt32, optional screenChangeReason as string)
   
@@ -43,7 +45,9 @@ type ScreenGame
     me.contextPtr = contextPtr
     dim context as GameContext at me.contextPtr
     
-    tbgl_backColor 128, 128, 255
+    me.rechargeChronos.context(contextPtr)
+    
+    tbgl_backColor 64, 64, 128
     
     ' UI
     me.uiFont = tbgl_fontHandle("Arial", context.screenHeight/30)
