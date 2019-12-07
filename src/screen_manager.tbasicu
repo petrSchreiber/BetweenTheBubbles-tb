@@ -58,8 +58,6 @@ type ScreenManager
     string screenChangeToFunction = StrFormat$("screen_{1}_changeTo", me.screenCurrent)
     string screenChangeReasonFunction = StrFormat$("screen_{1}_changeReason", me.screenCurrent)
     
-    string result
-    
     ' -- Process common tasks for screen
     call handleInputFunction()
     call renderFunction()
