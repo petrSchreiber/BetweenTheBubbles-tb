@@ -8,6 +8,7 @@ The `master` branch should be left untouched and we can contribute to its change
 
 feat_* - for features  
 fix_* - for corrections  
+morph_* - for tasks on code other than feat or fix. Examples: refactor, comment, readability improvement  
 docs_* - for documentation  
 chore_* - for maintenance stuff  
 
