@@ -1,0 +1,41 @@
+Type HowTime
+  
+  contextPtr as DWord
+  startedAt as Double
+  lastCallAt as Double
+  frameRate as Double
+  locked as boolean
+
+  function Raz()
+    if not me.locked then
+      Local context as GameContext at me.contextPtr
+      me.lastCallAt = context.gameTime
+      me.startedAt = me.lastCallAt
+      me.frameRate = context.FrameRate
+      me.locked = %TRUE
+    endif
+  end function
+  
+  Function unlock()
+     me.locked = %FALSE
+  end function
+
+  
+  Function Context(contextPtr as DWord)
+     me.contextPtr = contextPtr
+  end function
+
+
+  Function elapsedSinceLastCall() as Double
+    Local context as GameContext at me.contextPtr
+    Local thisTime as Double = context.gameTime
+    Function = thisTime - me.lastCallAt
+    me.lastCallAt = thisTime
+  end function
+
+  Function elapsedSinceStart() as Double
+    Local context as GameContext at me.contextPtr
+    return context.gameTime - me.startedAt
+  end function
+
+end type

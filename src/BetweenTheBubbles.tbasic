@@ -1,4 +1,4 @@
-﻿' [+] New inifinte bubbleverse!
+' [+] New inifinte bubbleverse!
 ' [+] Turning while speeding possible
 ' [+] Bubble reborn elsewhere, if drained or if merged
 ' [+] Player starts with some minimal energy
@@ -7,6 +7,8 @@
 %LOGGERPS = true
 
 uses "tbgl"
+
+#Include "init.tbasicu"
 
 #include "game_context.tbasicu"
 #include "screen_manager.tbasicu"
@@ -22,7 +24,7 @@ function tbMain()
   
   dim context as GameContext(hWin)
   dim sm as ScreenManager(varptr(context))
-  
+
   sm.set_current_screen("title")
   
   while context.isGameRunning()

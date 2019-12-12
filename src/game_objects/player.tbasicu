@@ -1,9 +1,9 @@
-﻿uses "math"
+uses "math"
 
-#include once "../game_context.tbasicu"
-
-#include once "../logger_ps.tbasicu"
-
+#include once "game_context.tbasicu"
+#include once "logger_ps.tbasicu"
+#include Once "..\game_systems\time_me.tbasicu"
+    
 type goPlayer
     logger as LoggerPS
 
@@ -13,20 +13,43 @@ type goPlayer
     attachedBubblePtr as UInt32
     contextPtr as UInt32
     
-    thrustImpulse as Float32
+    thrustImpulse as boolean
     
     energy as Float32
     
     spin as Float32
     thrust as float32
     
+    charge as Float32 ' how much is accumulated while preparing the jump
+    tryChargeChronos as HowTime
+
+    temps as Double ' how much time the Pilgrim's travel is in process
+    oldGameTime as Double ' to calculate time diff between two calls
+    currentThrustDuration as Double ' how much time will travel last
+    currentCharge as Double ' how much is this jump charged
+    crumb as Double
+    tryThrustChronos as HowTime
+    burstSafeSpeed as Boolean
+    
+    tempsBrake as Double ' how much time the Pilgrim's braking is in process
+    currentBrakeDuration as Double ' how much time will braking last
+    currentBrake as Double ' how much Thrust is it to brake
+    tryBrakeChronos as HowTime
+    recharge as Boolean
+    
     function init(scene as int32, optional attachedBubblePtr as uint32 = 0, contextPtr as uint32)
         if %LOGGERPS then me.logger.initialize("GameObject: Player")
         
         me.scene  = scene
         me.entity = tbgl_entityGetFreeID(scene)
-        me.energy = 5
+        me.energy = %START_ENERGY
         me.contextPtr = contextPtr
+        
+        me.tryChargeChronos.context(contextPtr) ' in this precise UDT context, I don't now how to use _create to pass the value 
+        me.tryThrustChronos.context(contextPtr)
+        me.tryBrakeChronos.context(contextPtr)
+        
+        me.burstSafeSpeed = %TRUE
         
         dWord data = varptr(me)
          
@@ -82,8 +105,8 @@ type goPlayer
       dim context as GameContext at me.contextPtr
       
       me.energy += energyGain / context.frameRate
-      if me.energy <= 0 then me.energy = 0
-      if me.energy >= 100 then me.energy = 100
+      if me.energy <= %MINENERGY then me.energy = %MINENERGY
+      if me.energy >= %MAXENERGY then me.energy = %MAXENERGY
     end function
     
     ' MOVEMENT
@@ -107,26 +130,99 @@ type goPlayer
       
       if sgnBefore <> sgnAfter then me.spin = 0
     end function
+  
+  function tryCharge() as Boolean
+ 
+    me.tryChargeChronos.raz
 
-    function tryThrust(boost as Float32)
-      dim context as GameContext at me.contextPtr
-      me.thrust += boost / context.frameRate
-      
-      if me.thrust > 10 then me.thrust = 10
-      me.thrustImpulse = true
-      
-      me.alterEnergy(-1)
-    end function
+    me.charge = me.tryChargeChronos.elapsedSinceStart
+    me.alterEnergy(-1/me.tryChargeChronos.framerate)
+    
+    if me.charge >= %MAXCHARGEDURATION Then ' Charge is full
+      if %LOGGERPS then me.logger.write("Full charge reached")
+      me.charge = %MAXCHARGEDURATION
+      me.tryChargeChronos.unlock ' reset charging time (for charge full)
+      return %TRUE ' launching jump
+    Else
+      return %FALSE
+    EndIf
+  
+  end function
+  
+  Function tryThrust() as Boolean
+  
+    Local easeCache as Double
+    
+    if not me.tryThrustChronos.locked then
+      me.tryThrustChronos.raz
+      me.currentCharge = %MAXCHARGE * Pow((me.charge)/(%MAXCHARGEDURATION),(1/%CHARGEPROGRESSIVENESS))
+      me.currentThrustDuration = %THRUSTDURATION * me.charge / %MAXCHARGEDURATION
+      me.tryChargeChronos.unlock
+    Else ' Already in travel
+      me.temps += me.tryThrustChronos.elapsedSinceLastCall
+    end if
 
-    function tryFadeThrust(brake as Float32)
-      dim context as GameContext at me.contextPtr
-      me.thrust -= brake / context.frameRate
-      
-      if me.thrust < 0 then
-        me.thrust = 0
-        me.thrustImpulse = false
-      end if
-    end function
+    if me.temps > me.currentThrustDuration then ' end of travel reached
+      me.thrust = 0
+      me.temps = 0
+      me.currentThrustDuration = 0
+      me.tryThrustChronos.unlock
+      me.thrustImpulse = %FALSE
+    elseif me.currentThrustDuration > 0 then
+      if me.thrust < %MIN_BURST_SPEED Then function = %TRUE ' speed is low enough to not burst bubbles
+      easeCache = (me.easeSimple(me.temps, me.currentCharge , me.currentThrustDuration) + me.crumb)
+      me.crumb = frac(easeCache) ' maybe not useful in the end ?
+      me.thrust = fix(easeCache)
+      me.thrustImpulse = %TRUE
+    endif
+
+  end function
+'[todo] First lvl : The Pilgrim brake to a stop between each jump. (charge - jump - charge - jump ...)
+'       Feat unlock : the Pilgrim can tie each jump to the previous (like swimming : charge - jump and charge while gliding along - jump and charge while gliding along - jump and charge while gliding along)
+  
+  Function tryBrake() as boolean
+  
+    if not me.tryBrakeChronos.locked then
+      me.tryBrakeChronos.raz
+      me.currentBrake = me.thrustImpulse
+      me.currentBrakeDuration = %MAXBRAKEDURATION * me.currentBrake / %MAXBRAKEPOWER
+    Else ' Already braking
+      me.tempsBrake += me.tryBrakeChronos.elapsedSinceLastCall ' [o] can be simplified by use of Chronos
+    end if
+    
+    if me.tempsBrake > me.currentBrakeDuration then ' end of travel reached
+      me.thrust = 0
+      me.currentBrake = 0
+      me.tempsBrake = 0
+      me.currentBrakeDuration = 0
+      me.tryBrakeChronos.unlock
+      me.thrustImpulse = %FALSE
+    elseif me.currentBrakeDuration > 0 then
+      if me.thrust < %MIN_BURST_SPEED Then function = %TRUE ' speed is low enough to not burst bubbles
+      easeCache = me.currentBrake * Pow((me.currentBrakeDuration-me.tempsBrake)/(me.currentBrakeDuration),(2)) + me.crumb
+      me.crumb = frac(easeCache) ' maybe not useful in the end ?
+      me.thrust = fix(easeCache)
+      me.thrustImpulse = %TRUE 
+    endif
+  
+  end function
+
+
+  function easeSimple(temps as double, fullValue as Double, fullTime as Double)
+  'While fix of https://github.com/DirectuX/easingtest is not ready
+  
+    Local t1 as Double = 0.05 * fullTime ' Time at top speed
+    Local t2 as double = 0.15 * fullTime 
+    Local t3 as double = 0.8  * fullTime ' Time at long trail
+    
+    Local v1 as double = fullValue ' Top speed
+    Local v2 as double = 0.7  * fullValue ' Speed at long trail start
+
+    Return Switch(temps > t2, v2 - v2 * Sqr((temps-t2)/t3), _
+                  temps > t1, v1 - v2 * Pow2((temps-t1)/t2), _
+                  temps <= t1, v1 - v1 * Pow2((t1-temps)/t1))
+                
+  end function
     
 end type
 
@@ -161,7 +257,14 @@ function goPlayer_render()
 
     
     ' Body
-    tbgl_pushColor 0, 0, 0
+    'tbgl_pushColor 0, 0, 0
+    
+    if uScreenGame.Player.burstSafeSpeed = %TRUE Then
+      tbgl_pushColor 0, 0, 0
+    Else
+      tbgl_pushColor 128, 0, 0
+    end if
+
     tbgl_beginPoly %GL_POLYGON
         tbgl_vertex 0.60, 0.30
         tbgl_vertex 1.40, 0.50
