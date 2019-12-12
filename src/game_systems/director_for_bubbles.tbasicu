@@ -1,5 +1,5 @@
 ﻿#include once "../building_blocks/bounding_rectangle.tbasicu"
-#include once "logger_ps.tbasicu"
+#include once "../logger_ps.tbasicu"
 
 #include once "../game_objects/bubble.tbasicu"
 

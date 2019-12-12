@@ -9,7 +9,7 @@ uses "tbgl"
 
 #include once "../building_blocks/bounding_rectangle.tbasicu"
 
-#include once "logger_ps.tbasicu"
+#include once "../logger_ps.tbasicu"
 
 type ScreenGame
 
