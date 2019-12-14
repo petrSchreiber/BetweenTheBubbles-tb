@@ -1,2 +1,5 @@
 *.tbasic text diff
 *.tbasicu text diff
+
+*.tbasic eol=crlf
+*.tbasicu eol=crlf
