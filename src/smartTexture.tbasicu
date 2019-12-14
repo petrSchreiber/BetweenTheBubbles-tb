@@ -1,0 +1,90 @@
+Uses "TBGL", "TImage", "File"
+
+Type TImageBitmap
+  bmType      As Long
+  Width       As Long
+  Height      As Long
+  WidthBytes  As Long
+  Planes      As Word
+  BitsPixel   As Word
+  Bits        As Byte Ptr
+End Type
+
+Type SmartTexture
+  Private
+    Static lastImageId As Long
+    imageId         As DWord
+    imageHandle     As DWord
+    texturingInfo   As TBGL_TTEXTURINGINFO  
+    width           As DWord
+    height          As DWord
+    
+    Function NewImageId() As Long
+      Me.lastImageId += 1
+      Return Me.lastImageId 
+    End Function
+    
+    Function GetImageHandledForGPUVersion()
+      DWord potWidth, potHeight
+      TBGL_EvaluatePOTMatch(Min(TImage_Width(Me.imageId), Me.texturingInfo.maxWidth),
+                            Min(TImage_Height(Me.imageId), Me.texturingInfo.maxHeight),
+                            potWidth,
+                            potHeight)
+
+      Me.width  = TImage_Width(Me.imageId)         
+      Me.height = TImage_Height(Me.imageId)         
+      
+      Return TImage_Resize(Me.imageId, potWidth, potHeight)
+    End Function
+    
+    Function FlipVertical(ByRef buffer As String, widthBytes As Long) As String
+      Long lines = Len(buffer) / widthBytes
+      Long i
+      
+      String converted
+      For i = lines To 1 Step -1
+        converted += Mid$(buffer, 1+(i-1)*widthBytes, widthBytes)
+      Next
+      
+      Return converted 
+    End Function
+  
+  Public
+    Function _Create()
+      Dim texturingInfo As TBGL_TTEXTURINGINFO At VarPtr(Me.texturingInfo) 
+      TBGL_TexturingQuery(texturingInfo)
+    End Function
+    
+    Function _Destroy()
+      If Me.imageId Then
+        TImage_Unload(Me.imageId)
+      End If
+    End Function
+    
+    Function FromFile(filePath As String)
+      If FILE_Exists(filePath) Then
+        Me.imageId = Me.NewImageId()      
+        TImage_Load(Me.imageId, filePath)
+        
+        Me.imageHandle = Me.GetImageHandledForGPUVersion()        
+        Return Me.imageHandle = 0
+      Else
+        Return 1
+      End If
+      
+    End Function
+    
+    Function Make(textureIndex As Long, textureFiltering As Long, Optional anisotropicLevel As Long)
+      If Me.imageId = 0 Then
+        Return 2
+      End If
+      Dim loadedBitmap As TImageBitmap
+      loadedBitmap = TImage_GetBitmapInfo(Me.imageId)
+      String buffer = Peek$(TImage_GetBitsPtr(Me.imageId), loadedBitmap.WidthBytes * loadedBitmap.Height)
+      buffer = Me.flipVertical(buffer, loadedBitmap.WidthBytes)
+      Long dataType = IIf(loadedBitmap.WidthBytes/loadedBitmap.Width = 4, %TBGL_DATA_BGRA, %TBGL_DATA_BGR)
+      
+      TBGL_MakeTexture buffer, dataType, Me.width, Me.height, textureIndex, textureFiltering, anisotropicLevel
+    End Function
+    
+End Type
