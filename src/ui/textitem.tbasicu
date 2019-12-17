@@ -1,4 +1,4 @@
-﻿type TextItem
+type TextItem
   message as string
 
   fontSlot  as Float32
@@ -15,9 +15,15 @@
   end function
   
   function Render(x as Float32, y as Float32)
+  
+    TBGL_PushStateProtect %TBGL_TEXTURING
+  
     tbgl_setActiveFont me.fontSlot
     tbgl_printFont(me.message, x, y)
     tbgl_setActiveFont 1
+    
+    tbgl_popStateProtect
+    
   end function
 
 end type
