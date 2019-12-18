@@ -1,9 +1,11 @@
-#Region "TBGL Global Settings"
-
-tbgl_UseTexturing %TRUE
-tbgl_UseAlphaTest %TRUE
-
-#EndRegion
+﻿
+'[t] Alas! This can't be here
+'#Region "TBGL Global Settings"
+'
+'tbgl_UseTexturing %TRUE
+'tbgl_UseAlphaTest %TRUE
+'
+'#EndRegion
 
 #Region "title"
 
@@ -23,8 +25,8 @@ tbgl_UseAlphaTest %TRUE
 %TIMEBOOST = 400
 %TIMETITLE = 650
 
-$TITLEPNG = "\media\BTB1024.png"
-$TITLESPRITEPNG = "\media\bulle512.png"
+$TITLEPNG = "media\btb1024.png"
+$TITLESPRITEPNG = "media\bulle512.png"
 
 
 type tBulles

@@ -1,4 +1,4 @@
-' [+] New inifinte bubbleverse!
+﻿' [+] New inifinte bubbleverse!
 ' [+] Turning while speeding possible
 ' [+] Bubble reborn elsewhere, if drained or if merged
 ' [+] Player starts with some minimal energy
@@ -89,6 +89,9 @@ function tbMain()
 
   dword hWin = tbgl_createWindowEx("Between the Bubbles", 720, 720, 32, %TBGL_WS_WINDOWED | %TBGL_WS_DONTSIZE | %TBGL_WS_CLOSEBOX)
   tbgl_showWindow
+  
+  tbgl_UseTexturing %TRUE
+  tbgl_UseAlphaTest %TRUE
   
   dim context as GameContext(hWin)
   dim sm as ScreenManager(varptr(context))

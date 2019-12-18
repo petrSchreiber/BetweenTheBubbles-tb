@@ -1,4 +1,4 @@
-#include once "../ui/textitem.tbasicu"
+﻿#include once "../ui/textitem.tbasicu"
 #Include ONCE "../smartTexture.tbasicu" ' https://github.com/petrSchreiber/SmartTexture
 
 '[t] Include Once inconsistent
@@ -518,7 +518,7 @@
   ' Renders single Bulle
   fUNCTION DrawBulle (index as long) as long
   
-      tbgl_pushTexture(1)
+      tbgl_pushTexture(2)
       tbgl_pushAlphaFunc(%TBGL_GREATER, 0.66)
       tbgl_PushMatrix
   
@@ -548,7 +548,7 @@
   
   fUNCTION DrawBulle2 (index as long) as long
   
-      tbgl_pushTexture(1)
+      tbgl_pushTexture(2)
       tbgl_pushAlphaFunc(%TBGL_GREATER, 0.66)
       tbgl_PushMatrix
   
@@ -580,7 +580,7 @@
   '[todo] Fade in
   
       tbgl_PushMatrix
-      tbgl_pushTexture(2)
+      tbgl_pushTexture(1)
       tbgl_pushAlphaFunc(%TBGL_GREATER, 0.66)
   
       tbgl_Translate 0, 0, 0
