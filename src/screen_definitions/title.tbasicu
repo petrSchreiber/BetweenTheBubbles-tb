@@ -49,8 +49,8 @@
       boosted as Boolean
       counterT as DWord
       stopbubbles as dword
-      Bulle(%MAXBULLES+%BOOST) as tBulles
-      Bulle2(%BOOST) as tBulles
+      Bubble1(%MAXBUBBLES+%BOOST) as tBubbleSprite
+      Bubble2(%BOOST) as tBubbleSprite
   
       t as SmartTexture
       t2 as SmartTexture
@@ -72,7 +72,7 @@
       me.playText.put("[P]lay", 2)
       me.quitText.put("[Q]uit", 2)
   
-  'Backgroung animation
+  'Backgroung animation   
       with me
       .ColorTo.r = %CTR
       .ColorTo.g = %CTG
@@ -119,7 +119,7 @@
       me.t2.FromFile(APP_ScriptPath & $TITLESPRITEPNG)
       me.t2.Make(2, %TBGL_TEX_MIPMAP)
   
-      me.InitBulles
+      me.InitBubbles
   
   end function
   
@@ -147,7 +147,7 @@
   
       TBGL_Camera(0, 0,%SIDE, 0, 0, 0)
   
-      me.RenderBulles
+      me.RenderBubbles
   
   'Commented out while TBGL_GBufferDefineFromArray instruction need fix
   'if me.balay then Memory_Swap(VarPtr(me.colorTo.r), VarPtr(me.colorStart.r), SizeOf(TBGL_TRGB))
@@ -480,16 +480,16 @@
       END WITH
   end function
   
-  Function InitBulles( ) as long
-    For i as integer = 1 to %MAXBULLES
-      FB_BornBulle(me.Bulle(1),i)
+  Function InitBubbles( ) as long
+    For i as integer = 1 to %MAXBUBBLES
+      FB_BornBubble(me.Bubble1(1),i)
       next
     For i as integer = 1 to %BOOST
-      FB_BornBulle(me.Bulle2(1),i)
+      FB_BornBubble(me.Bubble2(1),i)
       next
   end function
   
-  function RenderBulles () as long
+  function RenderBubbles () as long
       Local metadata as GameContext at me.contextPtr
     if me.counterT < %TIMETITLE then
       incr me.counterT
@@ -501,42 +501,43 @@
 
   Else
 
-      FB_MoveBulle(me.Bulle2(1),metadata.Framerate,%BOOST,False)
+      FB_MoveBubble(me.Bubble2(1),metadata.Framerate,%BOOST,False)
       for i as integer = 1 to %BOOST
-        me.DrawBulle2(i)
+        me.DrawBubble2(i)
       next
 
       end if
   
-      FB_MoveBulle(me.Bulle(1),metadata.Framerate,%MAXBULLES,true)
-    for i as integer = 1 to %MAXBULLES
-      me.DrawBulle(i)
+      FB_MoveBubble(me.Bubble1(1),metadata.Framerate,%MAXBUBBLES,true)
+    for i as integer = 1 to %MAXBUBBLES
+      me.DrawBubble(i)
       next
   
   end function
-  
-  ' Renders single Bulle
-  fUNCTION DrawBulle (index as long) as long
+
+
+  ' Renders single bubble
+  fUNCTION DrawBubble (index as long) as long
   
       tbgl_pushTexture(2)
       tbgl_pushAlphaFunc(%TBGL_GREATER, 0.66)
       tbgl_PushMatrix
   
-      tbgl_Translate me.Bulle(index).x, me.Bulle(index).y, me.Bulle(index).z
+      tbgl_Translate me.Bubble1(index).x, me.Bubble1(index).y, me.Bubble1(index).z
   
       tbgl_BeginPoly %GL_Quads
   
       tbgl_TexCoord2D 0,1
-      tbgl_Vertex -me.Bulle(index).Size,me.Bulle(index).Size,0
+      tbgl_Vertex -me.Bubble1(index).Size,me.Bubble1(index).Size,0
   
       tbgl_TexCoord2D 1,1
-      tbgl_Vertex  me.Bulle(index).Size,me.Bulle(index).Size,0
+      tbgl_Vertex  me.Bubble1(index).Size,me.Bubble1(index).Size,0
   
       tbgl_TexCoord2D 1,0
-      tbgl_Vertex  me.Bulle(index).Size,-me.Bulle(index).Size,0
+      tbgl_Vertex  me.Bubble1(index).Size,-me.Bubble1(index).Size,0
   
       tbgl_TexCoord2D 0,0
-      tbgl_Vertex -me.Bulle(index).Size,-me.Bulle(index).Size,0
+      tbgl_Vertex -me.Bubble1(index).Size,-me.Bubble1(index).Size,0
   
       tbgl_EndPoly
   
@@ -546,27 +547,27 @@
       
   end function
   
-  fUNCTION DrawBulle2 (index as long) as long
+  fUNCTION DrawBubble2 (index as long) as long
   
       tbgl_pushTexture(2)
       tbgl_pushAlphaFunc(%TBGL_GREATER, 0.66)
       tbgl_PushMatrix
   
-      tbgl_Translate me.Bulle2(index).x, me.Bulle2(index).y, me.Bulle2(index).z
+      tbgl_Translate me.Bubble2(index).x, me.Bubble2(index).y, me.Bubble2(index).z
   
       tbgl_BeginPoly %GL_Quads
   
       tbgl_TexCoord2D 0,1
-      tbgl_Vertex -me.Bulle2(index).Size,me.Bulle2(index).Size,0
+      tbgl_Vertex -me.Bubble2(index).Size,me.Bubble2(index).Size,0
   
       tbgl_TexCoord2D 1,1
-      tbgl_Vertex  me.Bulle2(index).Size,me.Bulle2(index).Size,0
+      tbgl_Vertex  me.Bubble2(index).Size,me.Bubble2(index).Size,0
   
       tbgl_TexCoord2D 1,0
-      tbgl_Vertex  me.Bulle2(index).Size,-me.Bulle2(index).Size,0
+      tbgl_Vertex  me.Bubble2(index).Size,-me.Bubble2(index).Size,0
   
       tbgl_TexCoord2D 0,0
-      tbgl_Vertex -me.Bulle2(index).Size,-me.Bulle2(index).Size,0
+      tbgl_Vertex -me.Bubble2(index).Size,-me.Bubble2(index).Size,0
   
       tbgl_EndPoly
   

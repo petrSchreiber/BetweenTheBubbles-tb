@@ -18,28 +18,24 @@ uses "tbgl"
 Const GROUND = 6
 const BGROUND = GROUND + 1
 
-type tBulles
+type tBubbleSprite
       X     as double
       Y     as double
       Z     as double
       Size  as double
       Speed as double
-      Fade  as double
-      R     as double
-      G     as double
-      B     as double
 end type
 
 Function rnd_range (first As Double, last As Double) As Double
   Function = Rnd * (last - first) + first
 End Function
 
-function FB_BornBulle Cdecl (byref ptBulles as tBulles, byval lIndexElement as long) As long Export
+function FB_BornBubble Cdecl (byref ptBubbles as tBubbleSprite, byval lIndexElement as long) As long Export
 ' passing ByRef means passing a pointer to the memory location where it is allocated
 
-  Dim pArray  As tBulles Ptr
+  Dim pArray  As tBubbleSprite Ptr
 '---Get pointer to the first element of the array
-  pArray = @ptBulles
+  pArray = @ptBubbles
 
   RANDOMIZE
 
@@ -51,12 +47,12 @@ function FB_BornBulle Cdecl (byref ptBulles as tBulles, byval lIndexElement as l
 
 end Function
 
-function FB_MoveBulle Cdecl (byref ptBulles as tBulles, ByVal FrameRate as Double, ByVal BubblesCount as Double, byval regenerate as boolean) As long Export
+function FB_MoveBubble Cdecl (byref ptBubbles as tBubbleSprite, ByVal FrameRate as Double, ByVal BubblesCount as Double, byval regenerate as boolean) As long Export
 ' passing ByRef means passing a pointer to the memory location where it is allocated
 
-  Dim pArray  As tBulles Ptr
+  Dim pArray  As tBubbleSprite Ptr
 '---Get pointer to the first element of the array
-  pArray = @ptBulles
+  pArray = @ptBubbles
 
   dim lIdx    as Long
   dim countb as long
@@ -65,7 +61,7 @@ function FB_MoveBulle Cdecl (byref ptBulles as tBulles, ByVal FrameRate as Doubl
     *(pArray + lIdx - 1).Speed = *(pArray + lIdx - 1).Size * (*(pArray + lIdx - 1).y + BGROUND)
     *(pArray + lIdx - 1).y = *(pArray + lIdx - 1).y + (*(pArray + lIdx - 1).Speed / FrameRate)
     if (regenerate and *(pArray + lIdx - 1).y > 3) then
-      FB_BornBulle(ptBulles,lIdx)
+      FB_BornBubble(ptBubbles,lIdx)
     ELSE
       countb = countb+1
     endif
