@@ -25,7 +25,8 @@
 %TIMEBOOST = 400
 %TIMETITLE = 650
 
-$TITLEPNG = "media\btb1024.png"
+'$TITLEPNG = "media\btb1024.png"
+$TITLEPNG = "media\btb1024_transparent.png"
 $TITLESPRITEPNG = "media\bulle512.png"
 
 

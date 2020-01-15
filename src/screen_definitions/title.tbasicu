@@ -72,7 +72,7 @@
       me.playText.put("[P]lay", 2)
       me.quitText.put("[Q]uit", 2)
   
-  'Backgroung animation   
+  'Backgroung animation
       with me
       .ColorTo.r = %CTR
       .ColorTo.g = %CTG
@@ -514,8 +514,7 @@
       next
   
   end function
-
-
+  
   ' Renders single bubble
   fUNCTION DrawBubble (index as long) as long
   
@@ -544,7 +543,7 @@
       tbgl_PopMatrix
       tbgl_popAlphaFunc
       tbgl_popTexture
-      
+  
   end function
   
   fUNCTION DrawBubble2 (index as long) as long
@@ -582,7 +581,10 @@
   
       tbgl_PushMatrix
       tbgl_pushTexture(1)
-      tbgl_pushAlphaFunc(%TBGL_GREATER, 0.66)
+  
+      tbgl_pushStateProtect(%TBGL_DEPTHMASK | %TBGL_DEPTH)
+      tbgl_pushState(%TBGL_BLEND)
+      tbgl_pushBlendFunc(%GL_SRC_ALPHA, %GL_ONE_MINUS_SRC_ALPHA)
   
       tbgl_Translate 0, 0, 0
   
@@ -602,7 +604,10 @@
   
       tbgl_EndPoly
   
-      tbgl_popAlphaFunc
+      tbgl_popBlendFunc
+      tbgl_popState
+      tbgl_popStateProtect
+  
       tbgl_popTexture
       tbgl_PopMatrix
   
@@ -648,3 +653,4 @@ end function
 function screen_title_changeReason() as string
   return uScreenTitle.changeReason()
 end function
+  
