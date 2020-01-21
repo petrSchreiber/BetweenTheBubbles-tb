@@ -1,4 +1,4 @@
-' [+] New inifinte bubbleverse!
+﻿' [+] New inifinte bubbleverse!
 ' [+] Turning while speeding possible
 ' [+] Bubble reborn elsewhere, if drained or if merged
 ' [+] Player starts with some minimal energy
@@ -9,6 +9,70 @@
 uses "tbgl"
 
 #Include "init.tbasicu"
+
+
+'[t] #Compiled must be in main script, wish to be in relevant include.
+
+#Compiled
+
+Const GROUND = 6
+const BGROUND = GROUND + 1
+
+type tBubbleSprite
+      X     as double
+      Y     as double
+      Z     as double
+      Size  as double
+      Speed as double
+end type
+
+Function rnd_range (first As Double, last As Double) As Double
+  Function = Rnd * (last - first) + first
+End Function
+
+function FB_BornBubble Cdecl (byref ptBubbles as tBubbleSprite, byval lIndexElement as long) As long Export
+' passing ByRef means passing a pointer to the memory location where it is allocated
+
+  Dim pArray  As tBubbleSprite Ptr
+'---Get pointer to the first element of the array
+  pArray = @ptBubbles
+
+  RANDOMIZE
+
+  *(pArray + lIndexElement - 1).x = rnd_range(-3,3)
+  *(pArray + lIndexElement - 1).z = rnd_range(-1,1)
+  *(pArray + lIndexElement - 1).y = - GROUND
+  *(pArray + lIndexElement - 1).Size = rnd_range(0.1,0.5)
+  return 0
+
+end Function
+
+function FB_MoveBubble Cdecl (byref ptBubbles as tBubbleSprite, ByVal FrameRate as Double, ByVal BubblesCount as Double, byval regenerate as boolean) As long Export
+' passing ByRef means passing a pointer to the memory location where it is allocated
+
+  Dim pArray  As tBubbleSprite Ptr
+'---Get pointer to the first element of the array
+  pArray = @ptBubbles
+
+  dim lIdx    as Long
+  dim countb as long
+
+  for lIdx = 1 to BubblesCount
+    *(pArray + lIdx - 1).Speed = *(pArray + lIdx - 1).Size * (*(pArray + lIdx - 1).y + BGROUND)
+    *(pArray + lIdx - 1).y = *(pArray + lIdx - 1).y + (*(pArray + lIdx - 1).Speed / FrameRate)
+    if (regenerate and *(pArray + lIdx - 1).y > 3) then
+      FB_BornBubble(ptBubbles,lIdx)
+    ELSE
+      countb = countb+1
+    endif
+  next
+
+  return countb
+
+end Function
+
+#EndCompiled
+
 
 #include "game_context.tbasicu"
 #include "screen_manager.tbasicu"
@@ -22,8 +86,13 @@ function tbMain()
   dword hWin = tbgl_createWindowEx("Between the Bubbles", 720, 720, 32, %TBGL_WS_WINDOWED | %TBGL_WS_DONTSIZE | %TBGL_WS_CLOSEBOX)
   tbgl_showWindow
   
+  tbgl_UseTexturing %TRUE
+  tbgl_UseAlphaTest %TRUE
+  
   dim context as GameContext(hWin)
   dim sm as ScreenManager(varptr(context))
+  
+  Local maxFrameRate AS LONG = TBGL_GetVSyncMaxFrameRate()-2
 
   sm.set_current_screen("title")
   
@@ -32,6 +101,8 @@ function tbMain()
     context.startFrame()
     
     sm.process_screen()
+    
+    TBGL_UseVSync IIF( context.frameRate < maxFrameRate , 0, 1 )
 
   wend
   
