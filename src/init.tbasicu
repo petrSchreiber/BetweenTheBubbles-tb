@@ -1,18 +1,59 @@
+﻿
+'[t] Alas! This can't be here
+'#Region "TBGL Global Settings"
+'
+'tbgl_UseTexturing %TRUE
+'tbgl_UseAlphaTest %TRUE
+'
+'#EndRegion
+
+#Region "title"
+
+%SIDE = 4
+
+%CTR = 50
+%CTG = 0
+%CTB = 0
+
+%CSR = 0
+%CSG = 0
+%CSB = 50
+
+%MAXBUBBLES = 30
+%GROUND = 5
+%BOOST = 600
+%TIMEBOOST = 400
+%TIMETITLE = 650
+
+$TITLEPNG = "media\btb1024.png"
+$TITLESPRITEPNG = "media\bulle512.png"
+
+
+type tBubbleSprite
+  X     as double
+  Y     as double
+  Z     as double
+  Size  as double
+  Speed as double
+end type
+
+#EndRegion
+
 #Region "player"
-    
-    %MINENERGY = 0 ' if > 0 then GOD_MODE = ON    default: 0
-    %MAXENERGY = 100 '   default: 100
-    %START_ENERGY = 5 ' energy affected to the Pilgrim at the begining (arbitrary unit, out of 100)   default: 5
-    
-    %MAXCHARGE = 25 ' upper limit for jump charge (arbitrary unit)   default: 25
-    %MAXCHARGEDURATION = 2 ' time for complete charge (s)    default: 2
-    %CHARGEPROGRESSIVENESS = 3 '    exponential charge inverse progressiveness default: 3
-    
-    %THRUSTDURATION = 5 ' upper limit for travel time (s)   default: 5
-    %MIN_BURST_SPEED = 9 ' The Pilgrim speed over which bubbles burst (arbitrary unit)   default: 9
-    
-    %MAXBRAKEDURATION = 1 ' s default: 1
-    %MAXBRAKEPOWER = %MAXCHARGE '   default: %MAXCHARGE
-    %REFRACTORYTIME = 2 ' time after jump during which recharge is not possible (s)  default: 2
+
+%MINENERGY = 0 ' if > 0 then GOD_MODE = ON    default: 0
+%MAXENERGY = 100 '   default: 100
+%START_ENERGY = 5 ' energy affected to the Pilgrim at the begining (arbitrary unit, out of 100)   default: 5
+
+%MAXCHARGE = 25 ' upper limit for jump charge (arbitrary unit)   default: 25
+%MAXCHARGEDURATION = 2 ' time for complete charge (s)    default: 2
+%CHARGEPROGRESSIVENESS = 3 '    exponential charge inverse progressiveness default: 3
+
+%THRUSTDURATION = 5 ' upper limit for travel time (s)   default: 5
+%MIN_BURST_SPEED = 9 ' The Pilgrim speed over which bubbles burst (arbitrary unit)   default: 9
+
+%MAXBRAKEDURATION = 1 ' s default: 1
+%MAXBRAKEPOWER = %MAXCHARGE '   default: %MAXCHARGE
+%REFRACTORYTIME = 2 ' time after jump during which recharge is not possible (s)  default: 2
 
 #EndRegion
