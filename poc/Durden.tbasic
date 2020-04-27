@@ -1,0 +1,214 @@
+﻿'---Script created on 04-25-2020 20:39:06 by
+uses "console"
+Uses "TBGL"
+
+  Type tRiver
+      sectorLength as DWORD
+      minWidth as DWORD ' actually half width
+      maxWidth as DWORD ' actually half width
+      banksWidth as Integer
+  'average + variance
+End Type
+
+  Type tXY
+      x as DWORD
+      y as DWORD
+End Type
+
+  Dim mapDimensions as tXY
+  dim myRiver as tRiver
+  Dim map() as DWORD
+  Dim actualPosition as tXY
+  Dim testPosition as tXY
+  Dim actualRiverStatus as tRiver
+  Dim randomDirection as integer
+  Dim moved as Boolean
+
+  mapDimensions.x = 300
+  mapDimensions.y = 300
+  myRiver.sectorLength = 10
+  myRiver.minWidth = 2
+  myRiver.maxWidth = 7
+  myRiver.banksWidth = 5
+  actualRiverStatus.sectorLength = 1
+  actualRiverStatus.minWidth = myRiver.minWidth
+
+  redim Preserve map(mapDimensions.x,mapDimensions.y)
+  actualPosition.x = mapDimensions.x - myRiver.minWidth - myRiver.banksWidth
+  actualPosition.y = mapDimensions.y - myRiver.minWidth - myRiver.banksWidth
+
+ for i as integer = 1 to mapDimensions.x
+    For j as Integer = 1 to mapDimensions.y
+
+      map(i,j) = 0
+
+    next
+  next
+
+  map(actualPosition.x,actualPosition.y) = 1
+
+  dim hWnd AS DWORD
+
+  hWnd = tbgl_CreateWindowEx("press ESC to quit", 640, 480, 32, %tbgl_WS_WINDOWED or %tbgl_WS_CLOSEBOX)
+  tbgl_ShowWindow
+  tbgl_ResetKeyState()
+
+  do
+
+    moved = %FALSE
+
+    do
+
+      if randomDirection = 0 then randomDirection = rnd(1,4)
+
+      Select case RandomDirection
+        Case 1
+'If actualPosition.x + actualRiverStatus.minWidth + myRiver.banksWidth > mapDimensions.x or actualPosition.x + 2 * actualRiverStatus.minWidth + myRiver.banksWidth > mapDimensions.x Then
+          If actualPosition.x + 3 * actualRiverStatus.minWidth + myRiver.banksWidth > mapDimensions.x Then
+            mapDimensions.x += 3 * actualRiverStatus.minWidth + myRiver.banksWidth
+            redim Preserve map(mapDimensions.x,mapDimensions.y)
+          endif
+          testPosition = actualPosition
+          testPosition.x += 2 * actualRiverStatus.minWidth
+          if checkWiden then
+            actualPosition.x += 2 * actualRiverStatus.minWidth
+            widen
+            moved = %TRUE
+            randomDirection = 0
+          else
+            randomDirection = 2
+          endif
+        Case 2
+         ' If not (actualPosition.x - actualRiverStatus.minWidth - myRiver.banksWidth < 1 or actualPosition.x - 2 * actualRiverStatus.minWidth - myRiver.banksWidth < 1) Then
+                    If 1<>1 or not (actualPosition.x - 3 * actualRiverStatus.minWidth - myRiver.banksWidth < 1) Then
+            testPosition = actualPosition
+            testPosition.x -= 2 * actualRiverStatus.minWidth
+            if checkWiden then
+              actualPosition.x -= 2 * actualRiverStatus.minWidth
+              widen
+              moved = %TRUE
+              randomDirection = 0
+            Else
+              randomDirection = 3
+            endif
+          Else
+            randomDirection = 3
+          endif
+
+        Case 3
+        '  If actualPosition.y + actualRiverStatus.minWidth + myRiver.banksWidth > mapDimensions.y or actualPosition.y + 2 * actualRiverStatus.minWidth + myRiver.banksWidth > mapDimensions.y Then
+             If actualPosition.y + 3 * actualRiverStatus.minWidth + myRiver.banksWidth > mapDimensions.y Then
+            mapDimensions.y += 3 * actualRiverStatus.minWidth + myRiver.banksWidth
+            redim Preserve map(mapDimensions.x,mapDimensions.y)
+          endif
+          testPosition = actualPosition
+          testPosition.y += 2 * actualRiverStatus.minWidth
+          if checkWiden then
+            actualPosition.y += 2 * actualRiverStatus.minWidth
+            widen
+            moved = %TRUE
+            randomDirection = 0
+          else
+            randomDirection = 4
+          endif
+        Case 4
+        '  If not actualPosition.y - actualRiverStatus.minWidth - myRiver.banksWidth < 1 or actualPosition.y - 2 * actualRiverStatus.minWidth - myRiver.banksWidth < 1 Then
+        If 1<>1 or not (actualPosition.y - 3 * actualRiverStatus.minWidth - myRiver.banksWidth < 1) Then
+            testPosition = actualPosition
+            testPosition.y -= 2 * actualRiverStatus.minWidth
+            if checkWiden then
+              actualPosition.y -= 2 * actualRiverStatus.minWidth
+              widen
+              moved = %TRUE
+              randomDirection = 0
+            Else
+              randomDirection = 1
+            endif
+          Else
+            randomDirection = 1
+          endif
+      End Select
+
+    loop while moved <> %TRUE
+
+    incr actualRiverStatus.sectorLength
+
+    if actualRiverStatus.sectorLength > myRiver.sectorLength Then
+      actualRiverStatus.sectorLength = 1
+      incr actualRiverStatus.minWidth
+    endif
+
+    printl "actualRiverStatus.sectorLength = " & actualRiverStatus.sectorLength, "actualRiverStatus.minWidth = " & actualRiverStatus.minWidth
+    
+    call drawing
+
+  loop while actualRiverStatus.minWidth <= myRiver.maxWidth
+
+  msgbox 0 , mapDimensions.x & " x " & mapDimensions.y, , "Done."
+
+' -- Main loop
+  While tbgl_IsWindow(hWnd)
+
+call drawing
+
+' -- ESCAPE key to exit application
+    If tbgl_GetWindowKeyState(hWnd, %VK_ESCAPE) Then Exit While
+
+  Wend
+
+  tbgl_DestroyWindow
+  
+  Function drawing()
+  
+  	' -- Set the resolution and the coordinate system
+    tbgl_Rendermatrix2D (0,480,640,0)
+    tbgl_ClearFrame
+
+' -- Draw points
+    tbgl_color 255,255,255
+    for i as DWord = 1 to mapDimensions.x
+      for j as DWord = 1 to mapDimensions.y
+        if map(i,j) = 1 then tbgl_point(i,j)
+      next
+    next
+'Show the rendered stuff to the public :)
+    tbgl_DrawFrame
+  	
+  End Function
+
+function widen()
+  for j as Long = (actualPosition.y - actualRiverStatus.minWidth) to (actualPosition.y + actualRiverStatus.minWidth)
+    for i as Long = (actualPosition.x - actualRiverStatus.minWidth) to (actualPosition.x + actualRiverStatus.minWidth)
+      map(i,j) = 1
+    next
+  next
+End Function
+
+'In this checkWiden() function I had an error because of j As Dword instead of Long. This could have been handy : https://www.thinbasic.com/community/showthread.php?13040-error-or-not-error
+function checkWiden()
+  checkWiden = %TRUE
+  local minx as long = testPosition.x - actualRiverStatus.minWidth - myRiver.banksWidth
+  Local miny as long = testPosition.y - actualRiverStatus.minWidth - myRiver.banksWidth
+  Local maxx as Long = testPosition.x + actualRiverStatus.minWidth + myRiver.banksWidth
+  Local maxy as long = testPosition.y + actualRiverStatus.minWidth + myRiver.banksWidth
+
+' try here commenting the next line, the programmation tip I get is not quite helping, should state that select case block is not even.
+  select case randomDirection
+    Case 1
+      minx = testPosition.x + actualRiverStatus.minWidth
+    Case 2
+      maxx = testPosition.x - actualRiverStatus.minWidth
+    Case 3
+      miny = testPosition.y + actualRiverStatus.minWidth
+    Case 4
+      maxy = testPosition.y - actualRiverStatus.minWidth
+  End Select
+
+  for j as Long = miny to maxy
+    for i as Long = minx to maxx
+      if map(i,j) = 1 Then
+        return %FALSE
+      endif
+    next
+  next
+End Function
