@@ -2,6 +2,8 @@
 uses "console"
 Uses "TBGL"
 
+#include "gameZoneDefinition.tbasicu"
+
   Type tRiver
       sectorLength as DWORD
       minWidth as DWORD ' actually half width
@@ -17,7 +19,7 @@ End Type
 
   Dim mapDimensions as tXY
   dim myRiver as tRiver
-  Dim map() as DWORD
+  Dim map as tGameZoneDefinition()
   Dim actualPosition as tXY
   Dim testPosition as tXY
   Dim actualRiverStatus as tRiver
@@ -33,19 +35,10 @@ End Type
   actualRiverStatus.sectorLength = 1
   actualRiverStatus.minWidth = myRiver.minWidth
 
-  redim Preserve map(mapDimensions.x,mapDimensions.y)
   actualPosition.x = mapDimensions.x - myRiver.minWidth - myRiver.banksWidth
   actualPosition.y = mapDimensions.y - myRiver.minWidth - myRiver.banksWidth
 
- for i as integer = 1 to mapDimensions.x
-    For j as Integer = 1 to mapDimensions.y
-
-      map(i,j) = 0
-
-    next
-  next
-
-  map(actualPosition.x,actualPosition.y) = 1
+  map.addGameZone(actualPosition.x, actualPosition.y)
 
   dim hWnd AS DWORD
 
@@ -66,7 +59,6 @@ End Type
 'If actualPosition.x + actualRiverStatus.minWidth + myRiver.banksWidth > mapDimensions.x or actualPosition.x + 2 * actualRiverStatus.minWidth + myRiver.banksWidth > mapDimensions.x Then
           If actualPosition.x + 3 * actualRiverStatus.minWidth + myRiver.banksWidth > mapDimensions.x Then
             mapDimensions.x += 3 * actualRiverStatus.minWidth + myRiver.banksWidth
-            redim Preserve map(mapDimensions.x,mapDimensions.y)
           endif
           testPosition = actualPosition
           testPosition.x += 2 * actualRiverStatus.minWidth
@@ -99,7 +91,6 @@ End Type
         '  If actualPosition.y + actualRiverStatus.minWidth + myRiver.banksWidth > mapDimensions.y or actualPosition.y + 2 * actualRiverStatus.minWidth + myRiver.banksWidth > mapDimensions.y Then
              If actualPosition.y + 3 * actualRiverStatus.minWidth + myRiver.banksWidth > mapDimensions.y Then
             mapDimensions.y += 3 * actualRiverStatus.minWidth + myRiver.banksWidth
-            redim Preserve map(mapDimensions.x,mapDimensions.y)
           endif
           testPosition = actualPosition
           testPosition.y += 2 * actualRiverStatus.minWidth
@@ -164,14 +155,10 @@ call drawing
     tbgl_Rendermatrix2D (0,480,640,0)
     tbgl_ClearFrame
 
-' -- Draw points
-    tbgl_color 255,255,255
-    for i as DWord = 1 to mapDimensions.x
-      for j as DWord = 1 to mapDimensions.y
-        if map(i,j) = 1 then tbgl_point(i,j)
-      next
-    next
-'Show the rendered stuff to the public :)
+    ' -- Draw points
+    map.Render()
+
+    'Show the rendered stuff to the public :)
     tbgl_DrawFrame
   	
   End Function
@@ -179,7 +166,7 @@ call drawing
 function widen()
   for j as Long = (actualPosition.y - actualRiverStatus.minWidth) to (actualPosition.y + actualRiverStatus.minWidth)
     for i as Long = (actualPosition.x - actualRiverStatus.minWidth) to (actualPosition.x + actualRiverStatus.minWidth)
-      map(i,j) = 1
+      map.addGameZone(i,j)
     next
   next
 End Function
@@ -206,7 +193,7 @@ function checkWiden()
 
   for j as Long = miny to maxy
     for i as Long = minx to maxx
-      if map(i,j) = 1 Then
+      if map.isGameZone(i,j) Then
         return %FALSE
       endif
     next

@@ -1,0 +1,124 @@
+﻿' Custom 2D waypoint
+type tWaypoint2D_i16
+  x as int16  ' 16bit integer = -32,768 to 32,767
+  y as int16  ' 16bit integer = -32,768 to 32,767
+end type
+
+' Game zone descriptor
+type tGameZone_i16
+  x as int16  ' 16bit integer = -32,768 to 32,767
+  y as int16  ' 16bit integer = -32,768 to 32,767
+end type
+
+type tGameZoneDefinition
+  gameZoneStorage  as dword
+  gameZoneCount    as dword
+  gameZoneCapacity as dword
+
+  waypointStorage  as dword
+  waypointCount    as dword
+  waypointCapacity as dword
+
+  function _create(optional gameZoneCapacity as dword = 1024, waypointCapacity as dword = 32)
+    ' Stores game zones
+    me.gameZoneCapacity = gameZoneCapacity
+  	me.gameZoneStorage  = heap_alloc(me.gameZoneCapacity * sizeof(tGameZone_i16))
+  	me.gameZoneCount    = 0
+  	
+  	' Stores optional waypoints -> they will allow to give us information about flow direction
+    me.waypointCapacity = waypointCapacity
+  	me.waypointStorage  = heap_alloc(me.waypointCapacity * sizeof(tWaypoint2D_i16))
+  	me.waypointCount    = 0
+  End Function
+  
+  function _destroy()
+  	heap_free(me.gameZoneStorage)
+  End Function
+  
+  ' --
+ 
+  function addGameZone(x as int16, y as int16)
+    me.gameZoneCount += 1
+    
+    if me.gameZoneCount > me.gameZoneCapacity then
+      me.gameZoneCapacity *= 2
+      me.gameZoneStorage = heap_realloc(me.gameZoneStorage, me.gameZoneCapacity * sizeof(tGameZone_i16))
+    end if
+    
+    dim memoryAddress as dword = me.gameZoneStorage + (me.gameZoneCount-1) * sizeof(tGameZone_i16)
+    dim gameZone as tGameZone_i16 at memoryAddress
+    gameZone.x = x
+    gameZone.y = y
+  end function
+
+  function isGameZone(x as int16, y as int16) as long
+
+    ' -- We create single game zone memory footprint
+    ' -- 16bits + 16bits = 32bits
+    dim gameZone as tGameZone_i16
+    gameZone.x = x
+    gameZone.y = y
+    
+    ' -- We create 32bit overlay
+    dim int32Equivalent as int32 at varptr(gameZone)
+    
+    ' -- We create int32 view to gameZone memory
+    dim gameZones(me.gameZoneCount) as int32 at me.gameZoneStorage
+
+    ' -- We take advantage of compiled array scan
+    int32 i = array scan gameZones(), = int32Equivalent
+    
+    ' -- Something found? gameZone exists
+    return i > 0
+  end function
+  
+  ' -- 
+ 
+  function addWaypoint(x as int16, y as int16)
+    me.waypointCount += 1
+    
+    if me.waypointCount > me.waypointCapacity then
+      me.waypointCapacity *= 2
+      me.waypointStorage = heap_realloc(me.waypointStorage, me.waypointCapacity * sizeof(tWaypoint2D_i16))
+    end if
+
+    dim memoryAddress as dword = me.waypointStorage + (me.waypointCount-1) * sizeof(tWaypoint2D_i16)
+    dim waypoint as tWaypoint2D_i16 at memoryAddress
+
+    waypoint.x = x
+    waypoint.y = y
+  end function
+  
+  function hasWaypoins() as int32
+    return me.waypointCount > 0
+  end function
+
+  ' --
+    
+  function Render()
+    ' Viewing raw memory as array of tGameZone_i16
+    dim gameZones(me.gameZoneCount) as tGameZone_i16 at me.gameZoneStorage
+    dim waypoints(me.waypointCount) as tWaypoint2D_i16 at me.waypointStorage
+    
+    int32 i
+    
+    tbgl_pushStateProtect %TBGL_DEPTH
+
+      tbgl_pushColor 64, 128, 255
+        for i = 1 to me.gameZoneCount
+          tbgl_point gameZones(i).x, gameZones(i).y
+        next
+      tbgl_popColor
+
+      tbgl_pushColor 255, 255, 255
+        tbgl_beginPoly %TBGL_LINESTRIP
+          for i = 1 to me.waypointCount
+            tbgl_vertex waypoints(i).x, waypoints(i).y
+          next
+        tbgl_endPoly
+      tbgl_popColor
+    
+    tbgl_popStateProtect
+  end function
+  
+end type

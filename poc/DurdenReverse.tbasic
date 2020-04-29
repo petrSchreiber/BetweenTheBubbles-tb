@@ -2,6 +2,8 @@
 uses "console"
 Uses "TBGL"
 
+#include "gameZoneDefinition.tbasicu"
+
   Type tRiver
       sectorLength as DWORD
       minWidth as DWORD ' actually half width
@@ -17,7 +19,7 @@ End Type
 
   Dim mapDimensions as tXY
   dim myRiver as tRiver
-  Dim map() as DWORD
+  Dim map as tGameZoneDefinition()
   Dim actualPosition as tXY
   Dim testPosition as tXY
   Dim actualRiverStatus as tRiver
@@ -33,19 +35,10 @@ End Type
   actualRiverStatus.sectorLength = 1
   actualRiverStatus.minWidth = myRiver.maxWidth
 
-  redim Preserve map(mapDimensions.x,mapDimensions.y)
   actualPosition.x = mapDimensions.x - myRiver.maxWidth - myRiver.banksWidth -150
   actualPosition.y = mapDimensions.y - myRiver.maxWidth - myRiver.banksWidth -150
 
-  for q as integer = 1 to mapDimensions.x
-    For p as Integer = 1 to mapDimensions.y
-
-      map(p,q) = 0
-
-    next
-  next
-
-  map(actualPosition.x,actualPosition.y) = 1
+  map.addGameZone(actualPosition.x,actualPosition.y)
 
   dim hWnd AS DWORD
 
@@ -54,9 +47,11 @@ End Type
   tbgl_ResetKeyState()
 
   widen
-
+  
+  Randomize (2302) ' 2302
+  
   do
-    Randomize
+
     moved = %FALSE
 
     do
@@ -65,11 +60,8 @@ End Type
 
       Select case RandomDirection
         Case 1
-'If actualPosition.x + actualRiverStatus.minWidth + myRiver.banksWidth > mapDimensions.x or actualPosition.x + 2 * actualRiverStatus.minWidth + myRiver.banksWidth > mapDimensions.x Then
           If actualPosition.x + 3 * actualRiverStatus.minWidth + myRiver.banksWidth > mapDimensions.x Then
             mapDimensions.x += 3 * actualRiverStatus.minWidth + myRiver.banksWidth
-            '[breakpoint] <Any note here. Breakpoint will be set to line following this statement>
-            redim Preserve map(mapDimensions.x,mapDimensions.y)
           endif
           testPosition = actualPosition
           testPosition.x += 2 * actualRiverStatus.minWidth
@@ -82,7 +74,6 @@ End Type
             randomDirection = 2
           endif
         Case 2
-' If not (actualPosition.x - actualRiverStatus.minWidth - myRiver.banksWidth < 1 or actualPosition.x - 2 * actualRiverStatus.minWidth - myRiver.banksWidth < 1) Then
           If not (actualPosition.x - 3 * actualRiverStatus.minWidth - myRiver.banksWidth < 1) Then
             testPosition = actualPosition
             testPosition.x -= 2 * actualRiverStatus.minWidth
@@ -99,11 +90,8 @@ End Type
           endif
 
         Case 3
-'  If actualPosition.y + actualRiverStatus.minWidth + myRiver.banksWidth > mapDimensions.y or actualPosition.y + 2 * actualRiverStatus.minWidth + myRiver.banksWidth > mapDimensions.y Then
           If actualPosition.y + 3 * actualRiverStatus.minWidth + myRiver.banksWidth > mapDimensions.y Then
             mapDimensions.y += 3 * actualRiverStatus.minWidth + myRiver.banksWidth
-            '[breakpoint] <Any note here. Breakpoint will be set to line following this statement>
-            redim Preserve map(mapDimensions.x,mapDimensions.y)
           endif
           testPosition = actualPosition
           testPosition.y += 2 * actualRiverStatus.minWidth
@@ -116,7 +104,6 @@ End Type
             randomDirection = 4
           endif
         Case 4
-'  If not actualPosition.y - actualRiverStatus.minWidth - myRiver.banksWidth < 1 or actualPosition.y - 2 * actualRiverStatus.minWidth - myRiver.banksWidth < 1 Then
           If not (actualPosition.y - 3 * actualRiverStatus.minWidth - myRiver.banksWidth < 1) Then
             testPosition = actualPosition
             testPosition.y -= 2 * actualRiverStatus.minWidth
@@ -164,18 +151,14 @@ End Type
 
 Function drawing()
 
-' -- Set the resolution and the coordinate system
+  ' -- Set the resolution and the coordinate system
   tbgl_Rendermatrix2D (0,480,640,0)
   tbgl_ClearFrame
 
-' -- Draw points
-  tbgl_color 255,255,255
-  for b as Long = 1 to mapDimensions.y
-    for a as Long = 1 to mapDimensions.x
-      if map(a,b) = 1 then tbgl_point(a,b)
-    next
-  next
-'Show the rendered stuff to the public :)
+  ' -- Draw river map
+  map.Render()
+  
+  'Show the rendered stuff to the public :)
   tbgl_DrawFrame
 
 End Function
@@ -183,13 +166,14 @@ End Function
 function widen()
   for u as Long = (actualPosition.y - actualRiverStatus.minWidth) to (actualPosition.y + actualRiverStatus.minWidth)
     for v as Long = (actualPosition.x - actualRiverStatus.minWidth) to (actualPosition.x + actualRiverStatus.minWidth)
-      map(v,u) = 1
-      'drawing
+      map.addGameZone(v,u)
     next
   next
+  
+  map.addWaypoint(actualPosition.x+1, actualPosition.y+1)
+  
 End Function
 
-'In this checkWiden() function I had an error because of j As Dword instead of Long. This could have been handy : https://www.thinbasic.com/community/showthread.php?13040-error-or-not-error
 function checkWiden()
   checkWiden = %TRUE
   local minx as long = testPosition.x - actualRiverStatus.minWidth - myRiver.banksWidth
@@ -197,7 +181,6 @@ function checkWiden()
   Local maxx as Long = testPosition.x + actualRiverStatus.minWidth + myRiver.banksWidth
   Local maxy as long = testPosition.y + actualRiverStatus.minWidth + myRiver.banksWidth
 
-' try here commenting the next line, the programmation tip I get is not quite helping, should state that select case block is not even.
   select case randomDirection
     Case 1
       minx = testPosition.x + actualRiverStatus.minWidth
@@ -211,7 +194,7 @@ function checkWiden()
 
   for l as Long = miny to maxy
     for k as Long = minx to maxx
-      if map(k,l) = 1 Then
+      if map.isGameZone(k,l) Then
         return %FALSE
       endif
     next
