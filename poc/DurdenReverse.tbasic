@@ -17,6 +17,13 @@ End Type
       y as DWORD
 End Type
 
+  begin Const '
+  %NORTH         = 1
+  %SOUTH         = 2
+  %EAST          = 4
+  %WEST         = 8
+  end const
+
   Dim mapDimensions as tXY
   dim myRiver as tRiver
   Dim map as tGameZoneDefinition()
@@ -25,6 +32,7 @@ End Type
   Dim actualRiverStatus as tRiver
   Dim randomDirection as integer
   Dim moved as Boolean
+  Dim compassTurn as Long
 
   mapDimensions.x = 300
   mapDimensions.y = 300
@@ -47,79 +55,73 @@ End Type
   tbgl_ResetKeyState()
 
   widen
-  
+
   Randomize (2302) ' 2302
-  
+
   do
 
     moved = %FALSE
+    randomDirection = rnd(1,4)
 
     do
 
-      if randomDirection = 0 then randomDirection = rnd(1,4)
+      if bitCount(compassTurn) < 3 then
 
-      Select case RandomDirection
-        Case 1
-          If actualPosition.x + 3 * actualRiverStatus.minWidth + myRiver.banksWidth > mapDimensions.x Then
-            mapDimensions.x += 3 * actualRiverStatus.minWidth + myRiver.banksWidth
+        Select case RandomDirection
+          Case 1
+          if isDirectionSet(compassTurn, %EAST) then
           endif
-          testPosition = actualPosition
-          testPosition.x += 2 * actualRiverStatus.minWidth
-          if checkWiden then
-            actualPosition.x += 2 * actualRiverStatus.minWidth
-            widen
-            moved = %TRUE
-            randomDirection = 0
-          else
-            randomDirection = 2
-          endif
-        Case 2
-          If not (actualPosition.x - 3 * actualRiverStatus.minWidth - myRiver.banksWidth < 1) Then
+            compassTurn = orb(compassTurn , %EAST)
+            If actualPosition.x + 3 * actualRiverStatus.minWidth + myRiver.banksWidth > mapDimensions.x Then
+              mapDimensions.x += 3 * actualRiverStatus.minWidth + myRiver.banksWidth
+            endif
             testPosition = actualPosition
-            testPosition.x -= 2 * actualRiverStatus.minWidth
+            testPosition.x += 2 * actualRiverStatus.minWidth
             if checkWiden then
-              actualPosition.x -= 2 * actualRiverStatus.minWidth
+              actualPosition.x += 2 * actualRiverStatus.minWidth
               widen
               moved = %TRUE
-              randomDirection = 0
-            Else
-              randomDirection = 3
             endif
-          Else
-            randomDirection = 3
-          endif
+          Case 2
+            compassTurn = orb(compassTurn , %WEST)
+            If not (actualPosition.x - 3 * actualRiverStatus.minWidth - myRiver.banksWidth < 1) Then
+              testPosition = actualPosition
+              testPosition.x -= 2 * actualRiverStatus.minWidth
+              if checkWiden then
+                actualPosition.x -= 2 * actualRiverStatus.minWidth
+                widen
+                moved = %TRUE
+              endif
+            endif
 
-        Case 3
-          If actualPosition.y + 3 * actualRiverStatus.minWidth + myRiver.banksWidth > mapDimensions.y Then
-            mapDimensions.y += 3 * actualRiverStatus.minWidth + myRiver.banksWidth
-          endif
-          testPosition = actualPosition
-          testPosition.y += 2 * actualRiverStatus.minWidth
-          if checkWiden then
-            actualPosition.y += 2 * actualRiverStatus.minWidth
-            widen
-            moved = %TRUE
-            randomDirection = 0
-          else
-            randomDirection = 4
-          endif
-        Case 4
-          If not (actualPosition.y - 3 * actualRiverStatus.minWidth - myRiver.banksWidth < 1) Then
+          Case 3
+            compassTurn = orb(compassTurn , %SOUTH)
+            If actualPosition.y + 3 * actualRiverStatus.minWidth + myRiver.banksWidth > mapDimensions.y Then
+              mapDimensions.y += 3 * actualRiverStatus.minWidth + myRiver.banksWidth
+            endif
             testPosition = actualPosition
-            testPosition.y -= 2 * actualRiverStatus.minWidth
+            testPosition.y += 2 * actualRiverStatus.minWidth
             if checkWiden then
-              actualPosition.y -= 2 * actualRiverStatus.minWidth
+              actualPosition.y += 2 * actualRiverStatus.minWidth
               widen
               moved = %TRUE
-              randomDirection = 0
-            Else
-              randomDirection = 1
             endif
-          Else
-            randomDirection = 1
-          endif
-      End Select
-
+          Case 4
+            compassTurn = orb(compassTurn , %NORTH)
+            If not (actualPosition.y - 3 * actualRiverStatus.minWidth - myRiver.banksWidth < 1) Then
+              testPosition = actualPosition
+              testPosition.y -= 2 * actualRiverStatus.minWidth
+              if checkWiden then
+                actualPosition.y -= 2 * actualRiverStatus.minWidth
+                widen
+                moved = %TRUE
+              endif
+            endif
+        End Select
+        randomDirection = rnd(1,4)
+      Else
+        randomDirection = CYCLE_Next(randomDirection,1,4)
+      End If
     loop while moved <> %TRUE
 
     incr actualRiverStatus.sectorLength
@@ -151,14 +153,14 @@ End Type
 
 Function drawing()
 
-  ' -- Set the resolution and the coordinate system
+' -- Set the resolution and the coordinate system
   tbgl_Rendermatrix2D (0,480,640,0)
   tbgl_ClearFrame
 
-  ' -- Draw river map
+' -- Draw river map
   map.Render()
-  
-  'Show the rendered stuff to the public :)
+
+'Show the rendered stuff to the public :)
   tbgl_DrawFrame
 
 End Function
@@ -169,9 +171,9 @@ function widen()
       map.addGameZone(v,u)
     next
   next
-  
+
   map.addWaypoint(actualPosition.x+1, actualPosition.y+1)
-  
+
 End Function
 
 function checkWiden()
@@ -199,4 +201,12 @@ function checkWiden()
       endif
     next
   next
+End Function
+
+function isDirectionSet(compass as long, direction as long) as long
+  return bit_get(compass, log2(direction))
+end function
+
+Function bitCount(Storage as Long) as Long
+  Return Tally(bin$(Storage), "1")
 End Function

@@ -21,12 +21,12 @@ type tGameZoneDefinition
 
   function _create(optional gameZoneCapacity as dword = 1024, waypointCapacity as dword = 32)
     ' Stores game zones
-    me.gameZoneCapacity = gameZoneCapacity
+   me.gameZoneCapacity = gameZoneCapacity
   	me.gameZoneStorage  = heap_alloc(me.gameZoneCapacity * sizeof(tGameZone_i16))
   	me.gameZoneCount    = 0
   	
   	' Stores optional waypoints -> they will allow to give us information about flow direction
-    me.waypointCapacity = waypointCapacity
+   me.waypointCapacity = waypointCapacity
   	me.waypointStorage  = heap_alloc(me.waypointCapacity * sizeof(tWaypoint2D_i16))
   	me.waypointCount    = 0
   End Function
