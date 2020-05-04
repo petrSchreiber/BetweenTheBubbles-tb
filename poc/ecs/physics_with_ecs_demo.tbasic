@@ -1,0 +1,68 @@
+﻿uses "tbgl"
+
+#Include "entityComponentSystem.tbasicu"
+
+#include "playerEntity.tbasicu"
+#include "leafEntity.tbasicu"
+
+
+function tbMain()
+  
+  double frameRate
+  
+  ' -- Create and show window
+  dWord hWnd = tbgl_createWindowEx("ECS experiment - press ESC to quit", 640, 480, 32, %TBGL_WS_WINDOWED | %TBGL_WS_CLOSEBOX)
+  tbgl_showWindow
+
+  dim ecs as tEntityComponentSystem()
+
+  dim p as tPlayerEntity
+  p.initialize()
+  ecs.AddEntityPtr(varptr(p))
+    
+  dim leafs(10) as tLeafEntity
+  int32 i
+
+  for i = 1 to UBound(leafs)
+    leafs(i).initialize()
+    
+    leafs(i).position.x = rndf(-10, 10)
+    leafs(i).position.y = rndf(-10, 10)
+  
+    ecs.AddEntityPtr(varptr(leafs(i)))
+  next
+  
+  tbgl_useVSync(0)
+  int32 frameCounter
+  
+  tbgl_backcolor 64, 128, 255
+  
+  ' -- Main loop
+  while tbgl_isWindow(hWnd) 
+    frameRate = tbgl_getFrameRate
+    
+    incr frameCounter
+    if frameCounter > 60 then
+      tbgl_setWindowTitle(hWnd, format$(FrameRate, "0"))
+      frameCounter = 0
+    end if
+
+    tbgl_clearFrame 
+      tbgl_camera(0, 0, 50, 0, 0, 0)
+
+      ecs.ProcessEntities()
+            
+    tbgl_drawFrame 
+
+    ' -- ESCAPE key to exit application
+    if tbgl_getWindowKeyState(hWnd, %VK_ESCAPE) then exit while
+    if tbgl_getWindowKeyState(hWnd, %VK_UP) then p.position.y += 1/frameRate
+    if tbgl_getWindowKeyState(hWnd, %VK_DOWN) then p.position.y -= 1/frameRate
+    if tbgl_getWindowKeyState(hWnd, %VK_LEFT) then p.position.x -= 1/frameRate
+    if tbgl_getWindowKeyState(hWnd, %VK_RIGHT) then p.position.x += 1/frameRate
+
+  wend
+
+  tbgl_destroyWindow
+end function
+

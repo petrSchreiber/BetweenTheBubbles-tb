@@ -1,0 +1,42 @@
+﻿#include once "entityBaseTypes.tbasicu"
+
+uses "math"
+
+type tLeafEntity extends tEntityBase
+  position    as tPosition
+  speed       as tSpeed
+  collider    as tBoundingCircle
+ 
+  function Initialize()
+    me.typeName        = remain$(typeof$(me), ".") ' Cuts the udt. start
+    me.entityAbility   = %ECS_RENDERABLE | %ECS_COLLIDABLE
+    me.collider.radius = 1
+  End Function
+
+  function SetSpeed(speed as tSpeed)
+    me.speed = speed
+  end Function
+end type
+
+function tLeafEntity_Render(leafPtr as DWord)
+  dim leaf as tLeafEntity at leafPtr
+  
+  tbgl_pushMatrix
+    tbgl_pushColor 0, 255, 0
+      tbgl_translate leaf.position.x, leaf.position.y
+          
+      int32 i
+      tbgl_beginPoly %TBGL_POLYGON
+        tbgl_vertex 0, 0
+        
+        for i = 1 to 16
+          tbgl_vertex cos(degtorad(360/16*i))*leaf.collider.radius, sin(degtorad(360/16*i))*leaf.collider.radius
+        next
+        
+        tbgl_vertex 0, 0
+      
+      tbgl_endPoly
+
+    tbgl_popColor
+  tbgl_popMatrix
+End Function

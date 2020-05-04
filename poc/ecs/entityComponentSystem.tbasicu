@@ -1,0 +1,160 @@
+﻿uses "console"
+
+#include once "entityBaseTypes.tbasicu"
+
+begin const
+  %ECS_RENDERABLE  = 1
+  %ECS_PHYSICSABLE = 2
+  %ECS_COLLIDABLE  = 4
+end const
+
+type tEntityList
+  pData     as dword
+  capacity  as dWord
+  count     as dword
+  
+  function AddEntityPtr(pEntity as dword)
+
+    me.count += 1
+    
+    if me.count > me.capacity then
+      me.capacity = me.count * 2
+      
+      if me.pData = 0 then
+        me.pData = HEAP_alloc(sizeof(dword) * me.capacity)
+      else
+        me.pData = HEAP_realloc(me.pData, sizeof(dword) * me.capacity)
+      end if
+
+    end if
+    
+    dim pointers(me.count) as dword at me.pData
+
+    pointers(me.count) = pEntity
+    
+  end function
+  
+  function _Destroy()
+  	if me.pData then HEAP_Free(me.pData)
+  End Function
+
+end type
+
+type tRenderableEntityList
+  tEntityList
+  
+  function Process()
+    int32 i
+    
+    dim pointers(me.count) as dword at me.pData
+
+    dim typeName as asciiz * 32
+
+    for i = 1 to me.count
+      typeName = peek$(asciiz, pointers(i))
+      
+      call typeName + "_Render"(pointers(i))
+
+    next
+  end function
+end type
+
+type tPhysicsableEntityList
+  tEntityList
+  
+  function Process()
+    int32 i
+    
+    dim pointers(me.count) as dword at me.pData
+
+    dim typeName as asciiz * 32
+
+    for i = 1 to me.count
+      typeName = peek$(asciiz, pointers(i))
+      
+      call typeName + "_Render"(pointers(i))
+    next
+  end function
+end type
+
+type tEntityComponentSystem
+
+  renderable  as tRenderableEntityList
+  physicsable as tEntityList
+  collidable  as tEntityList
+
+  ' Total overview
+  entityPtrs()    as dword
+  entityPtrsCount as dword
+  
+
+  function _Create()
+  	redim me.entityPtrs(1)
+  End Function
+  
+  '
+  
+  function AddEntityPtr(entityPtr as dword)
+    printl entityPtr in 12
+  
+    ' Is pointer valid
+    if entityPtr = 0 then
+      msgbox 0, "tEntityComponentSystem.AddEntityPtr: passed pointer is null"
+      stop
+    end if
+  
+    ' Is pointer pointer to Entity (starts with self describing name)
+    dim entityBase as tEntityBase at entityPtr
+    
+    if not Type_Exists(entityBase.typeName) then
+      msgbox 0, "tEntityComponentSystem.AddEntityPtr: passed pointer does not lead to existing entity type"
+      stop
+    end if
+    
+    int32 entityCapacity = ubound(me.entityPtrs)
+    
+    ' Is pointer new?
+    if me.entityPtrsCount > 0 then
+      dim entityPtrs(me.entityPtrsCount) as dword at varptr(me.entityPtrs(1)) ' Hack because me.array are not supported in array scan
+      int32 indexOfEntity = array scan entityPtrs(), = entityPtr
+      if indexOfEntity > 0 then
+        msgbox 0, "tEntityComponentSystem.AddEntityPtr: passed entity pointer already present"
+        stop
+      end if
+    end If
+        
+    me.entityPtrsCount += 1
+
+    if me.entityPtrsCount > entityCapacity then
+      redim preserve me.entityPtrs(entityCapacity * 2)
+    end if
+    
+    me.entityPtrs(me.entityPtrsCount) = entityPtr
+    
+    ' Add it to the correct list(s)
+    
+    ' First, let's recreate the entity TYPE for member queries
+    dim entity like entityBase.typeName at entityPtr
+    
+    if entity.hasAbility(%ECS_RENDERABLE) then
+      printl entityBase.typeName + " is renderable"
+      me.renderable.addEntityPtr(entityPtr)
+    end if
+    
+    if entity.hasAbility(%ECS_PHYSICSABLE) then
+      printl entityBase.typeName + " is physicsable"
+      me.physicsable.addEntityPtr(entityPtr)
+    end if
+
+    if entity.hasAbility(%ECS_COLLIDABLE) then
+      printl entityBase.typeName + " is collidable"
+      me.collidable.addEntityPtr(entityPtr)
+    end if
+    
+  end function
+  
+  function ProcessEntities()
+    if me.renderable.count then me.renderable.Process()
+  end function
+
+end type

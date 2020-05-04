@@ -1,0 +1,34 @@
+﻿type tEntityBase
+  typeName      as asciiz * 32
+  entityAbility as int32
+
+  
+  function HasAbility(ability as int32) as int32
+    return Bit_get(me.entityAbility, Log2(ability)) 
+  end function
+end type
+
+' --
+
+type tVector2
+  x as Float32
+  y as Float32
+end type
+
+type tPosition extend tVector2
+end type
+
+type tSpeed extend tVector2
+end type
+
+' --
+
+type tColliderBase
+  typeName    as asciiz * 32
+  
+  bounciness  as Float32
+end type
+
+type tBoundingCircle Extends tColliderBase
+	radius   as Float32
+End Type
