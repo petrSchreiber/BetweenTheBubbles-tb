@@ -50,29 +50,29 @@ type tGameZoneDefinition
     gameZone.x = x
     gameZone.y = y
   end function
-
-  function isGameZone(x as int16, y as int16) as long
-
-    ' -- We create single game zone memory footprint
-    ' -- 16bits + 16bits = 32bits
-    dim gameZone as tGameZone_i16
-    gameZone.x = x
-    gameZone.y = y
-    
-    ' -- We create 32bit overlay
-    dim int32Equivalent as int32 at varptr(gameZone)
-    
-    ' -- We create int32 view to gameZone memory
-    dim gameZones(me.gameZoneCount) as int32 at me.gameZoneStorage
-
-    ' -- We take advantage of compiled array scan
-    int32 i = array scan gameZones(), = int32Equivalent
-    
-    ' -- Something found? gameZone exists
-    return i > 0
-  end function
-  
-  ' -- 
+'
+'  function isGameZone(x as int16, y as int16) as long
+'
+'    ' -- We create single game zone memory footprint
+'    ' -- 16bits + 16bits = 32bits
+'    dim gameZone as tGameZone_i16
+'    gameZone.x = x
+'    gameZone.y = y
+'    
+'    ' -- We create 32bit overlay
+'    dim int32Equivalent as int32 at varptr(gameZone)
+'    
+'    ' -- We create int32 view to gameZone memory
+'    dim gameZones(me.gameZoneCount) as int32 at me.gameZoneStorage
+'
+'    ' -- We take advantage of compiled array scan
+'    int32 i = array scan gameZones(), = int32Equivalent
+'    
+'    ' -- Something found? gameZone exists
+'    return i > 0
+'  end function
+'  
+'  ' -- 
  
   function addWaypoint(x as int16, y as int16)
     me.waypointCount += 1
@@ -121,4 +121,61 @@ type tGameZoneDefinition
     tbgl_popStateProtect
   end function
   
+
+
+ function indexOfGameZone(x as int16, y as int16) as int32
+    ' -- We create single game zone memory footprint
+    ' -- 16bits + 16bits = 32bits
+    dim gameZone as tGameZone_i16
+    gameZone.x = x
+    gameZone.y = y
+   
+    ' -- We create 32bit overlay
+    dim int32Equivalent as int32 at varptr(gameZone)
+   
+    ' -- We create int32 view to gameZone memory
+    dim gameZones(me.gameZoneCount) as int32 at me.gameZoneStorage
+
+    ' -- We take advantage of compiled array scan
+    int32 i = array scan gameZones(), = int32Equivalent
+   
+    return i
+  end function 
+
+  function isGameZone(x as int16, y as int16) as long
+    return me.indexOfGameZone(x, y) > 0
+  end function
+ 
+  function removeGameZone(x as int16, y as int16)
+    int32 index = me.indexOfGameZone(x, y)
+   
+    if index = 0 then
+      exit function ' Nothing to remove
+    end if
+   
+    if index = me.gameZoneCapacity then
+      ' No shifting, just reduce count, on next addition the dirty memory of last element will be overwritten
+      me.gameZoneCount -= 1
+    else
+      ' Shift elements AFTER the element found, then reduce count
+      
+      ' me.gameZoneStorage = start if gameZone memory
+      ' index = element to remove
+      ' sizeof(tGameZone_i16) = size of gameZone element
+      uint32 pointerOfElementToErase = me.gameZoneStorage + (index-1) * sizeof(tGameZone_i16)
+      
+      ' We will overlay just from the index and to the end, we need to know how many elements to end from index
+      uint32 elementsToShift = (me.gameZoneCount - index) + 1
+
+      ' Partial overlay from index to end
+      ' Instead of Int32 there could be tGameZone_i16, but does not work - probably custom UDT not supported
+      dim partialOverlayOfGameZones(elementsToShift) as int32 at pointerOfElementToErase
+      
+      ' Let's move everything left by one element (meaning of -1)
+      array shift partialOverlayOfGameZones() for -1
+      
+      me.gameZoneCount -= 1
+    end if
+
+  end function
 end type

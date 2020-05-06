@@ -1,5 +1,5 @@
 ﻿'---Script created on 04-25-2020 20:39:06 by
-uses "console"
+'uses "console"
 Uses "TBGL"
 Uses "UI"
 
@@ -48,7 +48,7 @@ function parametersSetting()
   myRiver.minHalfWidth = 1
   myRiver.maxHalfWidth = 10
   myRiver.minSectorSurface = 100 * myRiver.maxHalfWidth
-  myRiver.seed = 2303
+  myRiver.seed = 23031
 
   global mapDimensions as tXY
 
@@ -88,6 +88,7 @@ function initWorldMap()
       actualPosition.y += 1
       widen2
     next j
+    call drawing
   next i
 
 End Function
@@ -110,6 +111,16 @@ function stirWorldMap()
   longitude = rnd(myRiver.maxHalfWidth, mapDimensions.x - myRiver.maxHalfWidth)
   
   crossMap(%EAST, latitude)
+  
+  
+  'Limited demo
+  For foo as byte = 1 to 10
+    latitude = RND(myRiver.maxHalfWidth, mapDimensions.y - myRiver.maxHalfWidth)
+    crossMap(%EAST, latitude)
+    drawing
+  next foo
+  MsgBox 0, "Done"
+
 
 End Function
 
@@ -118,13 +129,13 @@ Function crossMap(toWhere as byte, borderPosition as DWord)
   local isCrossing as byte
   Local maxLarge as Byte = 1 + myRiver.maxHalfWidth * 2
   Local fromTo, startPosition as tXY
-  Local minStretchLength, maxExpandPlace as DWord
+  Local minStretchLength, maxExpandPlace, actualExpand, fromToSelectSize, positionSelection, positionOffset as DWord
 
   select case toWhere
     case %EAST
 
       for i as DWord = 1 to mapDimensions.x
-      
+
         if map.isGameZone(i, borderPosition) Then
         
           incr isCrossing
@@ -135,26 +146,42 @@ Function crossMap(toWhere as byte, borderPosition as DWord)
             isCrossing = 0
             Iterate for
           endif
-          
+
+
           startPosition.x = i
           startPosition.y = borderPosition
-          fromTo = getStretchLength(toWhere, startPosition, isCrossing)
-          
+            
+          getStretchLength(toWhere, startPosition, isCrossing, fromTo)
+
           minStretchLength = 2 + isCrossing * 2 + myRiver.banksWidth * 2
           
           if fromTo.y - fromTo.x >= minStretchLength Then
-            maxExpandPlace = getExpandPlace(toWhere, fromTo, startPosition, isCrossing)
+          
+            fromToSelectSize = rnd(Fix( 0.1 * (fromTo.y - fromTo.x)),Fix( 0.9 * (fromTo.y - fromTo.x)))
             
+            positionSelection = (fromTo.y - fromTo.x - fromToSelectSize)
+            
+            positionOffset = rnd(Fix(0.1 * positionSelection), Fix(0.9 * PositionSelection))
+            
+            fromTo.x += positionOffset
+            fromTo.y = fromTo.x + fromToSelectSize
+
+            maxExpandPlace = getExpandPlace(toWhere, fromTo, startPosition, isCrossing)
+
             if maxExpandPlace < startPosition.x - isCrossing - 1 Then
-              
-              refund() ' something with function removeGameZone(x as int16, y as int16)
-              widen(maxExpandPlace, fromTo.y + 1, maxExpandPlace + isCrossing, fromTo.x - 1) ' (XNW as DWord, YNW as DWord, XSE as DWord, YSE as DWord)
-              widen(maxExpandPlace + isCrossing +1, fromTo.y + 1, startPosition.x - isCrossing -1, fromTo.y + isCrossing)
-              widen(maxExpandPlace + isCrossing +1, fromTo.x - isCrossing, startPosition.x - isCrossing -1, fromTo.x -1)
-              
+            
+            actualExpand = fix(0.15 * (startPosition.x - isCrossing - 1 - maxExpandPlace))
+
+            maxExpandPlace = rnd(fix(maxExpandPlace + actualExpand), startPosition.x - isCrossing - 1 - actualExpand)          
+             
+              widen(maxExpandPlace , fromTo.x, maxExpandPlace + isCrossing - 1, fromTo.y) ' (XNW as DWord, YNW as DWord, XSE as DWord, YSE as DWord)
+              widen(maxExpandPlace + isCrossing, fromTo.y - isCrossing + 1 , startPosition.x - isCrossing - 1 , fromTo.y )
+              widen(maxExpandPlace + isCrossing, fromTo.x, startPosition.x - isCrossing - 1 , fromTo.x + isCrossing )
+              refund(startPosition.x - isCrossing - 1, fromTo.x + isCrossing + 1, startPosition.x - 1, fromTo.y - isCrossing)
+
             End If
           endif
-          
+        isCrossing = 0
         endif
         
       Next
@@ -173,8 +200,8 @@ Function getExpandPlace(toWhere as Byte, fromTo as tXY, startPosition as tXY, is
     case %EAST
     
     for i as DWord = startPosition.x + myRiver.banksWidth to 1 step -1
-    	for j = fromTo.x - myRiver.banksWidth to fromTo.y + myRiver.banksWidth
-        if map.isGameZone(i, borderPosition) Then
+    	for j as dword = fromTo.y - myRiver.banksWidth to fromTo.x + myRiver.banksWidth
+        if map.isGameZone(i, startPosition.y) Then
           return i + myRiver.banksWidth
         endif
     	Next
@@ -190,51 +217,56 @@ Function getExpandPlace(toWhere as Byte, fromTo as tXY, startPosition as tXY, is
   end select
 End Function
 
-Function getStretchLength(toWhere as BYTE, startPosition as tXY, stretchWidth as Byte) as tXY
+Function getStretchLength(toWhere as BYTE, startPosition as tXY, stretchWidth as Byte, byref stretchLength as tXY)
 
-  Local leftRight, leftRight1, leftRight2, leftRight3, leftRight4 as tXY
+  Local leftRight1, leftRight2, leftRight3, leftRight4 as DWord
 
   select case toWhere
     case %EAST
 
       for i as dword = startPosition.y to 1 step -1
 
-        if map.isGameZone(startPosition.x, i) and not leftRight1.y Then
-          leftRight1.y = i + 1
+        if map.isGameZone(startPosition.x, i) and leftRight1 = 0 Then
+          leftRight1 = i + 1
         End If
-        if not map.isGameZone(startPosition.x - 1, i) and not leftRight2.y Then
-          leftRight2.y = i + 1
+        if map.isGameZone(startPosition.x - 1, i) = 0 and leftRight2 = 0 Then
+          leftRight2 = i + 1
         End If
-        if not map.isGameZone(startPosition.x - stretchWidth, i) and not leftRight3.y Then
-          leftRight3.y = i + 1
+        if map.isGameZone(startPosition.x - stretchWidth, i) = 0 and leftRight3 = 0 Then
+          leftRight3 = i + 1
         End If
-        if map.isGameZone(startPosition.x - stretchWidth - 1, i) and not leftRight4.y Then
-          leftRight4.y = i + 1
+        if map.isGameZone(startPosition.x - stretchWidth - 1, i) and leftRight4 = 0 Then
+          leftRight4 = i + 1
         End If
 
       Next
-      
-      leftRight.x = max(leftRight1.y, leftRight2.y, leftRight3.y, leftRight4.y)
-      reset leftRight1, leftRight2, leftRight3, leftRight4
+
+      stretchLength.x = max(leftRight1, leftRight2, leftRight3, leftRight4)
+   
+  '[o] <this part needs to be optimized>  -  faster assign ?
+      leftRight1 = mapDimensions.y
+      leftRight2 = mapDimensions.y
+      leftRight3 = mapDimensions.y
+      leftRight4 = mapDimensions.y
 
       For i as Dword = startPosition.y To mapDimensions.y
-      
-      if map.isGameZone(startPosition.x, i) and not leftRight1.y Then
-          leftRight1.y = i - 1
+
+      if map.isGameZone(startPosition.x, i) and leftRight1 = mapDimensions.y Then
+          leftRight1 = i - 1
         End If
-        if not map.isGameZone(startPosition.x - 1, i) and not leftRight2.y Then
-          leftRight2.y = i - 1
+        if map.isGameZone(startPosition.x - 1, i) = 0 and leftRight2 = mapDimensions.y Then
+          leftRight2 = i - 1
         End If
-        if not map.isGameZone(startPosition.x - stretchWidth, i) and not leftRight3.y Then
-          leftRight3.y = i - 1
+        if map.isGameZone(startPosition.x - stretchWidth, i) = 0 and leftRight3 = mapDimensions.y Then
+          leftRight3 = i - 1
         End If
-        if map.isGameZone(startPosition.x - stretchWidth - 1, i) and not leftRight4.y Then
-          leftRight4.y = i - 1
+        if map.isGameZone(startPosition.x - stretchWidth - 1, i) and leftRight4 = mapDimensions.y Then
+          leftRight4 = i - 1
         End If
 
       Next
-      
-      leftRight.y = min(leftRight1.y, leftRight2.y, leftRight3.y, leftRight4.y)
+
+      stretchLength.y = min(leftRight1, leftRight2, leftRight3, leftRight4)
 
     case %WEST
 
@@ -242,8 +274,6 @@ Function getStretchLength(toWhere as BYTE, startPosition as tXY, stretchWidth as
     Case %SOUTH
 
   end select
-
-  Return leftRight
 
 End Function
 
@@ -283,6 +313,16 @@ function widen(XNW as DWord, YNW as DWord, XSE as DWord, YSE as DWord)
   next
 
   'map.addWaypoint(actualPosition.x+1, actualPosition.y+1)
+
+End Function
+
+function refund(XNW as DWord, YNW as DWord, XSE as DWord, YSE as DWord)
+
+  for u as Long = YNW to YSE
+    for v as Long = XNW to XSE
+      if map.isGameZone(v,u) then map.removeGameZone(v,u)
+    next
+  next
 
 End Function
 

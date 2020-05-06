@@ -1,0 +1,24 @@
+﻿'---Script created on 05-06-2020 09:34:03 by 
+uses "console"
+
+#include "gameZoneDefinition.tbasicu"
+
+dim gz as tGameZoneDefinition()
+
+gz.addGameZone(1, 1)
+gz.addGameZone(1, 2)
+gz.addGameZone(1, 3)
+
+printl "[1,1]", iif$(gz.isGameZone(1, 1), "EXISTS", "DOES NOT EXIST")
+printl "[1,2]", iif$(gz.isGameZone(1, 2), "EXISTS", "DOES NOT EXIST")
+printl "[1,3]", iif$(gz.isGameZone(1, 3), "EXISTS", "DOES NOT EXIST")
+
+gz.removeGameZone(1, 2)
+
+printl "-"
+
+printl "[1,1]", iif$(gz.isGameZone(1, 1), "EXISTS", "DOES NOT EXIST")
+printl "[1,2]", iif$(gz.isGameZone(1, 2), "EXISTS", "DOES NOT EXIST")
+printl "[1,3]", iif$(gz.isGameZone(1, 3), "EXISTS", "DOES NOT EXIST")
+
+WaitKey
