@@ -1,12 +1,15 @@
 ﻿#include once "entityBaseTypes.tbasicu"
 
 type tPlayerEntity extends tEntityBase
+  physics    as tPhysicsBase
   collider    as tBoundingCircle
   
   function Initialize()
     me.typeName        = remain$(typeof$(me), ".") ' Cuts the udt. start
-    me.entityAbility   = %ECS_RENDERABLE | %ECS_COLLIDABLE
+    me.entityAbility   = %ECS_RENDERABLE | %ECS_PHYSICSABLE | %ECS_COLLIDABLE
     me.collider.radius = 0.5
+    
+    me.physics.mass    = 3
   End Function
 
 end type

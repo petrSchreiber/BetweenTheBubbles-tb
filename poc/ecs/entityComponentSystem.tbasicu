@@ -6,14 +6,21 @@ begin const
   %ECS_RENDERABLE  = 1
   %ECS_PHYSICSABLE = 2
   %ECS_COLLIDABLE  = 4
+  %ECS_FORCEABLE   = 8
+  %ECS_DEBUGABLE   = 16
 end const
+
+type tEntityDescriptor
+  pEntity       as dword
+  abilityOffset as dword
+end Type
 
 type tEntityList
   pData     as dword
   capacity  as dWord
   count     as dword
   
-  function AddEntityPtr(pEntity as dword)
+  function AddEntityPtr(pEntity as dword, optional offsetAble as dword = 0)
 
     me.count += 1
     
@@ -21,16 +28,17 @@ type tEntityList
       me.capacity = me.count * 2
       
       if me.pData = 0 then
-        me.pData = HEAP_alloc(sizeof(dword) * me.capacity)
+        me.pData = HEAP_alloc(sizeof(tEntityDescriptor) * me.capacity)
       else
-        me.pData = HEAP_realloc(me.pData, sizeof(dword) * me.capacity)
+        me.pData = HEAP_realloc(me.pData, sizeof(tEntityDescriptor) * me.capacity)
       end if
 
     end if
     
-    dim pointers(me.count) as dword at me.pData
+    dim pointers(me.count) as tEntityDescriptor at me.pData
 
-    pointers(me.count) = pEntity
+    pointers(me.count).pEntity       = pEntity
+    pointers(me.count).abilityOffset = offsetAble
     
   end function
   
@@ -47,22 +55,99 @@ type tRenderableEntityList
   
     if me.count = 0 then exit function
     
-    int32 i
-    
-    dim pointers(me.count) as dword at me.pData
-
+    dim pointers(me.count) as tEntityDescriptor at me.pData
     dim entityBase as tEntityBase at 0
     
+    int32 i
     for i = 1 to me.count
-      SetAt(entityBase, pointers(i))
+      SetAt(entityBase, pointers(i).pEntity)
       
       tbgl_pushMatrix
         tbgl_translate entityBase.position.x, entityBase.position.y
         tbgl_rotate entityBase.rotation
         
-        call entityBase.typeName + "_Render"(pointers(i))
+        call entityBase.typeName + "_Render"(pointers(i).pEntity)
       tbgl_popMatrix
 
+    next
+  end function
+end type
+
+type tDebugableEntityList
+  tEntityList
+  
+  function Process()
+  
+    if me.count = 0 then exit function
+    
+    dim pointers(me.count) as tEntityDescriptor at me.pData
+    dim entityBase as tEntityBase at 0
+    
+    int32 i
+    for i = 1 to me.count
+      SetAt(entityBase, pointers(i).pEntity)
+      
+      tbgl_pushMatrix
+        tbgl_translate entityBase.position.x, entityBase.position.y
+        tbgl_rotate entityBase.rotation
+        
+        call entityBase.typeName + "_DebugRender"(pointers(i).pEntity)
+      tbgl_popMatrix
+
+    next
+    
+  end function
+end type
+
+type tForceableEntityList
+  tEntityList
+  
+  physicsablePtr  as dword
+  
+  function SetPhysicsable(physicsablePtr as dword)
+    me.physicsablePtr = physicsablePtr
+  end function
+  
+  function Process()
+    if me.physicsablePtr = 0 then exit function
+    if me.count = 0 then exit function
+    
+    dim pointers(me.count) as tEntityDescriptor at me.pData
+    
+    dim dummyPhysicsable as tEntityList at me.physicsablePtr
+    dim pointersToPhysicsable(dummyPhysicsable.count) as tEntityDescriptor at peek(dword, me.physicsablePtr) ' Retrieving pData
+
+    dim entityBase    as tEntityBase at 0
+    dim entityPhysics as tPhysicsBase at 0
+    
+    dim forceAreaBase as tForceAreaBaseEntity at 0
+    dim forceAreaCircularEntity as tForceAreaCircularEntity at 0
+    
+    int32 i, j
+    float32 distance, fx, fy
+    for i = 1 to me.count
+      SetAt(forceAreaBase, pointers(i).pEntity)
+      
+      if forceAreaBase.areaType = %TFORCEAREATYPE_CIRCULAR then
+        setAt(forceAreaCircularEntity, pointers(i).pEntity)
+        
+        for j = 1 to dummyPhysicsable.count
+          setAt(entityBase, pointersToPhysicsable(j).pEntity)
+          setAt(entityPhysics, pointersToPhysicsable(j).pEntity+pointersToPhysicsable(j).abilityOffset)
+          
+          distance = dist(entityBase.position.x, entityBase.position.y, forceAreaBase.position.x, forceAreaBase.position.y)
+          if distance < forceAreaCircularEntity.radius then
+           
+            forceAreaCircularEntity.GetForceContribution(distance, fx, fy)
+            entityPhysics.force.x += fx
+            entityPhysics.force.y += fy
+          end if
+        next
+      else
+        msgbox 0, "Unknown ForceAbleEntity"
+        stop
+      end if
+     
     next
   end function
 end type
@@ -70,25 +155,36 @@ end type
 type tPhysicsableEntityList
   tEntityList
   
-  function Process()
-    int32 i
+  function Process(frameRate as float32)
+    if me.count = 0 then exit function
     
-    dim pointers(me.count) as dword at me.pData
+    dim dummyPhysicsable as tEntityList at me.pData
+    dim pointersToPhysicsable(dummyPhysicsable.count) as tEntityDescriptor at me.pData ' Retrieving pData
 
-    dim typeName as asciiz * 32
-
+    dim entityBase    as tEntityBase at 0
+    dim entityPhysics as tPhysicsBase at 0
+    
+    int32 i
     for i = 1 to me.count
-      typeName = peek$(asciiz, pointers(i))
+      setAt(entityBase, pointersToPhysicsable(i).pEntity)
+      setAt(entityPhysics, pointersToPhysicsable(i).pEntity+pointersToPhysicsable(i).abilityOffset)
       
-      call typeName + "_Render"(pointers(i))
+      entityBase.position.x += (entityPhysics.force.x / entityPhysics.mass) / frameRate
+      entityBase.position.y += (entityPhysics.force.y / entityPhysics.mass) / frameRate
+      
+      entityPhysics.force.x = 0'sqr(entityPhysics.force.x)
+      entityPhysics.force.y = 0'sqr(entityPhysics.force.y)
     next
+    
   end function
 end type
 
 type tEntityComponentSystem
 
   renderable  as tRenderableEntityList
-  physicsable as tEntityList
+  debugable   as tDebugableEntityList
+  forceAble   as tForceableEntityList
+  physicsable as tPhysicsableEntityList
   collidable  as tEntityList
 
   ' Total overview
@@ -98,6 +194,7 @@ type tEntityComponentSystem
 
   function _Create()
   	redim me.entityPtrs(1)
+  	me.forceAble.setPhysicsable(varptr(me.physicsable))
   End Function
   
   '
@@ -148,21 +245,35 @@ type tEntityComponentSystem
       printl entityBase.typeName + " is renderable"
       me.renderable.addEntityPtr(entityPtr)
     end if
-    
+        
     if entity.hasAbility(%ECS_PHYSICSABLE) then
       printl entityBase.typeName + " is physicsable"
-      me.physicsable.addEntityPtr(entityPtr)
+      me.physicsable.addEntityPtr(entityPtr, UDT_ElementOffset(entity.physics.mass))
     end if
 
     if entity.hasAbility(%ECS_COLLIDABLE) then
       printl entityBase.typeName + " is collidable"
       me.collidable.addEntityPtr(entityPtr)
     end if
+
+    if entity.hasAbility(%ECS_DEBUGABLE) then
+      printl entityBase.typeName + " is debugable"
+      me.debugable.addEntityPtr(entityPtr)
+    end if
+
+    if entity.hasAbility(%ECS_FORCEABLE) then
+      printl entityBase.typeName + " is forceable"
+      me.forceable.addEntityPtr(entityPtr)
+    end if
     
   end function
   
-  function ProcessEntities()
+  function ProcessEntities(frameRate as float32)
+  
+    if me.forceable.count then me.forceable.Process()
+    if me.physicsable.count then me.physicsable.Process(frameRate)
     if me.renderable.count then me.renderable.Process()
+    if me.debugable.count then me.debugable.Process()
   end function
 
 end type

@@ -6,6 +6,7 @@ Randomize timer
 
 #include "playerEntity.tbasicu"
 #include "leafEntity.tbasicu"
+#include "forceAreaCircularEntity.tbasicu"
 
 function tbMain()
   
@@ -17,21 +18,52 @@ function tbMain()
 
   dim ecs as tEntityComponentSystem()
 
+  ' PLAYER
   dim p as tPlayerEntity
   p.initialize()
   ecs.AddEntityPtr(varptr(p))
     
-  dim leafs(10) as tLeafEntity
+  ' LEAVES
+  dim leaves(16) as tLeafEntity
   int32 i
 
-  for i = 1 to UBound(leafs)
-    leafs(i).initialize()
+  for i = 1 to UBound(leaves)
+    leaves(i).initialize()
     
-    leafs(i).position.x = rndf(-10, 10)
-    leafs(i).position.y = rndf(-10, 10)
+    leaves(i).position.x = rndf(-7, 7)
+    leaves(i).position.y = rndf(-7, 7)
   
-    ecs.AddEntityPtr(varptr(leafs(i)))
+    ecs.AddEntityPtr(varptr(leaves(i)))
   next
+  
+  ' FORCE EFFECTORS
+  dim forceEffectorA as tForceAreaCircularEntity
+  forceEffectorA.Initialize(3, 10, 1, 0)
+  forceEffectorA.position.x = -7
+  forceEffectorA.position.y = -7
+
+  ecs.AddEntityPtr(varptr(forceEffectorA))
+
+  dim forceEffectorB as tForceAreaCircularEntity
+  forceEffectorB.Initialize(3, 10, 1, 0)
+  forceEffectorB.position.x = -5
+  forceEffectorB.position.y =  5
+
+  ecs.AddEntityPtr(varptr(forceEffectorB))
+
+  dim forceEffectorC as tForceAreaCircularEntity
+  forceEffectorC.Initialize(3, 10, 1, 0)
+  forceEffectorC.position.x =  5
+  forceEffectorC.position.y =  5
+
+  ecs.AddEntityPtr(varptr(forceEffectorC))
+
+  dim forceEffectorD as tForceAreaCircularEntity
+  forceEffectorD.Initialize(3, 10, 1, 0)
+  forceEffectorD.position.x =  5
+  forceEffectorD.position.y = -5
+
+  ecs.AddEntityPtr(varptr(forceEffectorD))
   
   tbgl_useVSync(0)
   int32 frameCounter
@@ -41,6 +73,11 @@ function tbMain()
   ' -- Main loop
   while tbgl_isWindow(hWnd) 
     frameRate = tbgl_getFrameRate
+
+    forceEffectorA.rotation = -30 + sin(timer+1) * 10
+    forceEffectorB.rotation = -120 + sin(timer+2) * 10
+    forceEffectorC.rotation = 120 + sin(timer+3) * 10
+    forceEffectorD.rotation = 30 + sin(timer+4) * 10
     
     incr frameCounter
     if frameCounter > 60 then
@@ -49,9 +86,9 @@ function tbMain()
     end if
 
     tbgl_clearFrame 
-      tbgl_camera(0, 0, 50, 0, 0, 0)
+      tbgl_camera(0, -25, 25, 0, 0, 0)
 
-      ecs.ProcessEntities()
+      ecs.ProcessEntities(frameRate)
             
     tbgl_drawFrame 
 

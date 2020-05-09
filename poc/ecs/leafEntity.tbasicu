@@ -3,12 +3,15 @@
 uses "math"
 
 type tLeafEntity extends tEntityBase
+  physics    as tPhysicsBase
   collider    as tBoundingCircle
  
   function Initialize()
     me.typeName        = remain$(typeof$(me), ".") ' Cuts the udt. start
-    me.entityAbility   = %ECS_RENDERABLE | %ECS_COLLIDABLE
+    me.entityAbility   = %ECS_RENDERABLE | %ECS_PHYSICSABLE | %ECS_COLLIDABLE
     me.collider.radius = 1
+    
+    me.physics.mass    = 1
   End Function
 
 

@@ -25,9 +25,12 @@ end type
 type tSpeed extend tVector2
 end type
 
+type tForce extend tVector2
+end type
+
 type tPhysicsBase
   mass     as float32
-  speed    as tSpeed
+  force    as tForce
 End type
 
 ' --
@@ -41,3 +44,15 @@ end type
 type tBoundingCircle Extends tColliderBase
 	radius   as Float32
 End Type
+
+' --
+
+begin const
+  %TFORCEAREATYPE_CIRCULAR = 1
+end const
+
+type tForceAreaBaseEntity extends tEntityBase
+  areaType  as int32
+  areaData  as dword
+  baseForce as float32
+end type
