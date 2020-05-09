@@ -1,10 +1,11 @@
 ﻿uses "tbgl"
 
+Randomize timer
+
 #Include "entityComponentSystem.tbasicu"
 
 #include "playerEntity.tbasicu"
 #include "leafEntity.tbasicu"
-
 
 function tbMain()
   
@@ -56,10 +57,10 @@ function tbMain()
 
     ' -- ESCAPE key to exit application
     if tbgl_getWindowKeyState(hWnd, %VK_ESCAPE) then exit while
-    if tbgl_getWindowKeyState(hWnd, %VK_UP) then p.position.y += 1/frameRate
-    if tbgl_getWindowKeyState(hWnd, %VK_DOWN) then p.position.y -= 1/frameRate
-    if tbgl_getWindowKeyState(hWnd, %VK_LEFT) then p.position.x -= 1/frameRate
-    if tbgl_getWindowKeyState(hWnd, %VK_RIGHT) then p.position.x += 1/frameRate
+    if tbgl_getWindowKeyState(hWnd, %VK_UP) then p.position.y += 3/frameRate
+    if tbgl_getWindowKeyState(hWnd, %VK_DOWN) then p.position.y -= 3/frameRate
+    if tbgl_getWindowKeyState(hWnd, %VK_LEFT) then p.position.x -= 3/frameRate
+    if tbgl_getWindowKeyState(hWnd, %VK_RIGHT) then p.position.x += 3/frameRate
 
   wend
 

@@ -1,8 +1,6 @@
 ﻿#include once "entityBaseTypes.tbasicu"
 
 type tPlayerEntity extends tEntityBase
-  position    as tPosition
-  speed       as tSpeed
   collider    as tBoundingCircle
   
   function Initialize()
@@ -11,12 +9,9 @@ type tPlayerEntity extends tEntityBase
     me.collider.radius = 0.5
   End Function
 
-  function SetSpeed(speed as tSpeed)
-    me.speed = speed
-  end Function
 end type
 
 function tPlayerEntity_Render(playerPtr as DWord)
   dim player as tPlayerEntity at playerPtr
-	tbgl_nGon(player.position.x, player.position.y, player.collider.radius, 36)
+	tbgl_nGon(0, 0, player.collider.radius, 36)
 End Function

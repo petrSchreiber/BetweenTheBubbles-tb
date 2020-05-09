@@ -44,16 +44,24 @@ type tRenderableEntityList
   tEntityList
   
   function Process()
+  
+    if me.count = 0 then exit function
+    
     int32 i
     
     dim pointers(me.count) as dword at me.pData
 
-    dim typeName as asciiz * 32
-
+    dim entityBase as tEntityBase at 0
+    
     for i = 1 to me.count
-      typeName = peek$(asciiz, pointers(i))
+      SetAt(entityBase, pointers(i))
       
-      call typeName + "_Render"(pointers(i))
+      tbgl_pushMatrix
+        tbgl_translate entityBase.position.x, entityBase.position.y
+        tbgl_rotate entityBase.rotation
+        
+        call entityBase.typeName + "_Render"(pointers(i))
+      tbgl_popMatrix
 
     next
   end function

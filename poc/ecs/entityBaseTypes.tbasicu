@@ -1,14 +1,4 @@
-﻿type tEntityBase
-  typeName      as asciiz * 32
-  entityAbility as int32
-
-  
-  function HasAbility(ability as int32) as int32
-    return Bit_get(me.entityAbility, Log2(ability)) 
-  end function
-end type
-
-' --
+﻿' --
 
 type tVector2
   x as Float32
@@ -18,8 +8,27 @@ end type
 type tPosition extend tVector2
 end type
 
+type tEntityBase
+  typeName      as asciiz * 32
+  entityAbility as int32
+  
+  position      as tPosition
+  rotation      as Float32
+  
+  function HasAbility(ability as int32) as int32
+    return Bit_get(me.entityAbility, Log2(ability)) 
+  end function
+end type
+
+' --
+
 type tSpeed extend tVector2
 end type
+
+type tPhysicsBase
+  mass     as float32
+  speed    as tSpeed
+End type
 
 ' --
 
