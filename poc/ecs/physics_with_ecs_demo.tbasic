@@ -10,12 +10,11 @@ Randomize timer
 
 function tbMain()
   
-  double frameRate
-  
   ' -- Create and show window
   dWord hWnd = tbgl_createWindowEx("ECS experiment - press ESC to quit", 640, 480, 32, %TBGL_WS_WINDOWED | %TBGL_WS_CLOSEBOX)
   tbgl_showWindow
 
+  #region "create and initialize ECS"
   dim ecs as tEntityComponentSystem()
 
   ' PLAYER
@@ -64,11 +63,13 @@ function tbMain()
   forceEffectorD.position.y = -5
 
   ecs.AddEntityPtr(varptr(forceEffectorD))
+  #endregion
   
-  tbgl_useVSync(0)
-  int32 frameCounter
-  
+  tbgl_useVSync(True)
   tbgl_backcolor 64, 128, 255
+
+  int32 frameCounter
+  double frameRate
   
   ' -- Main loop
   while tbgl_isWindow(hWnd) 
@@ -81,7 +82,7 @@ function tbMain()
     
     incr frameCounter
     if frameCounter > 60 then
-      tbgl_setWindowTitle(hWnd, format$(FrameRate, "0"))
+      tbgl_setWindowTitle(hWnd, format$(FrameRate, "0") + " FPS")
       frameCounter = 0
     end if
 

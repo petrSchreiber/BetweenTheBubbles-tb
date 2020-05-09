@@ -11,11 +11,12 @@ type tEntityList_ForceArea
   
   function Process()
     if me.physicsablePtr = 0 then exit function
-    if me.count = 0 then exit function
+    if me.count = 0          then exit function
     
     dim pointers(me.count) as tEntityList_Descriptor at me.pData
     
     dim dummyPhysicsable as tEntityList at me.physicsablePtr
+
     dim pointersToPhysicsable(dummyPhysicsable.count) as tEntityList_Descriptor at peek(dword, me.physicsablePtr) ' Retrieving pData
 
     dim entityBase    as tEntityBase at 0

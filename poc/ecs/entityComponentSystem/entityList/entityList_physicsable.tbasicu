@@ -19,9 +19,10 @@ type tEntityList_Physicsable
       
       entityBase.position.x += (entityPhysics.force.x / entityPhysics.mass) / frameRate
       entityBase.position.y += (entityPhysics.force.y / entityPhysics.mass) / frameRate
-      
-      entityPhysics.force.x = 0'sqr(entityPhysics.force.x)
-      entityPhysics.force.y = 0'sqr(entityPhysics.force.y)
+
+      '[todo] Some kind of force damping (now to harsh)
+      entityPhysics.force.x = 0
+      entityPhysics.force.y = 0
     next
     
   end function

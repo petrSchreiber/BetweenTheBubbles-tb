@@ -1,0 +1,55 @@
+﻿#include once "entityList_base.tbasicu"
+
+type tEntityList_Collidable
+  tEntityList
+  
+  physicsablePtr  as dword
+  
+  function SetPhysicsable(physicsablePtr as dword)
+    me.physicsablePtr = physicsablePtr
+  end function
+  
+  function Process()
+    if me.physicsablePtr = 0 then exit function
+    if me.count = 0          then exit function
+    
+    dim collidablePtr(me.count) as tEntityList_Descriptor at me.pData
+    
+    dim dummyPhysicsable as tEntityList at me.physicsablePtr
+    dim pointersToPhysicsable(dummyPhysicsable.count) as tEntityList_Descriptor at peek(dword, me.physicsablePtr) ' Retrieving pData
+
+    dim entityBase    as tEntityBase at 0
+    dim entityPhysics as tPhysicsBase at 0
+    
+    dim forceAreaBase as tEntity_ForceArea_Base at 0
+    dim forceAreaCircularEntity as tEntity_ForceArea_Circular at 0
+    
+    int32 i, j
+    float32 distance, fx, fy
+'    for i = 1 to me.count
+'      SetAt(forceAreaBase, collidablePtr(i).pEntity)
+'      
+'      if forceAreaBase.areaType = %ECS_FORCEAREA_CIRCULAR then
+'        setAt(forceAreaCircularEntity, collidablePtr(i).pEntity)
+'        
+'        for j = 1 to dummyPhysicsable.count
+'          setAt(entityBase, pointersToPhysicsable(j).pEntity)
+'          setAt(entityPhysics, pointersToPhysicsable(j).pEntity+pointersToPhysicsable(j).abilityOffset)
+'          
+'          distance = dist(entityBase.position.x, entityBase.position.y, forceAreaBase.position.x, forceAreaBase.position.y)
+'          if distance < forceAreaCircularEntity.radius then
+'           
+'            forceAreaCircularEntity.GetForceContribution(distance, fx, fy)
+'            entityPhysics.force.x += fx
+'            entityPhysics.force.y += fy
+'          end if
+'        next
+'      else
+'        msgbox 0, "Unknown forceAreaEntity"
+'        stop
+'      end if
+'     
+'    next
+  end function
+end type
+
