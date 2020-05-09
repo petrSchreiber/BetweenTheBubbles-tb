@@ -1,0 +1,28 @@
+﻿#include once "entityList_base.tbasicu"
+
+type tEntityList_Physicsable
+  tEntityList
+  
+  function Process(frameRate as float32)
+    if me.count = 0 then exit function
+    
+    dim dummyPhysicsable as tEntityList at me.pData
+    dim pointersToPhysicsable(dummyPhysicsable.count) as tEntityList_Descriptor at me.pData ' Retrieving pData
+
+    dim entityBase    as tEntityBase at 0
+    dim entityPhysics as tPhysicsBase at 0
+    
+    int32 i
+    for i = 1 to me.count
+      setAt(entityBase, pointersToPhysicsable(i).pEntity)
+      setAt(entityPhysics, pointersToPhysicsable(i).pEntity+pointersToPhysicsable(i).abilityOffset)
+      
+      entityBase.position.x += (entityPhysics.force.x / entityPhysics.mass) / frameRate
+      entityBase.position.y += (entityPhysics.force.y / entityPhysics.mass) / frameRate
+      
+      entityPhysics.force.x = 0'sqr(entityPhysics.force.x)
+      entityPhysics.force.y = 0'sqr(entityPhysics.force.y)
+    next
+    
+  end function
+end type

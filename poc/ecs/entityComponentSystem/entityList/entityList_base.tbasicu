@@ -1,0 +1,37 @@
+﻿type tEntityList_Descriptor
+  pEntity       as dword
+  abilityOffset as dword
+end Type
+
+type tEntityList
+  pData     as dword
+  capacity  as dWord
+  count     as dword
+  
+  function AddEntityPtr(pEntity as dword, optional offsetAble as dword = 0)
+
+    me.count += 1
+    
+    if me.count > me.capacity then
+      me.capacity = me.count * 2
+      
+      if me.pData = 0 then
+        me.pData = HEAP_alloc(sizeof(tEntityList_Descriptor) * me.capacity)
+      else
+        me.pData = HEAP_realloc(me.pData, sizeof(tEntityList_Descriptor) * me.capacity)
+      end if
+
+    end if
+    
+    dim pointers(me.count) as tEntityList_Descriptor at me.pData
+
+    pointers(me.count).pEntity       = pEntity
+    pointers(me.count).abilityOffset = offsetAble
+    
+  end function
+  
+  function _Destroy()
+  	if me.pData then HEAP_Free(me.pData)
+  End Function
+
+end type

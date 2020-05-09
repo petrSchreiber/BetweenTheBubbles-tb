@@ -2,11 +2,11 @@
 
 Randomize timer
 
-#Include "entityComponentSystem.tbasicu"
+#Include "entityComponentSystem/entityComponentSystem.tbasicu"
 
-#include "playerEntity.tbasicu"
-#include "leafEntity.tbasicu"
-#include "forceAreaCircularEntity.tbasicu"
+#include "entityComponentSystem/entityTypes/entity_player.tbasicu"
+#include "entityComponentSystem/entityTypes/entity_leaf.tbasicu"
+#include "entityComponentSystem/entityTypes/entity_forceArea_circular.tbasicu"
 
 function tbMain()
   
@@ -19,12 +19,12 @@ function tbMain()
   dim ecs as tEntityComponentSystem()
 
   ' PLAYER
-  dim p as tPlayerEntity
+  dim p as tEntity_Player
   p.initialize()
   ecs.AddEntityPtr(varptr(p))
     
   ' LEAVES
-  dim leaves(16) as tLeafEntity
+  dim leaves(16) as tEntity_Leaf
   int32 i
 
   for i = 1 to UBound(leaves)
@@ -37,28 +37,28 @@ function tbMain()
   next
   
   ' FORCE EFFECTORS
-  dim forceEffectorA as tForceAreaCircularEntity
+  dim forceEffectorA as tEntity_ForceArea_Circular
   forceEffectorA.Initialize(3, 10, 1, 0)
   forceEffectorA.position.x = -7
   forceEffectorA.position.y = -7
 
   ecs.AddEntityPtr(varptr(forceEffectorA))
 
-  dim forceEffectorB as tForceAreaCircularEntity
+  dim forceEffectorB as tEntity_ForceArea_Circular
   forceEffectorB.Initialize(3, 10, 1, 0)
   forceEffectorB.position.x = -5
   forceEffectorB.position.y =  5
 
   ecs.AddEntityPtr(varptr(forceEffectorB))
 
-  dim forceEffectorC as tForceAreaCircularEntity
+  dim forceEffectorC as tEntity_ForceArea_Circular
   forceEffectorC.Initialize(3, 10, 1, 0)
   forceEffectorC.position.x =  5
   forceEffectorC.position.y =  5
 
   ecs.AddEntityPtr(varptr(forceEffectorC))
 
-  dim forceEffectorD as tForceAreaCircularEntity
+  dim forceEffectorD as tEntity_ForceArea_Circular
   forceEffectorD.Initialize(3, 10, 1, 0)
   forceEffectorD.position.x =  5
   forceEffectorD.position.y = -5
@@ -74,10 +74,10 @@ function tbMain()
   while tbgl_isWindow(hWnd) 
     frameRate = tbgl_getFrameRate
 
-    forceEffectorA.rotation = -30 + sin(timer+1) * 10
+    forceEffectorA.rotation =  -30 + sin(timer+1) * 10
     forceEffectorB.rotation = -120 + sin(timer+2) * 10
-    forceEffectorC.rotation = 120 + sin(timer+3) * 10
-    forceEffectorD.rotation = 30 + sin(timer+4) * 10
+    forceEffectorC.rotation =  120 + sin(timer+3) * 10
+    forceEffectorD.rotation =   30 + sin(timer+4) * 10
     
     incr frameCounter
     if frameCounter > 60 then
@@ -89,15 +89,14 @@ function tbMain()
       tbgl_camera(0, -25, 25, 0, 0, 0)
 
       ecs.ProcessEntities(frameRate)
-            
-    tbgl_drawFrame 
+    tbgl_drawFrame
 
     ' -- ESCAPE key to exit application
     if tbgl_getWindowKeyState(hWnd, %VK_ESCAPE) then exit while
-    if tbgl_getWindowKeyState(hWnd, %VK_UP) then p.position.y += 3/frameRate
-    if tbgl_getWindowKeyState(hWnd, %VK_DOWN) then p.position.y -= 3/frameRate
-    if tbgl_getWindowKeyState(hWnd, %VK_LEFT) then p.position.x -= 3/frameRate
-    if tbgl_getWindowKeyState(hWnd, %VK_RIGHT) then p.position.x += 3/frameRate
+    if tbgl_getWindowKeyState(hWnd, %VK_UP)     then p.position.y += 3/frameRate
+    if tbgl_getWindowKeyState(hWnd, %VK_DOWN)   then p.position.y -= 3/frameRate
+    if tbgl_getWindowKeyState(hWnd, %VK_LEFT)   then p.position.x -= 3/frameRate
+    if tbgl_getWindowKeyState(hWnd, %VK_RIGHT)  then p.position.x += 3/frameRate
 
   wend
 

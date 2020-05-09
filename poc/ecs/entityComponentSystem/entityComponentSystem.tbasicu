@@ -1,0 +1,118 @@
+﻿uses "console"
+
+begin const
+  %ECS_FORCEAREA   = 1
+  %ECS_PHYSICSABLE = 2
+  %ECS_COLLIDABLE  = 4
+  %ECS_RENDERABLE  = 8
+  %ECS_DEBUGABLE   = 16
+end const
+
+#include "entityList/entityList_forcearea.tbasicu"
+#include "entityList/entityList_physicsable.tbasicu"
+'#include "entityList_collidable.tbasicu"
+#include "entityList/entityList_renderable.tbasicu"
+#include "entityList/entityList_debugable.tbasicu"
+
+type tEntityComponentSystem
+  ' List to store all entities (so we can check if it was added already)
+  entityPtrs()    as dword
+  entityPtrsCount as dword
+
+  ' Specialized lists
+  forceAble   as tEntityList_Forcearea
+  physicsable as tEntityList_Physicsable
+  collidable  as tEntityList
+  renderable  as tEntityList_Renderable
+  debugable   as tEntityList_Debugable
+  
+  function _Create()
+  	redim me.entityPtrs(1)
+  	me.forceAble.setPhysicsable(varptr(me.physicsable))
+  End Function
+  
+  '
+  
+  function AddEntityPtr(entityPtr as dword)
+    printl entityPtr in 12
+    
+    #region "input validation"
+    ' Is pointer valid
+    if entityPtr = 0 then
+      msgbox 0, "tEntityComponentSystem.AddEntityPtr: passed pointer is null"
+      stop
+    end if
+  
+    ' Is pointer pointer to Entity (starts with self describing name)
+    dim entityBase as tEntityBase at entityPtr
+    
+    if not Type_Exists(entityBase.typeName) then
+      msgbox 0, "tEntityComponentSystem.AddEntityPtr: passed pointer does not lead to existing entity type"
+      stop
+    end if
+    
+    int32 entityCapacity = ubound(me.entityPtrs)
+    
+    ' Is pointer new?
+    if me.entityPtrsCount > 0 then
+      dim entityPtrs(me.entityPtrsCount) as dword at varptr(me.entityPtrs(1)) ' Hack because me.array are not supported in array scan
+      int32 indexOfEntity = array scan entityPtrs(), = entityPtr
+      if indexOfEntity > 0 then
+        msgbox 0, "tEntityComponentSystem.AddEntityPtr: passed entity pointer already present"
+        stop
+      end if
+    end If
+    #endregion
+
+    #region "taking note of added entity"
+    me.entityPtrsCount += 1
+
+    if me.entityPtrsCount > entityCapacity then
+      redim preserve me.entityPtrs(entityCapacity * 2)
+    end if
+    
+    me.entityPtrs(me.entityPtrsCount) = entityPtr
+    #endregion
+    
+    #region "add the entity to all suitable use-oriented lists"
+    
+    ' First, let's recreate the entity TYPE for ability queries
+    dim entity like entityBase.typeName at entityPtr
+
+    if entity.hasAbility(%ECS_FORCEAREA) then
+      printl entityBase.typeName + " is forceable"
+      me.forceable.addEntityPtr(entityPtr)
+    end if
+
+    if entity.hasAbility(%ECS_PHYSICSABLE) then
+      printl entityBase.typeName + " is physicsable"
+      me.physicsable.addEntityPtr(entityPtr, UDT_ElementOffset(entity.physics.mass))
+    end if
+
+    if entity.hasAbility(%ECS_COLLIDABLE) then
+      printl entityBase.typeName + " is collidable"
+      me.collidable.addEntityPtr(entityPtr)
+    end if
+        
+    if entity.hasAbility(%ECS_RENDERABLE) then
+      printl entityBase.typeName + " is renderable"
+      me.renderable.addEntityPtr(entityPtr)
+    end if
+
+    if entity.hasAbility(%ECS_DEBUGABLE) then
+      printl entityBase.typeName + " is debugable"
+      me.debugable.addEntityPtr(entityPtr)
+    end if
+    #endregion
+    
+  end function
+  
+  function ProcessEntities(frameRate as float32)
+    if me.forceable.count then me.forceable.Process()
+    if me.physicsable.count then me.physicsable.Process(frameRate)
+    'if me.collidable.count then me.collidable.Process()
+    if me.renderable.count then me.renderable.Process()
+    if me.debugable.count then me.debugable.Process()
+  end function
+
+end type

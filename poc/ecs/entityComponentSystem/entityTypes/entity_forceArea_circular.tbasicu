@@ -1,19 +1,19 @@
 ﻿uses "math"
 
-#include once "entityBaseTypes.tbasicu"
+#include once "entity_baseTypes.tbasicu"
 
 
-type tForceAreaCircularEntity
-  tForceAreaBaseEntity
+type tEntity_ForceArea_Circular
+  tEntity_ForceArea_Base
   
   radius            as Float32
   centralIntensity  as float32 ' 0..1
   borderIntensity   as float32 ' 0..1
   
   function Initialize(force as float32, radius as float32, centralIntensity as float32, borderIntensity as float32)
-    me.areaType         = %TFORCEAREATYPE_CIRCULAR
+    me.areaType         = %ECS_FORCEAREA_CIRCULAR
     me.typeName         = remain$(typeof$(me), ".") ' Cuts the udt. start
-    me.entityAbility    = %ECS_DEBUGABLE | %ECS_FORCEABLE
+    me.entityAbility    = %ECS_DEBUGABLE | %ECS_FORCEAREA
     me.baseForce        = force
     
     me.radius           = radius
@@ -30,8 +30,8 @@ type tForceAreaCircularEntity
   end function
 end type
 
-function tForceAreaCircularEntity_DebugRender(entityPtr as dword)
-  dim forceCircular as tForceAreaCircularEntity at entityPtr
+function tEntity_ForceArea_Circular_DebugRender(entityPtr as dword)
+  dim forceCircular as tEntity_ForceArea_Circular at entityPtr
 
   tbgl_pushpolygonLook %GL_LINE
     tbgl_nGon(0, 0, forceCircular.Radius, 36)

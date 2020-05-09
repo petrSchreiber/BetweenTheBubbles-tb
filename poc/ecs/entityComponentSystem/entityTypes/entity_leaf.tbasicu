@@ -1,8 +1,8 @@
-﻿#include once "entityBaseTypes.tbasicu"
+﻿#include once "entity_baseTypes.tbasicu"
 
 uses "math"
 
-type tLeafEntity extends tEntityBase
+type tEntity_Leaf extends tEntityBase
   physics    as tPhysicsBase
   collider    as tBoundingCircle
  
@@ -14,11 +14,10 @@ type tLeafEntity extends tEntityBase
     me.physics.mass    = 1
   End Function
 
-
 end type
 
-function tLeafEntity_Render(leafPtr as DWord)
-  dim leaf as tLeafEntity at leafPtr
+function tEntity_Leaf_Render(leafPtr as DWord)
+  dim leaf as tEntity_Leaf at leafPtr
   
   tbgl_pushColor 0, 255, 0
         
@@ -31,7 +30,6 @@ function tLeafEntity_Render(leafPtr as DWord)
       next
       
       tbgl_vertex 0, 0
-    
     tbgl_endPoly
 
   tbgl_popColor

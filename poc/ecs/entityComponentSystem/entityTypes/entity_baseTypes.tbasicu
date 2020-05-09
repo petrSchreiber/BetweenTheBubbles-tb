@@ -5,14 +5,11 @@ type tVector2
   y as Float32
 end type
 
-type tPosition extend tVector2
-end type
-
 type tEntityBase
   typeName      as asciiz * 32
   entityAbility as int32
   
-  position      as tPosition
+  position      as tVector2
   rotation      as Float32
   
   function HasAbility(ability as int32) as int32
@@ -22,15 +19,21 @@ end type
 
 ' --
 
-type tSpeed extend tVector2
+begin const
+  %ECS_FORCEAREA_CIRCULAR = 1
+end const
+
+type TEntity_ForceArea_Base extends tEntityBase
+  areaType  as int32
+  areaData  as dword
+  baseForce as float32
 end type
 
-type tForce extend tVector2
-end type
+' --
 
 type tPhysicsBase
   mass     as float32
-  force    as tForce
+  force    as tVector2
 End type
 
 ' --
@@ -44,15 +47,3 @@ end type
 type tBoundingCircle Extends tColliderBase
 	radius   as Float32
 End Type
-
-' --
-
-begin const
-  %TFORCEAREATYPE_CIRCULAR = 1
-end const
-
-type tForceAreaBaseEntity extends tEntityBase
-  areaType  as int32
-  areaData  as dword
-  baseForce as float32
-end type

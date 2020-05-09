@@ -1,0 +1,26 @@
+﻿#include once "entityList_base.tbasicu"
+
+type tEntityList_Renderable
+  tEntityList
+  
+  function Process()
+  
+    if me.count = 0 then exit function
+    
+    dim pointers(me.count) as tEntityList_Descriptor at me.pData
+    dim entityBase as tEntityBase at 0
+    
+    int32 i
+    for i = 1 to me.count
+      SetAt(entityBase, pointers(i).pEntity)
+      
+      tbgl_pushMatrix
+        tbgl_translate entityBase.position.x, entityBase.position.y
+        tbgl_rotate entityBase.rotation
+        
+        call entityBase.typeName + "_Render"(pointers(i).pEntity)
+      tbgl_popMatrix
+
+    next
+  end function
+end type

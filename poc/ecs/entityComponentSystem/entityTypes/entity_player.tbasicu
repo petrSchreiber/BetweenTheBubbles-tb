@@ -1,8 +1,8 @@
-﻿#include once "entityBaseTypes.tbasicu"
+﻿#include once "entity_baseTypes.tbasicu"
 
-type tPlayerEntity extends tEntityBase
+type tEntity_Player extends tEntityBase
   physics    as tPhysicsBase
-  collider    as tBoundingCircle
+  collider   as tBoundingCircle
   
   function Initialize()
     me.typeName        = remain$(typeof$(me), ".") ' Cuts the udt. start
@@ -14,7 +14,7 @@ type tPlayerEntity extends tEntityBase
 
 end type
 
-function tPlayerEntity_Render(playerPtr as DWord)
-  dim player as tPlayerEntity at playerPtr
+function tEntity_Player_Render(playerPtr as DWord)
+  dim player as tEntity_Player at playerPtr
 	tbgl_nGon(0, 0, player.collider.radius, 36)
 End Function
