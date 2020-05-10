@@ -6,23 +6,23 @@ type tEntityList_Physicsable
   function Process(frameRate as float32)
     if me.count = 0 then exit function
     
-    dim dummyPhysicsable as tEntityList at me.pData
-    dim pointersToPhysicsable(dummyPhysicsable.count) as tEntityList_Descriptor at me.pData ' Retrieving pData
+    dim pointersToPhysicsable(me.count) as tEntityList_Descriptor at me.pData ' Retrieving pData
 
     dim entityBase    as tEntityBase at 0
     dim entityPhysics as tPhysicsBase at 0
     
+    dim FORCE_DAMPING as Float32 = 0.75
+
     int32 i
     for i = 1 to me.count
-      setAt(entityBase, pointersToPhysicsable(i).pEntity)
-      setAt(entityPhysics, pointersToPhysicsable(i).pEntity+pointersToPhysicsable(i).abilityOffset)
+      setAt(entityBase   , pointersToPhysicsable(i).pEntity)
+      setAt(entityPhysics, pointersToPhysicsable(i).pAbility(%ECS_PHYSICSABLE_INDEX))
       
       entityBase.position.x += (entityPhysics.force.x / entityPhysics.mass) / frameRate
       entityBase.position.y += (entityPhysics.force.y / entityPhysics.mass) / frameRate
 
-      '[todo] Some kind of force damping (now to harsh)
-      entityPhysics.force.x = 0
-      entityPhysics.force.y = 0
+      entityPhysics.force.x += (-entityPhysics.force.x/FORCE_DAMPING) / frameRate
+      entityPhysics.force.y += (-entityPhysics.force.y/FORCE_DAMPING) / frameRate
     next
     
   end function

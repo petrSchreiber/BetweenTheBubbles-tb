@@ -1,6 +1,7 @@
 ﻿type tEntityList_Descriptor
-  pEntity       as dword
-  abilityOffset as dword
+  pEntity         as dword
+
+  pAbility(5) as dword  '[!] Number of elements must match the number of items in %ECS_*ABLE
 end Type
 
 type tEntityList
@@ -8,7 +9,7 @@ type tEntityList
   capacity  as dWord
   count     as dword
   
-  function AddEntityPtr(pEntity as dword, optional offsetAble as dword = 0)
+  function AddEntityPtr(pEntity as dword) as dword
 
     me.count += 1
     
@@ -26,8 +27,8 @@ type tEntityList
     dim pointers(me.count) as tEntityList_Descriptor at me.pData
 
     pointers(me.count).pEntity       = pEntity
-    pointers(me.count).abilityOffset = offsetAble
     
+    return varptr(pointers(me.count).pEntity)
   end function
   
   function _Destroy()

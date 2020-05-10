@@ -87,9 +87,10 @@ type tEntityList_Collidable
       dy = entityB.position.y - entityA.position.y
       distance = sqr(dx*dx + dy*dy)
       
-      ' -- Getting the info about radius from collidable interface
-      SetAt(circleColliderA, collidablePtr(indexOfColliderA).pEntity+collidablePtr(indexOfColliderA).abilityOffset)
-      SetAt(circleColliderB, collidablePtr(indexOfColliderB).pEntity+collidablePtr(indexOfColliderB).abilityOffset)
+      ' -- Getting the info about radius/bounciness from collidable interface
+      
+      SetAt(circleColliderA, collidablePtr(indexOfColliderA).pAbility(%ECS_COLLIDABLE_INDEX))
+      SetAt(circleColliderB, collidablePtr(indexOfColliderB).pAbility(%ECS_COLLIDABLE_INDEX))
       
       intersection = (circleColliderA.radius + circleColliderB.radius) - distance
       
@@ -100,6 +101,10 @@ type tEntityList_Collidable
         
         entityB.position.x += dx/distance * intersection/2
         entityB.position.y += dy/distance * intersection/2
+        
+        ' -- Physics
+        'if circleColliderA.bounciness > 0 then
+        'if circleColliderB.bounciness > 0 then
       end if
       
       #endregion

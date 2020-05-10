@@ -23,7 +23,7 @@ function tbMain()
   ecs.AddEntityPtr(varptr(p))
     
   ' LEAVES
-  dim leaves(30) as tEntity_Leaf
+  dim leaves(32) as tEntity_Leaf
   int32 i
 
   for i = 1 to UBound(leaves)
@@ -37,28 +37,28 @@ function tbMain()
   
   ' FORCE EFFECTORS
   dim forceEffectorA as tEntity_ForceArea_Circular
-  forceEffectorA.Initialize(3, 10, 1, 0)
+  forceEffectorA.Initialize(0.1, 10, 1, 0)
   forceEffectorA.position.x = -7
   forceEffectorA.position.y = -7
 
   ecs.AddEntityPtr(varptr(forceEffectorA))
 
   dim forceEffectorB as tEntity_ForceArea_Circular
-  forceEffectorB.Initialize(3, 10, 1, 0)
+  forceEffectorB.Initialize(0.1, 10, 1, 0)
   forceEffectorB.position.x = -5
   forceEffectorB.position.y =  5
 
   ecs.AddEntityPtr(varptr(forceEffectorB))
 
   dim forceEffectorC as tEntity_ForceArea_Circular
-  forceEffectorC.Initialize(3, 10, 1, 0)
+  forceEffectorC.Initialize(0.1, 10, 1, 0)
   forceEffectorC.position.x =  5
   forceEffectorC.position.y =  5
 
   ecs.AddEntityPtr(varptr(forceEffectorC))
 
   dim forceEffectorD as tEntity_ForceArea_Circular
-  forceEffectorD.Initialize(3, 10, 1, 0)
+  forceEffectorD.Initialize(0.1, 10, 1, 0)
   forceEffectorD.position.x =  5
   forceEffectorD.position.y = -5
 
@@ -73,12 +73,12 @@ function tbMain()
   
   ' -- Main loop
   while tbgl_isWindow(hWnd) 
-    frameRate = tbgl_getFrameRate
+    frameRate = (frameRate + tbgl_getFrameRate)/2
 
     forceEffectorA.rotation =  -30 + sin(timer+1) * 10
     forceEffectorB.rotation = -120 + sin(timer+2) * 10
-    forceEffectorC.rotation =  120 + sin(timer+3) * 10
-    forceEffectorD.rotation =   30 + sin(timer+4) * 10
+    forceEffectorC.rotation =  140 + sin(timer+3) * 10
+    forceEffectorD.rotation =   50 + sin(timer+4) * 10
     
     incr frameCounter
     if frameCounter > 60 then
@@ -87,7 +87,7 @@ function tbMain()
     end if
 
     tbgl_clearFrame 
-      tbgl_camera(0, -25, 25, 0, 0, 0)
+      tbgl_camera(0, -35, 25, 0, 0, 0)
 
       ecs.ProcessEntities(frameRate)
     tbgl_drawFrame

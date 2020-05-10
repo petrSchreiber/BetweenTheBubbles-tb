@@ -35,7 +35,7 @@ type tEntityList_ForceArea
         
         for j = 1 to dummyPhysicsable.count
           setAt(entityBase, pointersToPhysicsable(j).pEntity)
-          setAt(entityPhysics, pointersToPhysicsable(j).pEntity+pointersToPhysicsable(j).abilityOffset)
+          setAt(entityPhysics, pointersToPhysicsable(j).pAbility(%ECS_PHYSICSABLE_INDEX))
           
           distance = dist(entityBase.position.x, entityBase.position.y, forceAreaBase.position.x, forceAreaBase.position.y)
           if distance < forceAreaCircularEntity.radius then

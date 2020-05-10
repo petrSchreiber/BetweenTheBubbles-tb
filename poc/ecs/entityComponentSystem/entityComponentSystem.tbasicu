@@ -6,6 +6,12 @@ begin const
   %ECS_PHYSICSABLE = 4
   %ECS_RENDERABLE  = 8
   %ECS_DEBUGABLE   = 16
+  
+  %ECS_FORCEAREA_INDEX   = log2(%ECS_FORCEAREA)
+  %ECS_COLLIDABLE_INDEX  = log2(%ECS_COLLIDABLE)
+  %ECS_PHYSICSABLE_INDEX = log2(%ECS_PHYSICSABLE)
+  %ECS_RENDERABLE_INDEX  = log2(%ECS_RENDERABLE)
+  %ECS_DEBUGABLE_INDEX   = log2(%ECS_DEBUGABLE)
 end const
 
 #include "entityList/entityList_forcearea.tbasicu"
@@ -30,6 +36,15 @@ type tEntityComponentSystem
   	redim me.entityPtrs(1)
   	me.forcearea.setPhysicsable(varptr(me.physicsable))
   	me.collidable.setPhysicsable(varptr(me.physicsable))
+  	
+  	' Set last elements for first frame
+    int32 i
+    dim entityBase as tEntityBase at 0
+    for i = 1 to me.entityPtrsCount
+      setAt(entityBase, me.entityPtrs(i))
+      entityBase.position.lastX = entityBase.position.x
+      entityBase.position.lastY = entityBase.position.y
+    next
   End Function
   
   '
@@ -79,6 +94,8 @@ type tEntityComponentSystem
     
     ' First, let's recreate the entity TYPE for ability queries
     dim entity like entityBase.typeName at entityPtr
+    dim entityDescriptor as tEntityList_Descriptor at 0
+    dim entityDescriptorPtr as dword
 
     if entity.hasAbility(%ECS_FORCEAREA) then
       printl entityBase.typeName + " is forcearea"
@@ -87,12 +104,22 @@ type tEntityComponentSystem
 
     if entity.hasAbility(%ECS_COLLIDABLE) then
       printl entityBase.typeName + " is collidable"
-      me.collidable.addEntityPtr(entityPtr, UDT_ElementOffset(entity.collider.typeName))
+      entityDescriptorPtr = me.collidable.addEntityPtr(entityPtr)
+
+      SetAt(entityDescriptor, entityDescriptorPtr)
+      entityDescriptor.pAbility(%ECS_COLLIDABLE_INDEX) = entityPtr+UDT_ElementOffset(entity.collider.typeName)
+      if entity.hasAbility(%ECS_PHYSICSABLE) then
+        entityDescriptor.pAbility(%ECS_PHYSICSABLE_INDEX) = entityPtr+UDT_ElementOffset(entity.physics.mass)
+      end if
     end if
 
     if entity.hasAbility(%ECS_PHYSICSABLE) then
       printl entityBase.typeName + " is physicsable"
-      me.physicsable.addEntityPtr(entityPtr, UDT_ElementOffset(entity.physics.mass))
+      entityDescriptorPtr = me.physicsable.addEntityPtr(entityPtr)
+      printl "PHYSX" + entityDescriptorPtr, me.physicsable.count in 14
+
+      SetAt(entityDescriptor, entityDescriptorPtr)
+      entityDescriptor.pAbility(%ECS_PHYSICSABLE_INDEX) = entityPtr+UDT_ElementOffset(entity.physics.mass)
     end if
 
     if entity.hasAbility(%ECS_RENDERABLE) then
@@ -114,6 +141,15 @@ type tEntityComponentSystem
     if me.physicsable.count then me.physicsable.Process(frameRate)
     if me.renderable.count  then me.renderable.Process()
     if me.debugable.count   then me.debugable.Process()
+
+    ' Automatically update last frame data
+    int32 i
+    dim entityBase as tEntityBase at 0
+    for i = 1 to me.entityPtrsCount
+      setAt(entityBase, me.entityPtrs(i))
+      entityBase.position.lastX = entityBase.position.x
+      entityBase.position.lastY = entityBase.position.y
+    next
   end function
 
 end type

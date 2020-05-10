@@ -5,14 +5,21 @@ type tVector2
   y as Float32
 end type
 
+type tPosition
+  tVector2
+  
+  lastX as float32
+  lastY as float32
+end type
+
 type tEntityBase
   typeName      as asciiz * 32
   entityAbility as int32
   
-  position      as tVector2
+  position      as tPosition
   rotation      as Float32
   
-  function HasAbility(ability as int32) as int32
+  function hasAbility(ability as int32) as int32
     return Bit_get(me.entityAbility, Log2(ability)) 
   end function
 end type
