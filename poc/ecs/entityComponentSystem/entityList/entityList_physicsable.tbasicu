@@ -11,7 +11,7 @@ type tEntityList_Physicsable
     dim entityBase    as tEntityBase at 0
     dim entityPhysics as tPhysicsBase at 0
     
-    dim FORCE_DAMPING as Float32 = 0.75
+    dim FORCE_DAMPING as Float32 = 0.9
 
     int32 i
     for i = 1 to me.count

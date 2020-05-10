@@ -116,7 +116,6 @@ type tEntityComponentSystem
     if entity.hasAbility(%ECS_PHYSICSABLE) then
       printl entityBase.typeName + " is physicsable"
       entityDescriptorPtr = me.physicsable.addEntityPtr(entityPtr)
-      printl "PHYSX" + entityDescriptorPtr, me.physicsable.count in 14
 
       SetAt(entityDescriptor, entityDescriptorPtr)
       entityDescriptor.pAbility(%ECS_PHYSICSABLE_INDEX) = entityPtr+UDT_ElementOffset(entity.physics.mass)

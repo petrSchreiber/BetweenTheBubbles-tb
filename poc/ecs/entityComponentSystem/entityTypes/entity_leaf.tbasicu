@@ -11,7 +11,10 @@ type tEntity_Leaf extends tEntityBase
     me.entityAbility   = %ECS_RENDERABLE | %ECS_PHYSICSABLE | %ECS_COLLIDABLE
 
     me.collider.Initialize(1) ' Radius
+    me.collider.bounciness = 3
+    
     me.physics.Initialize(1)    ' Mass
+
   End Function
 
 end type

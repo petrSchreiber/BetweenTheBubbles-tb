@@ -66,12 +66,16 @@ type tEntityList_Collidable
     
     int32 i
     float32 dx, dy, distance, intersection
+
+    dim entityA as tEntityBase at 0
+    dim entityB as tEntityBase at 0
     
     dim circleColliderA as tBoundingCircle at 0
     dim circleColliderB as tBoundingCircle at 0
 
-    dim entityA as tEntityBase at 0
-    dim entityB as tEntityBase at 0
+    dim physicsA as tPhysicsBase at 0
+    dim physicsB as tPhysicsBase at 0
+    dword physicsAPtr, physicsBPtr
     
     for i = 1 to pairCount
       'printl indexOfColliderA, indexOfColliderB
@@ -88,7 +92,6 @@ type tEntityList_Collidable
       distance = sqr(dx*dx + dy*dy)
       
       ' -- Getting the info about radius/bounciness from collidable interface
-      
       SetAt(circleColliderA, collidablePtr(indexOfColliderA).pAbility(%ECS_COLLIDABLE_INDEX))
       SetAt(circleColliderB, collidablePtr(indexOfColliderB).pAbility(%ECS_COLLIDABLE_INDEX))
       
@@ -103,8 +106,24 @@ type tEntityList_Collidable
         entityB.position.y += dy/distance * intersection/2
         
         ' -- Physics
-        'if circleColliderA.bounciness > 0 then
-        'if circleColliderB.bounciness > 0 then
+        if circleColliderA.bounciness > 0 then
+          physicsAPtr = collidablePtr(indexOfColliderA).pAbility(%ECS_PHYSICSABLE_INDEX)
+          if physicsAPtr then
+            Setat(physicsA, physicsAPtr)
+            physicsA.force.x += -(dx/distance * intersection/2) * circleColliderA.bounciness
+            physicsA.force.y += -(dy/distance * intersection/2) * circleColliderA.bounciness
+          end if
+        end if
+        
+        if circleColliderB.bounciness > 0 then
+          physicsBPtr = collidablePtr(indexOfColliderB).pAbility(%ECS_PHYSICSABLE_INDEX)
+          if physicsBPtr then
+            Setat(physicsB, physicsBPtr)
+            physicsB.force.x += (dx/distance * intersection/2) * circleColliderB.bounciness
+            physicsB.force.y += (dy/distance * intersection/2) * circleColliderB.bounciness
+          end if
+        end if
+        
       end if
       
       #endregion
