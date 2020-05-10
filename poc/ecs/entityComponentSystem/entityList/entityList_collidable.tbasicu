@@ -47,8 +47,8 @@ type tEntityList_Collidable
     ' 3 4
     '
     ' Aha! We can see a pattern here:
-    ' Column A goes from 1x for (C-1) to (C-1)x for 1
-    ' Column B goes from C to C, C-1, to C, C-1, C-2 ...
+    ' Column A goes 1 1 1 (3x), 2 2 (2x), 3 (1x) => basically from 1 repeated C-1 times, to C-1 repeated 1 time
+    ' Column B goes 2 3 4, 3 4, 4 => shortening sequence, with max of C, and increasing base from 2 up
     ' The number of pairs can be calculated like ((C-1) / 2) * (C)
     
     int32 minColliderBIndex = 2                       ' Starting at 2 for any count, will raise to count
