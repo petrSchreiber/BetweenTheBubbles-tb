@@ -12,17 +12,24 @@ type tEntityList_Physicsable
     dim entityPhysics as tPhysicsBase at 0
     
     dim FORCE_DAMPING as Float32 = 0.9
+    dim SPIN_DAMPING as Float32 = 0.5
 
     int32 i
     for i = 1 to me.count
       setAt(entityBase   , pointersToPhysicsable(i).pEntity)
       setAt(entityPhysics, pointersToPhysicsable(i).pAbility(%ECS_PHYSICSABLE_INDEX))
       
+      ' EFFECT
       entityBase.position.x += (entityPhysics.force.x / entityPhysics.mass) / frameRate
       entityBase.position.y += (entityPhysics.force.y / entityPhysics.mass) / frameRate
 
+      entityBase.rotation   += (entityPhysics.spin / entityPhysics.mass) / frameRate
+
+
+      ' DAMPING
       entityPhysics.force.x += (-entityPhysics.force.x/FORCE_DAMPING) / frameRate
       entityPhysics.force.y += (-entityPhysics.force.y/FORCE_DAMPING) / frameRate
+      entityPhysics.spin    += (-entityPhysics.spin/SPIN_DAMPING) / frameRate
     next
     
   end function

@@ -76,6 +76,7 @@ type tEntityList_Collidable
     dim physicsA as tPhysicsBase at 0
     dim physicsB as tPhysicsBase at 0
     dword physicsAPtr, physicsBPtr
+    float32 speedX, speedY, spin
     
     for i = 1 to pairCount
       'printl indexOfColliderA, indexOfColliderB
@@ -106,21 +107,33 @@ type tEntityList_Collidable
         entityB.position.y += dy/distance * intersection/2
         
         ' -- Physics
-        if circleColliderA.bounciness > 0 then
-          physicsAPtr = collidablePtr(indexOfColliderA).pAbility(%ECS_PHYSICSABLE_INDEX)
-          if physicsAPtr then
+        speedX = (entityA.position.x-entityA.position.lastX) - (entityB.position.x-entityB.position.lastX)
+        speedY = (entityA.position.y-entityA.position.lastY) - (entityB.position.Y-entityB.position.lastY)
+        
+        if abs(speedX) > abs(speedY) then
+          spin = sgn(speedX) * iif(entityA.position.y > entityB.position.y, 1, -1)
+        else
+          spin = sgn(speedY) * iif(entityA.position.x > entityB.position.x, -1, 1)
+        end if
+        spin*= sqr(speedX*speedX + speedY*speedY) * 30
+        
+        physicsAPtr = collidablePtr(indexOfColliderA).pAbility(%ECS_PHYSICSABLE_INDEX)
+        if physicsAPtr then
+          if circleColliderA.bounciness > 0 then
             Setat(physicsA, physicsAPtr)
             physicsA.force.x += -(dx/distance * intersection/2) * circleColliderA.bounciness
             physicsA.force.y += -(dy/distance * intersection/2) * circleColliderA.bounciness
+            physicsA.spin    += spin
           end if
         end if
-        
-        if circleColliderB.bounciness > 0 then
-          physicsBPtr = collidablePtr(indexOfColliderB).pAbility(%ECS_PHYSICSABLE_INDEX)
-          if physicsBPtr then
+      
+        physicsBPtr = collidablePtr(indexOfColliderB).pAbility(%ECS_PHYSICSABLE_INDEX)
+        if physicsBPtr then
+          if circleColliderB.bounciness > 0 then
             Setat(physicsB, physicsBPtr)
             physicsB.force.x += (dx/distance * intersection/2) * circleColliderB.bounciness
             physicsB.force.y += (dy/distance * intersection/2) * circleColliderB.bounciness
+            physicsB.spin    += -spin
           end if
         end if
         
@@ -141,30 +154,6 @@ type tEntityList_Collidable
       
       indexOfColliderB = CYCLE_Next(indexOfColliderB, minColliderBIndex, maxColliderBIndex)
     next
-      
-    
-'      SetAt(forceAreaBase, collidablePtr(i).pEntity)
-'      
-'      if forceAreaBase.areaType = %ECS_FORCEAREA_CIRCULAR then
-'        setAt(forceAreaCircularEntity, collidablePtr(i).pEntity)
-'        
-'        for j = 1 to dummyPhysicsable.count
-'          setAt(entityBase, pointersToPhysicsable(j).pEntity)
-'          setAt(entityPhysics, pointersToPhysicsable(j).pEntity+pointersToPhysicsable(j).abilityOffset)
-'          
-'          distance = dist(entityBase.position.x, entityBase.position.y, forceAreaBase.position.x, forceAreaBase.position.y)
-'          if distance < forceAreaCircularEntity.radius then
-'           
-'            forceAreaCircularEntity.GetForceContribution(distance, fx, fy)
-'            entityPhysics.force.x += fx
-'            entityPhysics.force.y += fy
-'          end if
-'        next
-'      else
-'        msgbox 0, "Unknown forceAreaEntity"
-'        stop
-'      end if
-'     
 
   end function
 end type

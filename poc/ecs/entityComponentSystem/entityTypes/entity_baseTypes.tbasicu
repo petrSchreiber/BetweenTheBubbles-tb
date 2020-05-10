@@ -41,8 +41,9 @@ end type
 ' --
 
 type tPhysicsBase
-  mass     as float32
+  mass     as float32   '[todo] Incorporate to physics/collision calculations
   force    as tVector2
+  spin     as float32
   
   function Initialize(mass as float32)
     me.mass = mass
