@@ -46,9 +46,9 @@ function parametersSetting()
 
   myRiver.banksWidth = 3
   myRiver.minHalfWidth = 1
-  myRiver.maxHalfWidth = 10
+  myRiver.maxHalfWidth = 5 ' typical = 3 to 12
   myRiver.minSectorSurface = 100 * myRiver.maxHalfWidth
-  myRiver.seed = 23031
+  myRiver.seed = 71250831 ' try different values ' 23031
 
   global mapDimensions as tXY
 
@@ -88,9 +88,19 @@ function initWorldMap()
       actualPosition.y += 1
       widen2
     next j
-    call drawing
+    drawing
   next i
-
+  
+  ' Drawing a square 
+  ' if map dimensions .y is < screen vertical resolution then
+  ' the square is square ( for myRiver.maxHalfWidth = 3 or 4 )
+  ' else it is squashed ( for myRiver.maxHalfWidth = 5 to 12 )
+  ' could be fun to render to a scaled picture
+  
+  widen(10,10,150,150)
+  widen(280,500,300,1000)
+  drawing
+  
 End Function
 
 Function widen2()
@@ -109,18 +119,24 @@ function stirWorldMap()
 
   latitude = RND(myRiver.maxHalfWidth, mapDimensions.y - myRiver.maxHalfWidth)
   longitude = rnd(myRiver.maxHalfWidth, mapDimensions.x - myRiver.maxHalfWidth)
-  
   crossMap(%EAST, latitude)
-  
+  drawing
   
   'Limited demo
-  For foo as byte = 1 to 10
-    latitude = RND(myRiver.maxHalfWidth, mapDimensions.y - myRiver.maxHalfWidth)
-    crossMap(%EAST, latitude)
-    drawing
-  next foo
+  
+  For barr as byte = 1 to 5 
+    For foo as byte = 1 to 2
+      latitude = RND(myRiver.maxHalfWidth, mapDimensions.y - myRiver.maxHalfWidth)
+      crossMap(%WEST, latitude)
+      drawing
+    next foo
+    For foo as byte = 1 to 2
+      latitude = RND(myRiver.maxHalfWidth, mapDimensions.y - myRiver.maxHalfWidth)
+      crossMap(%EAST, latitude)
+      drawing
+    next foo
+  next barr
   MsgBox 0, "Done"
-
 
 End Function
 
@@ -153,26 +169,26 @@ Function crossMap(toWhere as byte, borderPosition as DWord)
             
           getStretchLength(toWhere, startPosition, isCrossing, fromTo)
 
-          minStretchLength = 2 + isCrossing * 2 + myRiver.banksWidth * 2
+          minStretchLength = 2 + isCrossing * 2 + myRiver.banksWidth * 4
           
           if fromTo.y - fromTo.x >= minStretchLength Then
           
-            fromToSelectSize = rnd(Fix( 0.1 * (fromTo.y - fromTo.x)),Fix( 0.9 * (fromTo.y - fromTo.x)))
-            
+            fromToSelectSize = rnd(minStretchLength, Max(minStretchLength, Fix( 0.9 * (fromTo.y - fromTo.x - myRiver.banksWidth * 4))))
+            'printl "minStretchLength: " , minStretchLength , "select size: ", fromToSelectSize, "out of : ", str$(fromTo.y - fromTo.x)
             positionSelection = (fromTo.y - fromTo.x - fromToSelectSize)
             
-            positionOffset = rnd(Fix(0.1 * positionSelection), Fix(0.9 * PositionSelection))
+            positionOffset = rnd(myRiver.banksWidth * 4, fix(PositionSelection/2))
             
             fromTo.x += positionOffset
             fromTo.y = fromTo.x + fromToSelectSize
 
             maxExpandPlace = getExpandPlace(toWhere, fromTo, startPosition, isCrossing)
 
-            if maxExpandPlace < startPosition.x - isCrossing - 1 Then
+            if maxExpandPlace < startPosition.x - isCrossing - 1 - 2 * myRiver.banksWidth Then
             
-            actualExpand = fix(0.15 * (startPosition.x - isCrossing - 1 - maxExpandPlace))
+              actualExpand = fix(0.15 * (startPosition.x - isCrossing - 1 - maxExpandPlace))
 
-            maxExpandPlace = rnd(fix(maxExpandPlace + actualExpand), startPosition.x - isCrossing - 1 - actualExpand)          
+              maxExpandPlace = rnd(maxExpandPlace + actualExpand, startPosition.x - isCrossing - 1 - actualExpand)
              
               widen(maxExpandPlace , fromTo.x, maxExpandPlace + isCrossing - 1, fromTo.y) ' (XNW as DWord, YNW as DWord, XSE as DWord, YSE as DWord)
               widen(maxExpandPlace + isCrossing, fromTo.y - isCrossing + 1 , startPosition.x - isCrossing - 1 , fromTo.y )
@@ -187,6 +203,56 @@ Function crossMap(toWhere as byte, borderPosition as DWord)
       Next
 
     case %WEST
+    
+    for i as DWord = mapDimensions.x to 1 step -1
+
+        if map.isGameZone(i, borderPosition) Then
+        
+          incr isCrossing
+          
+        elseif isCrossing > 0 Then
+        
+          if isCrossing > maxLarge Then
+            isCrossing = 0
+            Iterate for
+          endif
+
+          startPosition.x = i
+          startPosition.y = borderPosition
+            
+          getStretchLength(toWhere, startPosition, isCrossing, fromTo)
+
+          minStretchLength = 2 + isCrossing * 2 + myRiver.banksWidth * 4
+          
+          if fromTo.y - fromTo.x >= minStretchLength Then
+          
+            fromToSelectSize = rnd(minStretchLength, Max(minStretchLength, Fix( 0.9 * (fromTo.y - fromTo.x - myRiver.banksWidth * 4))))
+            
+            positionSelection = (fromTo.y - fromTo.x - fromToSelectSize)
+            
+            positionOffset = rnd(myRiver.banksWidth * 4, fix(PositionSelection/2))
+            
+            fromTo.x += positionOffset
+            fromTo.y = fromTo.x + fromToSelectSize
+
+            maxExpandPlace = getExpandPlace(toWhere, fromTo, startPosition, isCrossing)
+
+            if maxExpandPlace > startPosition.x + isCrossing + 1 + 2 * myRiver.banksWidth Then
+            
+            actualExpand = fix(0.15 * (maxExpandPlace - startPosition.x + isCrossing + 1))
+
+            maxExpandPlace = rnd(maxExpandPlace - actualExpand, startPosition.x + isCrossing + 1 + actualExpand)
+             
+              widen(maxExpandPlace - isCrossing + 1, fromTo.x, maxExpandPlace, fromTo.y) ' (XNW as DWord, YNW as DWord, XSE as DWord, YSE as DWord)
+              widen(startPosition.x + isCrossing + 1, fromTo.y - isCrossing + 1 , maxExpandPlace - isCrossing , fromTo.y )
+              widen(startPosition.x + isCrossing + 1, fromTo.x, maxExpandPlace - isCrossing , fromTo.x + isCrossing )
+              refund(startPosition.x +1, fromTo.x + isCrossing + 1, startPosition.x + 1 + isCrossing, fromTo.y - isCrossing)
+            End If
+          endif
+        isCrossing = 0
+        endif
+        
+      Next
 
     Case %NORTH
     Case %SOUTH
@@ -199,17 +265,27 @@ Function getExpandPlace(toWhere as Byte, fromTo as tXY, startPosition as tXY, is
     select case toWhere
     case %EAST
     
-    for i as DWord = startPosition.x + myRiver.banksWidth to 1 step -1
-    	for j as dword = fromTo.y - myRiver.banksWidth to fromTo.x + myRiver.banksWidth
-        if map.isGameZone(i, startPosition.y) Then
-          return i + myRiver.banksWidth
+    for i as DWord = startPosition.x - myRiver.banksWidth - isCrossing to 1 step -1 ' 
+    	for j as dword = fromTo.x - myRiver.banksWidth to fromTo.y + myRiver.banksWidth
+        if map.isGameZone(i, j) Then
+          return i + 2 * myRiver.banksWidth
         endif
     	Next
     Next
     
-    return myRiver.banksWidth
+    return 2 * myRiver.banksWidth
     
     case %WEST
+    
+    for i as DWord = startPosition.x + myRiver.banksWidth + isCrossing to mapDimensions.x
+    	for j as dword = fromTo.x - myRiver.banksWidth to fromTo.y + myRiver.banksWidth
+        if map.isGameZone(i, j) Then
+          return i - 2 * myRiver.banksWidth
+        endif
+    	Next
+    Next
+    
+    return mapDimensions.x - 2 * myRiver.banksWidth
 
     Case %NORTH
     Case %SOUTH
@@ -228,22 +304,78 @@ Function getStretchLength(toWhere as BYTE, startPosition as tXY, stretchWidth as
 
         if map.isGameZone(startPosition.x, i) and leftRight1 = 0 Then
           leftRight1 = i + 1
+          exit for
         End If
         if map.isGameZone(startPosition.x - 1, i) = 0 and leftRight2 = 0 Then
           leftRight2 = i + 1
+          exit for
         End If
         if map.isGameZone(startPosition.x - stretchWidth, i) = 0 and leftRight3 = 0 Then
           leftRight3 = i + 1
+          exit for
         End If
         if map.isGameZone(startPosition.x - stretchWidth - 1, i) and leftRight4 = 0 Then
           leftRight4 = i + 1
+          exit for
+        End If
+        
+      Next
+
+      stretchLength.x = max(leftRight1, leftRight2, leftRight3, leftRight4)
+   
+      leftRight1 = mapDimensions.y
+      leftRight2 = mapDimensions.y
+      leftRight3 = mapDimensions.y
+      leftRight4 = mapDimensions.y
+
+      For i as Dword = startPosition.y To mapDimensions.y
+
+        if map.isGameZone(startPosition.x, i) and leftRight1 = mapDimensions.y Then
+          leftRight1 = i - 1
+          exit for
+        End If
+        if map.isGameZone(startPosition.x - 1, i) = 0 and leftRight2 = mapDimensions.y Then
+          leftRight2 = i - 1
+          exit for
+        End If
+        if map.isGameZone(startPosition.x - stretchWidth, i) = 0 and leftRight3 = mapDimensions.y Then
+          leftRight3 = i - 1
+          exit for
+        End If
+        if map.isGameZone(startPosition.x - stretchWidth - 1, i) and leftRight4 = mapDimensions.y Then
+          leftRight4 = i - 1
+          Exit for
+        End If
+
+      Next
+
+      stretchLength.y = min(leftRight1, leftRight2, leftRight3, leftRight4)
+
+    case %WEST
+
+      for i as dword = startPosition.y to 1 step -1
+
+        if map.isGameZone(startPosition.x, i) and leftRight1 = 0 Then
+          leftRight1 = i + 1
+          Exit for
+        End If
+        if map.isGameZone(startPosition.x + 1, i) = 0 and leftRight2 = 0 Then
+          leftRight2 = i + 1
+          Exit for
+        End If
+        if map.isGameZone(startPosition.x + stretchWidth, i) = 0 and leftRight3 = 0 Then
+          leftRight3 = i + 1
+          Exit for
+        End If
+        if map.isGameZone(startPosition.x + stretchWidth + 1, i) and leftRight4 = 0 Then
+          leftRight4 = i + 1
+          Exit for
         End If
 
       Next
 
       stretchLength.x = max(leftRight1, leftRight2, leftRight3, leftRight4)
    
-  '[o] <this part needs to be optimized>  -  faster assign ?
       leftRight1 = mapDimensions.y
       leftRight2 = mapDimensions.y
       leftRight3 = mapDimensions.y
@@ -253,23 +385,25 @@ Function getStretchLength(toWhere as BYTE, startPosition as tXY, stretchWidth as
 
       if map.isGameZone(startPosition.x, i) and leftRight1 = mapDimensions.y Then
           leftRight1 = i - 1
+          Exit for
         End If
-        if map.isGameZone(startPosition.x - 1, i) = 0 and leftRight2 = mapDimensions.y Then
+        if map.isGameZone(startPosition.x + 1, i) = 0 and leftRight2 = mapDimensions.y Then
           leftRight2 = i - 1
+          Exit for
         End If
-        if map.isGameZone(startPosition.x - stretchWidth, i) = 0 and leftRight3 = mapDimensions.y Then
+        if map.isGameZone(startPosition.x + stretchWidth, i) = 0 and leftRight3 = mapDimensions.y Then
           leftRight3 = i - 1
+          Exit for
         End If
-        if map.isGameZone(startPosition.x - stretchWidth - 1, i) and leftRight4 = mapDimensions.y Then
+        if map.isGameZone(startPosition.x + stretchWidth + 1, i) and leftRight4 = mapDimensions.y Then
           leftRight4 = i - 1
+          Exit for
         End If
 
       Next
 
       stretchLength.y = min(leftRight1, leftRight2, leftRight3, leftRight4)
-
-    case %WEST
-
+      
     Case %NORTH
     Case %SOUTH
 
@@ -326,32 +460,6 @@ function refund(XNW as DWord, YNW as DWord, XSE as DWord, YSE as DWord)
 
 End Function
 
-function checkWiden()
-  checkWiden = %TRUE
-  local minx as long = testPosition.x - actualRiverStatus.minWidth - myRiver.banksWidth
-  Local miny as long = testPosition.y - actualRiverStatus.minWidth - myRiver.banksWidth
-  Local maxx as Long = testPosition.x + actualRiverStatus.minWidth + myRiver.banksWidth
-  Local maxy as long = testPosition.y + actualRiverStatus.minWidth + myRiver.banksWidth
-
-  select case randomDirection
-    Case 1
-      minx = testPosition.x + actualRiverStatus.minWidth
-    Case 2
-      maxx = testPosition.x - actualRiverStatus.minWidth
-    Case 3
-      miny = testPosition.y + actualRiverStatus.minWidth
-    Case 4
-      maxy = testPosition.y - actualRiverStatus.minWidth
-  End Select
-
-  for l as Long = miny to maxy
-    for k as Long = minx to maxx
-      if map.isGameZone(k,l) Then
-        return %FALSE
-      endif
-    next
-  next
-End Function
 
 function isDirectionSet(compass as long, direction as long) as long
   return bit_get(compass, log2(direction))
