@@ -11,7 +11,7 @@ Randomize timer
 function tbMain()
   
   ' -- Create and show window
-  dWord hWnd = tbgl_createWindowEx("ECS experiment - press ESC to quit", 640, 480, 32, %TBGL_WS_WINDOWED | %TBGL_WS_CLOSEBOX)
+  dWord hWnd = tbgl_createWindowEx("ECS experiment - press ESC to quit", 1280, 720, 32, %TBGL_WS_WINDOWED | %TBGL_WS_CLOSEBOX)
   tbgl_showWindow
 
   #region "create and initialize ECS"
@@ -23,7 +23,7 @@ function tbMain()
   ecs.AddEntityPtr(varptr(p))
     
   ' LEAVES
-  dim leaves(16) as tEntity_Leaf
+  dim leaves(30) as tEntity_Leaf
   int32 i
 
   for i = 1 to UBound(leaves)

@@ -11,7 +11,7 @@ type tEntityList_Collidable
   
   function Process()
     if me.physicsablePtr = 0 then exit function
-    if me.count = 0          then exit function
+    if me.count < 2          then exit function ' It needs at least 2 to collide :)
     
     dim collidablePtr(me.count) as tEntityList_Descriptor at me.pData
     
@@ -24,9 +24,101 @@ type tEntityList_Collidable
     dim forceAreaBase as tEntity_ForceArea_Base at 0
     dim forceAreaCircularEntity as tEntity_ForceArea_Circular at 0
     
-    int32 i, j
-    float32 distance, fx, fy
-'    for i = 1 to me.count
+    ' IDEA:
+    ' For 4 colliders, C = 4
+    ' 
+    ' Collision table (Y = Yes, collide with each other, N = Don't collide)
+    ' We want to calculate interaction with 1 and 2 for example, but doing the same for 2 and 1 makes no sense
+    '
+    '   1 2 3 4
+    ' 1 N N N N
+    ' 2 Y N N N
+    ' 3 Y Y N N
+    ' 4 Y Y Y N
+    '
+    ' Now, expanded to just indexes (again for 4 colliders)
+    '
+    ' A B
+    ' 1 2
+    ' 1 3
+    ' 1 4
+    ' 2 3
+    ' 2 4
+    ' 3 4
+    '
+    ' Aha! We can see a pattern here:
+    ' Column A goes from 1x for (C-1) to (C-1)x for 1
+    ' Column B goes from C to C, C-1, to C, C-1, C-2 ...
+    ' The number of pairs can be calculated like (C / 2) * (C + 1)
+    
+    int32 minColliderBIndex = 2                       ' Starting at 2 for any count, will raise to count
+    int32 maxColliderBIndex = me.count                ' Ending at count
+
+    int32 indexOfColliderA = 1                        ' Basically 1 always :)
+    int32 indexOfColliderB = minColliderBIndex        ' Basically 2 always :)
+    
+    int32 pairCount = ((me.count-1) / 2) * (me.count) ' For 4 it is 6, for 5 it is 10, ...
+    
+    int32 auxiliaryCounter
+    int32 auxiliaryCounterMax = me.count - 1          ' Example: 3 for case of 4, as seen in the table, then it will go down with each A increment
+    
+    printl "Potential collision interactions: " + pairCount in 13
+    
+    int32 i
+    float32 dx, dy, distance, intersection
+    
+    dim circleColliderA as tBoundingCircle at 0
+    dim circleColliderB as tBoundingCircle at 0
+
+    dim entityA as tEntityBase at 0
+    dim entityB as tEntityBase at 0
+    
+    for i = 1 to pairCount
+      'printl indexOfColliderA, indexOfColliderB
+      ' -- Calculating collision between collider A and collider B
+      '[todo] Detect collider type, prepare safe check for collider type (now we just presume circular for all)
+      
+      #region "circle to circle collision"
+      ' -- Getting the info about position from base interface
+      SetAt(entityA, collidablePtr(indexOfColliderA).pEntity)
+      SetAt(entityB, collidablePtr(indexOfColliderB).pEntity)
+
+      dx = entityB.position.x - entityA.position.x
+      dy = entityB.position.y - entityA.position.y
+      distance = sqr(dx*dx + dy*dy)
+      
+      ' -- Getting the info about radius from collidable interface
+      SetAt(circleColliderA, collidablePtr(indexOfColliderA).pEntity+collidablePtr(indexOfColliderA).abilityOffset)
+      SetAt(circleColliderB, collidablePtr(indexOfColliderB).pEntity+collidablePtr(indexOfColliderB).abilityOffset)
+      
+      intersection = (circleColliderA.radius + circleColliderB.radius) - distance
+      
+      if intersection > 0 then ' The circles overlap = collide
+        ' Fix the distance to "just touch" = move circles away on the vector dx, dy, but each in opposite direction
+        entityA.position.x -= dx/distance * intersection/2
+        entityA.position.y -= dy/distance * intersection/2
+        
+        entityB.position.x += dx/distance * intersection/2
+        entityB.position.y += dy/distance * intersection/2
+      end if
+      
+      #endregion
+      
+      ' -- Calculating next indexOfColliderA, indexOfColliderB
+      auxiliaryCounter += 1
+      if auxiliaryCounter = auxiliaryCounterMax then
+        indexOfColliderA += 1
+        
+        minColliderBIndex += 1
+        
+        auxiliaryCounter     = 0
+        auxiliaryCounterMax -= 1
+      end if
+      
+      indexOfColliderB = CYCLE_Next(indexOfColliderB, minColliderBIndex, maxColliderBIndex)
+    next
+      
+    
 '      SetAt(forceAreaBase, collidablePtr(i).pEntity)
 '      
 '      if forceAreaBase.areaType = %ECS_FORCEAREA_CIRCULAR then
@@ -49,7 +141,7 @@ type tEntityList_Collidable
 '        stop
 '      end if
 '     
-'    next
+
   end function
 end type
 

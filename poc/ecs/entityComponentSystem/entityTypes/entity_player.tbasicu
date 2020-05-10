@@ -7,9 +7,9 @@ type tEntity_Player extends tEntityBase
   function Initialize()
     me.typeName        = remain$(typeof$(me), ".") ' Cuts the udt. start
     me.entityAbility   = %ECS_RENDERABLE | %ECS_PHYSICSABLE | %ECS_COLLIDABLE
-    me.collider.radius = 0.5
-    
-    me.physics.mass    = 3
+
+    me.collider.Initialize(0.5) ' Radius
+    me.physics.Initialize(3)    ' Mass
   End Function
 
 end type

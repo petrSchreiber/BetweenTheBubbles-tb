@@ -23,7 +23,9 @@ begin const
   %ECS_FORCEAREA_CIRCULAR = 1
 end const
 
-type TEntity_ForceArea_Base extends tEntityBase
+type TEntity_ForceArea_Base
+  tEntityBase
+
   areaType  as int32
   areaData  as dword
   baseForce as float32
@@ -34,6 +36,10 @@ end type
 type tPhysicsBase
   mass     as float32
   force    as tVector2
+  
+  function Initialize(mass as float32)
+    me.mass = mass
+  end function
 End type
 
 ' --
@@ -44,6 +50,14 @@ type tColliderBase
   bounciness  as Float32
 end type
 
-type tBoundingCircle Extends tColliderBase
+type tBoundingCircle
+  tColliderBase
+  
 	radius   as Float32
+	
+  function Initialize(radius as float32)
+    me.typeName = remain$(typeof$(me), ".") ' Cuts the udt. start
+    
+    me.radius   = radius
+  End Function
 End Type

@@ -87,7 +87,7 @@ type tEntityComponentSystem
 
     if entity.hasAbility(%ECS_COLLIDABLE) then
       printl entityBase.typeName + " is collidable"
-      me.collidable.addEntityPtr(entityPtr)
+      me.collidable.addEntityPtr(entityPtr, UDT_ElementOffset(entity.collider.typeName))
     end if
 
     if entity.hasAbility(%ECS_PHYSICSABLE) then
