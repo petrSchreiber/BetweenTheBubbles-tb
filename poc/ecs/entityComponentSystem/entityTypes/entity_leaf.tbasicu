@@ -7,7 +7,7 @@ type tEntity_Leaf extends tEntityBase
   collider   as tBoundingCircle
  
   function Initialize()
-    me.typeName        = remain$(typeof$(me), ".") ' Cuts the udt. start
+    me.typeName        = remain$(typeof(me), ".") ' Cuts the udt. start
     me.entityAbility   = %ECS_RENDERABLE | %ECS_PHYSICSABLE | %ECS_COLLIDABLE
 
     me.collider.Initialize(1) ' Radius

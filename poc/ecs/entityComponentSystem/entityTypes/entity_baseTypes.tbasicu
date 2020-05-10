@@ -64,7 +64,7 @@ type tBoundingCircle
 	radius   as Float32
 	
   function Initialize(radius as float32)
-    me.typeName = remain$(typeof$(me), ".") ' Cuts the udt. start
+    me.typeName = remain$(typeof(me), ".") ' Cuts the udt. start
     
     me.radius   = radius
   End Function

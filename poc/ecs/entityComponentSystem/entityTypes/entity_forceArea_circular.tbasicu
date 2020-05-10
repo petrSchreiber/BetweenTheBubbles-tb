@@ -12,7 +12,7 @@ type tEntity_ForceArea_Circular
   
   function Initialize(force as float32, radius as float32, centralIntensity as float32, borderIntensity as float32)
     me.areaType         = %ECS_FORCEAREA_CIRCULAR
-    me.typeName         = remain$(typeof$(me), ".") ' Cuts the udt. start
+    me.typeName         = remain$(typeof(me), ".") ' Cuts the udt. start
     me.entityAbility    = %ECS_DEBUGABLE | %ECS_FORCEAREA
     me.baseForce        = force
     
