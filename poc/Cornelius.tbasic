@@ -1,9 +1,14 @@
 ﻿'---Script created on 04-25-2020 20:39:06 by
-'uses "console"
+uses "console"
 Uses "TBGL"
 Uses "UI"
 
 #include "gameZoneDefinition.tbasicu"
+#Include "https://github.com/DirectuX/logger/raw/master/LOG.tbasicu"
+
+Global logger as tLogThis
+logger.defaultTarget = %LT_ToConsole
+Console_SetScreenBufferSize(120,300)
 
   Type tRiver
       minSectorSurface as dWord
@@ -11,6 +16,8 @@ Uses "UI"
       maxHalfWidth as byte
       banksWidth as byte
       seed as Number
+      meandering as single
+      meander as Single
 End Type
 
   Type tXY
@@ -28,6 +35,9 @@ End Type
 
 Function TBMain()
 
+  logger.defaultTitle = Function_Name
+  logger.wInfo("Logger loaded")
+
   call parametersSetting ' Sets initial variables
   Call initDisplay ' Create the windows for map display
   Call initWorldMap ' Build straight river
@@ -38,6 +48,8 @@ End Function
 
 function parametersSetting()
 
+  logger.defaultTitle = Function_Name
+
   global displayWindowSize as tXY
   global hWnd AS DWORD
 
@@ -46,10 +58,13 @@ function parametersSetting()
 
   myRiver.banksWidth = 3
   myRiver.minHalfWidth = 1
-  myRiver.maxHalfWidth = 5 ' typical = 3 to 12
+  myRiver.maxHalfWidth = 4 ' typical = 3 to 12
   myRiver.minSectorSurface = 100 * myRiver.maxHalfWidth
-  myRiver.seed = 71250831 ' try different values ' 23031
+  myRiver.meandering = 0.15 ' how is the meander distribution ( far-off and nearby disclosed % ) typical = 0.15
+  myRiver.meander = 0.9 ' how max long is meander ( is a % of stretch length ) typical = 0.9
+  myRiver.seed = 23031 ' try different values ' 23031
 
+  Global maxLarge as Byte = 1 + myRiver.maxHalfWidth * 2 ' max river width, this is also the lakes's minimum side
   global mapDimensions as tXY
 
   for i as byte = myRiver.minHalfWidth to myRiver.maxHalfWidth
@@ -60,12 +75,14 @@ function parametersSetting()
 
   global actualPosition as tXY
 
+'[todo] add a calm pool there (minimum lake size should be ok)
+'Start (source) of the river
   actualPosition.y = 0
   actualPosition.x = fix(mapDimensions.x / 2)
 
   global map as tGameZoneDefinition()
 
-  MsgBox 0, mapDimensions.x & " x " & mapDimensions.y , , "mapDimensions"
+  logger.write(%LT_ToMsgBox + %LT_ToConsole, mapDimensions.x & " x " & mapDimensions.y, "mapDimensions", %TAG_INFO)
 
 End Function
 
@@ -73,7 +90,6 @@ function initDisplay()
 
   DESKTOP GET CLIENT TO displayWindowSize.x, displayWindowSize.y
 
-' why (-15) ?
   hWnd = tbgl_CreateWindowEx("press ESC to quit", min(mapDimensions.x, displayWindowSize.x / 2), min(mapDimensions.y, displayWindowSize.y), 32, %tbgl_WS_WINDOWED or %tbgl_WS_CLOSEBOX, -15 + displayWindowSize.x - min(mapDimensions.x, displayWindowSize.x / 2), 0)
   tbgl_ShowWindow
   tbgl_ResetKeyState()
@@ -81,6 +97,11 @@ function initDisplay()
 End Function
 
 function initWorldMap()
+
+  logger.defaultTitle = Function_Name
+
+  logger.wInfo("Generating a " & str$(1 + myRiver.maxHalfWidth - myRiver.minHalfWidth) & " segments river")
+  logger.wInfo("Min width = " & str$(1 + 2 * myRiver.minHalfWidth) & " gameZones" & $TAB & "Max width = " & str$(1 + 2 * myRiver.maxHalfWidth) & " gameZones")
 
   for i as byte = myRiver.minHalfWidth to myRiver.maxHalfWidth
     actualRiverStatus.minHalfWidth = i
@@ -90,17 +111,16 @@ function initWorldMap()
     next j
     drawing
   next i
-  
-  ' Drawing a square 
-  ' if map dimensions .y is < screen vertical resolution then
-  ' the square is square ( for myRiver.maxHalfWidth = 3 or 4 )
-  ' else it is squashed ( for myRiver.maxHalfWidth = 5 to 12 )
-  ' could be fun to render to a scaled picture
-  
-  widen(10,10,150,150)
-  widen(280,500,300,1000)
+
+' Drawing a square
+' if map dimensions .y is < screen vertical resolution then
+' the square is square ( for myRiver.maxHalfWidth = 3 or 4 )
+' else it is squashed ( for myRiver.maxHalfWidth = 5 to 12 )
+' could be fun to render to a scaled picture with no distortion
+
+  widen(10,10,50,50)
   drawing
-  
+
 End Function
 
 Function widen2()
@@ -117,180 +137,340 @@ function stirWorldMap()
 
   Local longitude, latitude as DWord
 
-  latitude = RND(myRiver.maxHalfWidth, mapDimensions.y - myRiver.maxHalfWidth)
-  longitude = rnd(myRiver.maxHalfWidth, mapDimensions.x - myRiver.maxHalfWidth)
-  crossMap(%EAST, latitude)
-  drawing
-  
-  'Limited demo
-  
-  For barr as byte = 1 to 5 
-    For foo as byte = 1 to 2
-      latitude = RND(myRiver.maxHalfWidth, mapDimensions.y - myRiver.maxHalfWidth)
-      crossMap(%WEST, latitude)
-      drawing
-    next foo
-    For foo as byte = 1 to 2
-      latitude = RND(myRiver.maxHalfWidth, mapDimensions.y - myRiver.maxHalfWidth)
-      crossMap(%EAST, latitude)
-      drawing
-    next foo
-  next barr
-  MsgBox 0, "Done"
+'latitude = RND(myRiver.maxHalfWidth, mapDimensions.y - myRiver.maxHalfWidth)
+'longitude = rnd(myRiver.maxHalfWidth, mapDimensions.x - myRiver.maxHalfWidth)
+'crossMap(%WEST, 1250)
+'drawing
+
+'Limited demo
+
+'  For barr as byte = 1 to 1
+'
+'    For foo as byte = 1 to 1
+'      latitude = RND(myRiver.maxHalfWidth, mapDimensions.y - myRiver.maxHalfWidth)
+'
+'      logger.write(%LT_ToConsole, "Walking to the %EAST at y= " & str$(latitude), Function_Name, %TAG_INFO)
+'
+'      crossMap(%EAST, latitude)
+'      drawing
+'    next foo
+'    For foo as byte = 1 to 1
+'      longitude = RND(myRiver.maxHalfWidth, mapDimensions.x - myRiver.maxHalfWidth)
+'
+'      logger.write(%LT_ToConsole, "Walking to the %SOUTH at x= " & str$(longitude), Function_Name, %TAG_INFO)
+'
+'      crossMap(%SOUTH, longitude)
+'      drawing
+'    next foo
+'
+'    For foo as byte = 1 to 1
+'      latitude = RND(myRiver.maxHalfWidth, mapDimensions.y - myRiver.maxHalfWidth)
+'
+'      logger.write(%LT_ToConsole, "Walking to the %WEST at y= " & str$(latitude), Function_Name, %TAG_INFO)
+'
+'      crossMap(%WEST, latitude)
+'      drawing
+'    next foo
+'
+'    For foo as byte = 1 to 1
+'      longitude = rnd(myRiver.maxHalfWidth, mapDimensions.x - myRiver.maxHalfWidth)
+'
+'      logger.write(%LT_ToConsole, "Walking to the %NORTH at x= " & str$(longitude), Function_Name, %TAG_INFO)
+'
+'      crossMap(%NORTH, longitude)
+'      drawing
+'    next foo
+'
+'  next barr
+
+'TESTED OK
+'crossMap(%EAST, 100)
+'drawing
+
+'crossMap(%WEST, 100)
+'drawing
+
+
+  logger.write(%LT_ToConsole + %LT_ToMsgBox, "Stiring done.", Function_Name, %TAG_INFO)
 
 End Function
 
 Function crossMap(toWhere as byte, borderPosition as DWord)
 
   local isCrossing as byte
-  Local maxLarge as Byte = 1 + myRiver.maxHalfWidth * 2
   Local fromTo, startPosition as tXY
-  Local minStretchLength, maxExpandPlace, actualExpand, fromToSelectSize, positionSelection, positionOffset as DWord
+  Local minStretchLength, maxExpandPlace, minExpandPlace, actualExpand, fromToSelectSize, maxSelectSize, positionSelection, positionOffset as DWord
+
+  select case toWhere
+    case %EAST
+      for i as DWord = 1 to mapDimensions.x
+
+        if map.isGameZone(i, borderPosition) Then
+          incr isCrossing
+        elseif isCrossing > 0 Then
+          if isCrossing > maxLarge Then
+            isCrossing = 0
+            Iterate for
+          endif
+
+          startPosition.x = i
+          startPosition.y = borderPosition
+          getStretchLength(toWhere, startPosition, isCrossing, fromTo)
+
+          logger.write(%LT_ToConsole, "Crossed a " & str$(fromTo.y - fromTo.x) & " gameZones long stretch of a " & str$(isCrossing) & " gameZones wide river", Function_Name, %TAG_DEBUG)
+
+          minStretchLength = 2 + isCrossing * 2 + myRiver.banksWidth * 4
+
+          if fromTo.y - fromTo.x >= minStretchLength Then
+            maxSelectSize = Max(minStretchLength, Fix( myRiver.meander* (fromTo.y - fromTo.x - myRiver.banksWidth * 4)))
+            fromToSelectSize = rnd(minStretchLength, maxSelectSize)
+
+            logger.write(%LT_ToConsole, "Selected = " & str$(fromToSelectSize) & " out of [" & str$(minStretchLength) & ";" & str$(maxSelectSize) & "]" , Function_Name, %TAG_DEBUG)
+
+            positionSelection = (fromTo.y - fromTo.x - fromToSelectSize)
+            positionOffset = rnd(min(myRiver.banksWidth * 4,fix(PositionSelection/2)), fix(PositionSelection/2))
+            fromTo.x += positionOffset
+            fromTo.y = fromTo.x + fromToSelectSize
+            maxExpandPlace = getExpandPlace(toWhere, fromTo, startPosition, isCrossing)
+            minExpandPlace = startPosition.x - isCrossing - 1 - 2 * myRiver.banksWidth
+
+            if maxExpandPlace < minExpandPlace Then
+
+' actualExpand = fix(myRiver.meandering * (startPosition.x - isCrossing - 1 - maxExpandPlace))
+'  maxExpandPlace = rnd(maxExpandPlace + actualExpand, startPosition.x - isCrossing - 1 - actualExpand)
+
+' (XNW as DWord, YNW as DWord, XSE as DWord, YSE as DWord)
+              refund(startPosition.x - isCrossing , fromTo.x + isCrossing, startPosition.x - 1, fromTo.y - isCrossing)
+              widen(maxExpandPlace, fromTo.x, maxExpandPlace + isCrossing - 1, fromTo.y)
+              widen(maxExpandPlace + isCrossing, fromTo.x, startPosition.x - isCrossing - 1 , fromTo.x + isCrossing - 1)
+              widen(maxExpandPlace + isCrossing, fromTo.y - isCrossing + 1, startPosition.x - isCrossing - 1 , fromTo.y)
+
+            Else
+              logger.write(%LT_ToConsole, "Max expand place x= " & str$(maxExpandPlace) & " > " & str$(minExpandPlace) & ", ignoring this stretch", Function_Name, %TAG_NOTICE)
+            End If
+          Else
+            logger.write(%LT_ToConsole, "Min stretch length = " & str$(minStretchLength) & " gameZones,  ignoring this stretch", Function_Name, %TAG_NOTICE)
+          endif
+          isCrossing = 0
+        endif
+
+      Next
+    case %WEST
+      for i as DWord = mapDimensions.x to 1 step -1
+
+        if map.isGameZone(i, borderPosition) Then
+          incr isCrossing
+        elseif isCrossing > 0 Then
+          if isCrossing > maxLarge Then
+            isCrossing = 0
+            Iterate for
+          endif
+
+          startPosition.x = i
+          startPosition.y = borderPosition
+          getStretchLength(toWhere, startPosition, isCrossing, fromTo)
+
+          logger.write(%LT_ToConsole, "Crossed a " & str$(fromTo.y - fromTo.x) & " gameZones long stretch of a " & str$(isCrossing) & " gameZones wide river", Function_Name, %TAG_DEBUG)
+
+          minStretchLength = 2 + isCrossing * 2 + myRiver.banksWidth * 4
+
+          if fromTo.y - fromTo.x >= minStretchLength Then
+            maxSelectSize = Max(minStretchLength, Fix( myRiver.meander * (fromTo.y - fromTo.x - myRiver.banksWidth * 4)))
+            fromToSelectSize = rnd(minStretchLength, maxSelectSize)
+
+            logger.write(%LT_ToConsole, "Selected = " & str$(fromToSelectSize) & " out of [" & str$(minStretchLength) & ";" & str$(maxSelectSize) & "]" , Function_Name, %TAG_DEBUG)
+
+            positionSelection = (fromTo.y - fromTo.x - fromToSelectSize) - myRiver.banksWidth
+            positionOffset = rnd(myRiver.banksWidth,positionSelection)
+            fromTo.x += positionOffset
+            fromTo.y = fromTo.x + fromToSelectSize
+            maxExpandPlace = getExpandPlace(toWhere, fromTo, startPosition, isCrossing)
+            minExpandPlace = startPosition.x + isCrossing + 1 + 2 * myRiver.banksWidth
+
+            if maxExpandPlace > minExpandPlace Then
+
+' actualExpand = fix(myRiver.meandering * (maxExpandPlace - startPosition.x + isCrossing + 1))
+' maxExpandPlace = rnd(maxExpandPlace - actualExpand, startPosition.x + isCrossing + 1 + actualExpand)
+
+' (XNW as DWord, YNW as DWord, XSE as DWord, YSE as DWord)
+              refund(startPosition.x + 1, fromTo.x + isCrossing, startPosition.x + isCrossing, fromTo.y - isCrossing -1)
+              widen(maxExpandPlace - isCrossing, fromTo.x, maxExpandPlace - 1, fromTo.y)
+              widen(startPosition.x + isCrossing + 1, fromTo.x, maxExpandPlace - isCrossing , fromTo.x + isCrossing - 1)
+              widen(startPosition.x + isCrossing + 1, fromTo.y - isCrossing, maxExpandPlace - isCrossing - 1, fromTo.y)
+
+            Else
+              logger.write(%LT_ToConsole, "Max expand place x= " & str$(maxExpandPlace) & " < " & str$(minExpandPlace) & ", ignoring this stretch", Function_Name, %TAG_NOTICE)
+            End If
+          Else
+            logger.write(%LT_ToConsole, "Min stretch length = " & str$(minStretchLength) & " gameZones,  ignoring this stretch", Function_Name, %TAG_NOTICE)
+          endif
+          isCrossing = 0
+        endif
+      Next
+
+    Case %NORTH
+      for i as DWord = mapDimensions.y To 1 step -1
+
+        if map.isGameZone(borderPosition, i) Then
+          incr isCrossing
+        elseif isCrossing > 0 Then
+          if isCrossing > maxLarge Then
+            isCrossing = 0
+            Iterate for
+          endif
+
+          startPosition.y = i
+          startPosition.x = borderPosition
+          getStretchLength(toWhere, startPosition, isCrossing, fromTo)
+
+          logger.write(%LT_ToConsole, "Crossed a " & str$(fromTo.y - fromTo.x) & " gameZones long stretch of a " & str$(isCrossing) & " gameZones wide river", Function_Name, %TAG_DEBUG)
+
+          minStretchLength = 2 + isCrossing * 2 + myRiver.banksWidth * 4
+
+          if fromTo.y - fromTo.x >= minStretchLength Then
+            maxSelectSize = Max(minStretchLength, Fix( myRiver.meander * (fromTo.y - fromTo.x - myRiver.banksWidth * 4)))
+            fromToSelectSize = rnd(minStretchLength, maxSelectSize)
+
+            logger.write(%LT_ToConsole, "Selected = " & str$(fromToSelectSize) & " out of [" & str$(minStretchLength) & ";" & str$(maxSelectSize) & "]" , Function_Name, %TAG_DEBUG)
+
+            positionSelection = (fromTo.y - fromTo.x - fromToSelectSize) - myRiver.banksWidth
+            positionOffset = rnd(myRiver.banksWidth,positionSelection)
+            fromTo.x += positionOffset
+            fromTo.y = fromTo.x + fromToSelectSize
+            maxExpandPlace = getExpandPlace(toWhere, fromTo, startPosition, isCrossing)
+            minExpandPlace = startPosition.y + isCrossing + 1 + 2 * myRiver.banksWidth
+
+            if maxExpandPlace > minExpandPlace Then
+
+' actualExpand = fix(myRiver.meandering * (maxExpandPlace - startPosition.y + isCrossing + 1))
+' maxExpandPlace = rnd(startPosition.y + isCrossing + 1 + actualExpand, maxExpandPlace - actualExpand)
+
+' (XNW as DWord, YNW as DWord, XSE as DWord, YSE as DWord)
+              refund(fromTo.x + isCrossing, startPosition.y + 1, fromTo.y - isCrossing, startPosition.y + isCrossing)
+              widen(fromTo.x, maxExpandPlace - isCrossing + 1, fromTo.y, maxExpandPlace )
+              widen(fromTo.x , startPosition.y + isCrossing + 1, fromTo.x + isCrossing - 1, maxExpandPlace - isCrossing )
+              widen(fromTo.y - isCrossing + 1, startPosition.y + isCrossing + 1, fromTo.y,maxExpandPlace - isCrossing)
+
+            Else
+              logger.write(%LT_ToConsole, "Max expand place y= " & str$(maxExpandPlace) & " < " & str$(minExpandPlace) & ", ignoring this stretch", Function_Name, %TAG_NOTICE)
+            End If
+          Else
+            logger.write(%LT_ToConsole, "Min stretch length = " & str$(minStretchLength) & " gameZones,  ignoring this stretch", Function_Name, %TAG_NOTICE)
+          endif
+          isCrossing = 0
+        endif
+
+      Next
+
+    Case %SOUTH
+      for i as DWord = 1 to mapDimensions.y
+
+        if map.isGameZone(borderPosition, i) Then
+          incr isCrossing
+        elseif isCrossing > 0 Then
+          if isCrossing > maxLarge Then
+            isCrossing = 0
+            Iterate for
+          endif
+
+          startPosition.x = borderPosition
+          startPosition.y = i
+          getStretchLength(toWhere, startPosition, isCrossing, fromTo)
+
+          logger.write(%LT_ToConsole, "Crossed a " & str$(fromTo.y - fromTo.x) & " gameZones long stretch of a " & str$(isCrossing) & " gameZones wide river", Function_Name, %TAG_DEBUG)
+
+          minStretchLength = 2 + isCrossing * 2 + myRiver.banksWidth * 4
+
+          if fromTo.y - fromTo.x >= minStretchLength Then
+            maxSelectSize = Max(minStretchLength, Fix( myRiver.meander * (fromTo.y - fromTo.x - myRiver.banksWidth * 4)))
+            fromToSelectSize = rnd(minStretchLength, maxSelectSize)
+
+            logger.write(%LT_ToConsole, "Selected = " & str$(fromToSelectSize) & " out of [" & str$(minStretchLength) & ";" & str$(maxSelectSize) & "]" , Function_Name, %TAG_DEBUG)
+
+            positionSelection = (fromTo.y - fromTo.x - fromToSelectSize) - myRiver.banksWidth
+            positionOffset = rnd(myRiver.banksWidth,positionSelection)
+            fromTo.x += positionOffset
+            fromTo.y = fromTo.x + fromToSelectSize
+            maxExpandPlace = getExpandPlace(toWhere, fromTo, startPosition, isCrossing)
+            minExpandPlace = startPosition.y - isCrossing - 1 - 2 * myRiver.banksWidth
+
+            if maxExpandPlace < minExpandPlace Then
+
+'actualExpand = fix(myRiver.meandering * (startPosition.y - isCrossing - 1 - maxExpandPlace))
+'maxExpandPlace = rnd(maxExpandPlace + actualExpand, startPosition.y - isCrossing - 1 - actualExpand)
+
+' (XNW as DWord, YNW as DWord, XSE as DWord, YSE as DWord)
+              refund(fromTo.x + isCrossing - 1, startPosition.y - isCrossing, fromTo.y - isCrossing + 1, startPosition.y)
+'widen(fromTo.x, maxExpandPlace, fromTo.y, maxExpandPlace + isCrossing - 2)
+'widen(fromTo.x, maxExpandPlace + isCrossing, fromTo.x + isCrossing - 2, startPosition.y - isCrossing - 1)
+              widen(fromTo.y - isCrossing + 2, maxExpandPlace + isCrossing, fromTo.y, startPosition.y - isCrossing - 1)
+
+            Else
+              logger.write(%LT_ToConsole, "Max expand place y= " & str$(maxExpandPlace) & " > " & str$(minExpandPlace) & ", ignoring this stretch", Function_Name, %TAG_NOTICE)
+            End If
+          Else
+            logger.write(%LT_ToConsole, "Min stretch length = " & str$(minStretchLength) & " gameZones,  ignoring this stretch", Function_Name, %TAG_NOTICE)
+          endif
+          isCrossing = 0
+        endif
+      Next
+  end select
+
+End Function
+
+Function getExpandPlace(toWhere as Byte, fromTo as tXY, startPosition as tXY, isCrossing as Byte) as DWord
 
   select case toWhere
     case %EAST
 
-      for i as DWord = 1 to mapDimensions.x
-
-        if map.isGameZone(i, borderPosition) Then
-        
-          incr isCrossing
-          
-        elseif isCrossing > 0 Then
-        
-          if isCrossing > maxLarge Then
-            isCrossing = 0
-            Iterate for
+      for i as DWord = startPosition.x - myRiver.banksWidth - isCrossing to 1 step -1
+        for j as dword = fromTo.x - myRiver.banksWidth to fromTo.y + myRiver.banksWidth
+          if map.isGameZone(i, j) Then
+            return i + 2 * myRiver.banksWidth
           endif
-
-
-          startPosition.x = i
-          startPosition.y = borderPosition
-            
-          getStretchLength(toWhere, startPosition, isCrossing, fromTo)
-
-          minStretchLength = 2 + isCrossing * 2 + myRiver.banksWidth * 4
-          
-          if fromTo.y - fromTo.x >= minStretchLength Then
-          
-            fromToSelectSize = rnd(minStretchLength, Max(minStretchLength, Fix( 0.9 * (fromTo.y - fromTo.x - myRiver.banksWidth * 4))))
-            'printl "minStretchLength: " , minStretchLength , "select size: ", fromToSelectSize, "out of : ", str$(fromTo.y - fromTo.x)
-            positionSelection = (fromTo.y - fromTo.x - fromToSelectSize)
-            
-            positionOffset = rnd(myRiver.banksWidth * 4, fix(PositionSelection/2))
-            
-            fromTo.x += positionOffset
-            fromTo.y = fromTo.x + fromToSelectSize
-
-            maxExpandPlace = getExpandPlace(toWhere, fromTo, startPosition, isCrossing)
-
-            if maxExpandPlace < startPosition.x - isCrossing - 1 - 2 * myRiver.banksWidth Then
-            
-              actualExpand = fix(0.15 * (startPosition.x - isCrossing - 1 - maxExpandPlace))
-
-              maxExpandPlace = rnd(maxExpandPlace + actualExpand, startPosition.x - isCrossing - 1 - actualExpand)
-             
-              widen(maxExpandPlace , fromTo.x, maxExpandPlace + isCrossing - 1, fromTo.y) ' (XNW as DWord, YNW as DWord, XSE as DWord, YSE as DWord)
-              widen(maxExpandPlace + isCrossing, fromTo.y - isCrossing + 1 , startPosition.x - isCrossing - 1 , fromTo.y )
-              widen(maxExpandPlace + isCrossing, fromTo.x, startPosition.x - isCrossing - 1 , fromTo.x + isCrossing )
-              refund(startPosition.x - isCrossing - 1, fromTo.x + isCrossing + 1, startPosition.x - 1, fromTo.y - isCrossing)
-
-            End If
-          endif
-        isCrossing = 0
-        endif
-        
+        Next
       Next
 
+      return 2 * myRiver.banksWidth
+
     case %WEST
-    
-    for i as DWord = mapDimensions.x to 1 step -1
 
-        if map.isGameZone(i, borderPosition) Then
-        
-          incr isCrossing
-          
-        elseif isCrossing > 0 Then
-        
-          if isCrossing > maxLarge Then
-            isCrossing = 0
-            Iterate for
+      for i as DWord = startPosition.x + myRiver.banksWidth + isCrossing to mapDimensions.x
+        for j as dword = fromTo.x - myRiver.banksWidth to fromTo.y + myRiver.banksWidth
+          if map.isGameZone(i, j) Then
+            return i - 2 * myRiver.banksWidth
           endif
-
-          startPosition.x = i
-          startPosition.y = borderPosition
-            
-          getStretchLength(toWhere, startPosition, isCrossing, fromTo)
-
-          minStretchLength = 2 + isCrossing * 2 + myRiver.banksWidth * 4
-          
-          if fromTo.y - fromTo.x >= minStretchLength Then
-          
-            fromToSelectSize = rnd(minStretchLength, Max(minStretchLength, Fix( 0.9 * (fromTo.y - fromTo.x - myRiver.banksWidth * 4))))
-            
-            positionSelection = (fromTo.y - fromTo.x - fromToSelectSize)
-            
-            positionOffset = rnd(myRiver.banksWidth * 4, fix(PositionSelection/2))
-            
-            fromTo.x += positionOffset
-            fromTo.y = fromTo.x + fromToSelectSize
-
-            maxExpandPlace = getExpandPlace(toWhere, fromTo, startPosition, isCrossing)
-
-            if maxExpandPlace > startPosition.x + isCrossing + 1 + 2 * myRiver.banksWidth Then
-            
-            actualExpand = fix(0.15 * (maxExpandPlace - startPosition.x + isCrossing + 1))
-
-            maxExpandPlace = rnd(maxExpandPlace - actualExpand, startPosition.x + isCrossing + 1 + actualExpand)
-             
-              widen(maxExpandPlace - isCrossing + 1, fromTo.x, maxExpandPlace, fromTo.y) ' (XNW as DWord, YNW as DWord, XSE as DWord, YSE as DWord)
-              widen(startPosition.x + isCrossing + 1, fromTo.y - isCrossing + 1 , maxExpandPlace - isCrossing , fromTo.y )
-              widen(startPosition.x + isCrossing + 1, fromTo.x, maxExpandPlace - isCrossing , fromTo.x + isCrossing )
-              refund(startPosition.x +1, fromTo.x + isCrossing + 1, startPosition.x + 1 + isCrossing, fromTo.y - isCrossing)
-            End If
-          endif
-        isCrossing = 0
-        endif
-        
+        Next
       Next
 
-    Case %NORTH
-    Case %SOUTH
-
-  end select
-End Function
-
-
-Function getExpandPlace(toWhere as Byte, fromTo as tXY, startPosition as tXY, isCrossing as Byte) as DWord
-    select case toWhere
-    case %EAST
-    
-    for i as DWord = startPosition.x - myRiver.banksWidth - isCrossing to 1 step -1 ' 
-    	for j as dword = fromTo.x - myRiver.banksWidth to fromTo.y + myRiver.banksWidth
-        if map.isGameZone(i, j) Then
-          return i + 2 * myRiver.banksWidth
-        endif
-    	Next
-    Next
-    
-    return 2 * myRiver.banksWidth
-    
-    case %WEST
-    
-    for i as DWord = startPosition.x + myRiver.banksWidth + isCrossing to mapDimensions.x
-    	for j as dword = fromTo.x - myRiver.banksWidth to fromTo.y + myRiver.banksWidth
-        if map.isGameZone(i, j) Then
-          return i - 2 * myRiver.banksWidth
-        endif
-    	Next
-    Next
-    
-    return mapDimensions.x - 2 * myRiver.banksWidth
+      return mapDimensions.x - 2 * myRiver.banksWidth
 
     Case %NORTH
+
+      for i as DWord = startPosition.y + myRiver.banksWidth + isCrossing To mapDimensions.y
+        for j as dword = fromTo.x - myRiver.banksWidth to fromTo.y + myRiver.banksWidth
+          if map.isGameZone(j, i) Then
+            return i - 2 * myRiver.banksWidth
+          endif
+        Next
+      Next
+
+      return mapDimensions.y - 2 * myRiver.banksWidth
+
     Case %SOUTH
 
+      for i as DWord = startPosition.y - myRiver.banksWidth - isCrossing To 1 step -1
+        for j as dword = fromTo.x - myRiver.banksWidth to fromTo.y + myRiver.banksWidth
+          if map.isGameZone(j, i) Then
+            return i + 2 * myRiver.banksWidth
+          endif
+        Next
+      Next
+
+      return 2 * myRiver.banksWidth
+
   end select
+
 End Function
 
 Function getStretchLength(toWhere as BYTE, startPosition as tXY, stretchWidth as Byte, byref stretchLength as tXY)
@@ -318,11 +498,11 @@ Function getStretchLength(toWhere as BYTE, startPosition as tXY, stretchWidth as
           leftRight4 = i + 1
           exit for
         End If
-        
+
       Next
 
       stretchLength.x = max(leftRight1, leftRight2, leftRight3, leftRight4)
-   
+
       leftRight1 = mapDimensions.y
       leftRight2 = mapDimensions.y
       leftRight3 = mapDimensions.y
@@ -375,7 +555,7 @@ Function getStretchLength(toWhere as BYTE, startPosition as tXY, stretchWidth as
       Next
 
       stretchLength.x = max(leftRight1, leftRight2, leftRight3, leftRight4)
-   
+
       leftRight1 = mapDimensions.y
       leftRight2 = mapDimensions.y
       leftRight3 = mapDimensions.y
@@ -383,7 +563,7 @@ Function getStretchLength(toWhere as BYTE, startPosition as tXY, stretchWidth as
 
       For i as Dword = startPosition.y To mapDimensions.y
 
-      if map.isGameZone(startPosition.x, i) and leftRight1 = mapDimensions.y Then
+        if map.isGameZone(startPosition.x, i) and leftRight1 = mapDimensions.y Then
           leftRight1 = i - 1
           Exit for
         End If
@@ -403,15 +583,121 @@ Function getStretchLength(toWhere as BYTE, startPosition as tXY, stretchWidth as
       Next
 
       stretchLength.y = min(leftRight1, leftRight2, leftRight3, leftRight4)
-      
+
     Case %NORTH
+
+      for i as dword = startPosition.x to 1 step -1
+
+        if map.isGameZone(i, startPosition.y) and leftRight1 = 0 Then
+          leftRight1 = i + 1
+          exit for
+        End If
+        if map.isGameZone(i, startPosition.y + 1) = 0 and leftRight2 = 0 Then
+          leftRight2 = i + 1
+          exit for
+        End If
+        if map.isGameZone(i, startPosition.y + stretchWidth) = 0 and leftRight3 = 0 Then
+          leftRight3 = i + 1
+          exit for
+        End If
+        if map.isGameZone(i, startPosition.y + stretchWidth + 1) and leftRight4 = 0 Then
+          leftRight4 = i + 1
+          exit for
+        End If
+
+      Next
+
+      stretchLength.x = max(leftRight1, leftRight2, leftRight3, leftRight4)
+
+      leftRight1 = mapDimensions.x
+      leftRight2 = mapDimensions.x
+      leftRight3 = mapDimensions.x
+      leftRight4 = mapDimensions.X
+
+      For i as Dword = startPosition.x To mapDimensions.x
+
+        if map.isGameZone(i, startPosition.y) and leftRight1 = mapDimensions.x Then
+          leftRight1 = i - 1
+          exit for
+        End If
+        if map.isGameZone(i, startPosition.y + 1) = 0 and leftRight2 = mapDimensions.x Then
+          leftRight2 = i - 1
+          exit for
+        End If
+        if map.isGameZone(i, startPosition.y + stretchWidth) = 0 and leftRight3 = mapDimensions.x Then
+          leftRight3 = i - 1
+          exit for
+        End If
+        if map.isGameZone(i, startPosition.y + stretchWidth + 1) and leftRight4 = mapDimensions.x Then
+          leftRight4 = i - 1
+          Exit for
+        End If
+
+      Next
+
+      stretchLength.y = min(leftRight1, leftRight2, leftRight3, leftRight4)
+
     Case %SOUTH
+
+      for i as dword = startPosition.x to 1 step -1
+
+        if map.isGameZone(i, startPosition.y) and leftRight1 = 0 Then
+          leftRight1 = i + 1
+          exit for
+        End If
+        if map.isGameZone(i, startPosition.y - 1) = 0 and leftRight2 = 0 Then
+          leftRight2 = i + 1
+          exit for
+        End If
+        if map.isGameZone(i, startPosition.y - stretchWidth) = 0 and leftRight3 = 0 Then
+          leftRight3 = i + 1
+          exit for
+        End If
+        if map.isGameZone(i, startPosition.y - stretchWidth - 1) and leftRight4 = 0 Then
+          leftRight4 = i + 1
+          exit for
+        End If
+
+      Next
+
+      stretchLength.x = max(leftRight1, leftRight2, leftRight3, leftRight4)
+
+      leftRight1 = mapDimensions.x
+      leftRight2 = mapDimensions.x
+      leftRight3 = mapDimensions.x
+      leftRight4 = mapDimensions.x
+
+      For i as Dword = startPosition.x To mapDimensions.x
+
+        if map.isGameZone(i, startPosition.y) and leftRight1 = mapDimensions.x Then
+          leftRight1 = i - 1
+          exit for
+        End If
+        if map.isGameZone(i, startPosition.y - 1) = 0 and leftRight2 = mapDimensions.x Then
+          leftRight2 = i - 1
+          exit for
+        End If
+        if map.isGameZone(i, startPosition.y - stretchWidth) = 0 and leftRight3 = mapDimensions.x Then
+          leftRight3 = i - 1
+          exit for
+        End If
+        if map.isGameZone(i, startPosition.y - stretchWidth - 1) and leftRight4 = mapDimensions.x Then
+          leftRight4 = i - 1
+          Exit for
+        End If
+
+      Next
+
+      stretchLength.y = min(leftRight1, leftRight2, leftRight3, leftRight4)
 
   end select
 
 End Function
 
 function sleepDisplay()
+
+  logger.defaultTitle = Function_Name
+  logger.wInfo("Now sleeping")
 
 ' -- Main loop
   While tbgl_IsWindow(hWnd)
@@ -446,7 +732,7 @@ function widen(XNW as DWord, YNW as DWord, XSE as DWord, YSE as DWord)
     next
   next
 
-  'map.addWaypoint(actualPosition.x+1, actualPosition.y+1)
+'map.addWaypoint(actualPosition.x+1, actualPosition.y+1)
 
 End Function
 
@@ -459,7 +745,6 @@ function refund(XNW as DWord, YNW as DWord, XSE as DWord, YSE as DWord)
   next
 
 End Function
-
 
 function isDirectionSet(compass as long, direction as long) as long
   return bit_get(compass, log2(direction))
