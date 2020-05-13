@@ -89,8 +89,11 @@ End Function
 function initDisplay()
 
   DESKTOP GET CLIENT TO displayWindowSize.x, displayWindowSize.y
+  
+  MsgBox 0, str$(displayWindowSize.x) & " x " & str$(displayWindowSize.y),,"Desktop resolution"
 
   hWnd = tbgl_CreateWindowEx("press ESC to quit", min(mapDimensions.x, displayWindowSize.x / 2), min(mapDimensions.y, displayWindowSize.y), 32, %tbgl_WS_WINDOWED or %tbgl_WS_CLOSEBOX, -15 + displayWindowSize.x - min(mapDimensions.x, displayWindowSize.x / 2), 0)
+  
   tbgl_ShowWindow
   tbgl_ResetKeyState()
 
@@ -187,8 +190,12 @@ function stirWorldMap()
 'crossMap(%EAST, 100)
 'drawing
 
-'crossMap(%WEST, 100)
-'drawing
+crossMap(%WEST, 100)
+drawing
+
+crossMap(%NORTH, 180)
+drawing
+
 
 
   logger.write(%LT_ToConsole + %LT_ToMsgBox, "Stiring done.", Function_Name, %TAG_INFO)
@@ -293,10 +300,10 @@ Function crossMap(toWhere as byte, borderPosition as DWord)
 ' maxExpandPlace = rnd(maxExpandPlace - actualExpand, startPosition.x + isCrossing + 1 + actualExpand)
 
 ' (XNW as DWord, YNW as DWord, XSE as DWord, YSE as DWord)
-              refund(startPosition.x + 1, fromTo.x + isCrossing, startPosition.x + isCrossing, fromTo.y - isCrossing -1)
+              refund(startPosition.x + 1, fromTo.x + isCrossing, startPosition.x + isCrossing, fromTo.y - isCrossing)
               widen(maxExpandPlace - isCrossing, fromTo.x, maxExpandPlace - 1, fromTo.y)
               widen(startPosition.x + isCrossing + 1, fromTo.x, maxExpandPlace - isCrossing , fromTo.x + isCrossing - 1)
-              widen(startPosition.x + isCrossing + 1, fromTo.y - isCrossing, maxExpandPlace - isCrossing - 1, fromTo.y)
+              widen(startPosition.x + isCrossing + 1, fromTo.y - isCrossing + 1, maxExpandPlace - isCrossing - 1, fromTo.y)
 
             Else
               logger.write(%LT_ToConsole, "Max expand place x= " & str$(maxExpandPlace) & " < " & str$(minExpandPlace) & ", ignoring this stretch", Function_Name, %TAG_NOTICE)
@@ -400,10 +407,10 @@ Function crossMap(toWhere as byte, borderPosition as DWord)
 'maxExpandPlace = rnd(maxExpandPlace + actualExpand, startPosition.y - isCrossing - 1 - actualExpand)
 
 ' (XNW as DWord, YNW as DWord, XSE as DWord, YSE as DWord)
-              refund(fromTo.x + isCrossing - 1, startPosition.y - isCrossing, fromTo.y - isCrossing + 1, startPosition.y)
-'widen(fromTo.x, maxExpandPlace, fromTo.y, maxExpandPlace + isCrossing - 2)
-'widen(fromTo.x, maxExpandPlace + isCrossing, fromTo.x + isCrossing - 2, startPosition.y - isCrossing - 1)
-              widen(fromTo.y - isCrossing + 2, maxExpandPlace + isCrossing, fromTo.y, startPosition.y - isCrossing - 1)
+              refund(fromTo.x + isCrossing, startPosition.y - isCrossing, fromTo.y - isCrossing, startPosition.y)
+              widen(fromTo.x, maxExpandPlace, fromTo.y, maxExpandPlace + isCrossing - 1)
+              widen(fromTo.x, maxExpandPlace + isCrossing, fromTo.x + isCrossing - 1, startPosition.y - isCrossing - 1)
+              widen(fromTo.y - isCrossing + 1, maxExpandPlace + isCrossing, fromTo.y, startPosition.y - isCrossing - 1)
 
             Else
               logger.write(%LT_ToConsole, "Max expand place y= " & str$(maxExpandPlace) & " > " & str$(minExpandPlace) & ", ignoring this stretch", Function_Name, %TAG_NOTICE)
@@ -713,7 +720,7 @@ End Function
 Function drawing()
 
 ' -- Set the resolution and the coordinate system
-  tbgl_Rendermatrix2D (0,mapDimensions.y, mapDimensions.x,0)
+  tbgl_Rendermatrix2D (1,mapDimensions.y, mapDimensions.x,1, %TBGL_PIXEL_PERFECT_2D)
   tbgl_ClearFrame
 
 ' -- Draw river map
