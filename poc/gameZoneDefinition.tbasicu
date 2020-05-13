@@ -102,21 +102,10 @@ type tGameZoneDefinition
     
     int32 i
     
-    tbgl_pushStateProtect %TBGL_DEPTH
-
-      tbgl_pushColor 64, 128, 255
-        for i = 1 to me.gameZoneCount
-          tbgl_point gameZones(i).x, gameZones(i).y
-        next
-      tbgl_popColor
-
-      tbgl_pushColor 255, 255, 255
-        tbgl_beginPoly %TBGL_LINESTRIP
-          for i = 1 to me.waypointCount
-            tbgl_vertex waypoints(i).x, waypoints(i).y
-          next
-        tbgl_endPoly
-      tbgl_popColor
+    for i = 1 to me.gameZoneCount
+      Canvas_Color(rgb(64, 128, 255))
+      Canvas_SetPixel(gameZones(i).x, gameZones(i).y)
+    next
     
     tbgl_popStateProtect
   end function

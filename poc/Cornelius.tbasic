@@ -92,10 +92,13 @@ function initDisplay()
   
   MsgBox 0, str$(displayWindowSize.x) & " x " & str$(displayWindowSize.y),,"Desktop resolution"
 
-  hWnd = tbgl_CreateWindowEx("press ESC to quit", min(mapDimensions.x, displayWindowSize.x / 2), min(mapDimensions.y, displayWindowSize.y), 32, %tbgl_WS_WINDOWED or %tbgl_WS_CLOSEBOX, -15 + displayWindowSize.x - min(mapDimensions.x, displayWindowSize.x / 2), 0)
-  
-  tbgl_ShowWindow
-  tbgl_ResetKeyState()
+  int32 posX   = -15 + displayWindowSize.x - min(mapDimensions.x, displayWindowSize.x / 2)
+  int32 posY   = 0
+  int32 width  = min(mapDimensions.x, displayWindowSize.x / 2)
+  int32 height = min(mapDimensions.y, displayWindowSize.y) + 100
+
+  hWnd = Canvas_Window("press ESC to quit", posX, posY, width, height)
+  Canvas_Attach(hWnd, 0, True)
 
 End Function
 
@@ -707,27 +710,28 @@ function sleepDisplay()
   logger.wInfo("Now sleeping")
 
 ' -- Main loop
-  While tbgl_IsWindow(hWnd)
+  While IsWindow(hWnd)
     call drawing
-' -- ESCAPE key to exit application
-    If tbgl_GetWindowKeyState(hWnd, %VK_ESCAPE) Then Exit While
+    
+    if asc(Canvas_Inkey)=  27 Then Exit While
   Wend
 
-  tbgl_DestroyWindow
+  Canvas_BitmapSaveImageFile("result.png")
+  Canvas_Window end
 
 End Function
 
 Function drawing()
 
 ' -- Set the resolution and the coordinate system
-  tbgl_Rendermatrix2D (1,mapDimensions.y, mapDimensions.x,1, %TBGL_PIXEL_PERFECT_2D)
-  tbgl_ClearFrame
+  Canvas_Scale pixels'( 1,mapDimensions.y, mapDimensions.x,1)
+  Canvas_clear
 
 ' -- Draw river map
   map.Render()
 
 'Show the rendered stuff to the public :)
-  tbgl_DrawFrame
+  Canvas_Redraw
 
 End Function
 
