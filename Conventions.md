@@ -15,3 +15,48 @@ chore_* - for maintenance stuff
 ## Game feedback and discussions
 
 Feedback and discussions are shared with the [ThinBasic community](https://www.thinbasic.com/community/forum.php "ThinBasic's community forum")
+
+## BTB Glossary
+
+### G
+
+#### gameZone
+A gameZone is one elemental square that constitute a world. Many gameZones are necessary to represent a world. All the game happens in gameZones. Outside gameZone is called the void.
+
+### L
+
+#### level (lvl)
+A level is composed by _minimum_ one world. The player must have achieved all pre-set requirement to access the next level.
+
+
+### P
+
+#### Pilgrim
+The Pilgrim is the main character controlled by the player.
+
+
+### T
+
+#### the Pilgrim
+see **P**ilgrim
+
+#### tile
+A tile is a decorative shape (usually a square) that can be seen while in game. Many tiles are necessary to draw a gameZone.
+
+
+### U
+
+#### universe
+The Between The Bubbles (BTB) universe is all that compose the game (rules, worlds, characters...)
+
+
+### V
+
+#### void
+The void is the space of the map that is between gameZones. It is not part of the game.
+
+
+### W
+
+#### world
+A world is an aera of the game composed by many gameZones of the same theme ("Countryside", "The city", "A calm pool" ...)
