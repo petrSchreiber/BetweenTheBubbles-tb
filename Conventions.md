@@ -21,7 +21,14 @@ Feedback and discussions are shared with the [ThinBasic community](https://www.t
 ### G
 
 #### gameZone
-A gameZone is one elemental square that constitute a world. Many gameZones are necessary to represent a world. All the game happens in gameZones. Outside gameZone is called the void.
+A gameZone is one elemental square that constitute a world. Many gameZones are necessary to represent a world. All the game happens in gameZones. Outside gameZone is called the void. GameZones are constituted by tiles and contains items, characters..
+
+
+### I
+
+#### item
+An item is an object that can be seen while in-game in a gameZone. It is placed on a tile.
+
 
 ### L
 
