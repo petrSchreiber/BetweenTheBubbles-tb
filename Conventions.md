@@ -26,7 +26,7 @@ A gameZone is one elemental square that constitute a world. Many gameZones are n
 ### L
 
 #### level (lvl)
-A level is composed by _minimum_ one world. The player must have achieved all pre-set requirement to access the next level.
+A level is an aera composed by _minimum_ one world. The player must have achieved all pre-set requirement to access the next level.
 
 
 ### P
