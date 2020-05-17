@@ -18,6 +18,12 @@ Feedback and discussions are shared with the [ThinBasic community](https://www.t
 
 ## BTB Glossary
 
+### E
+
+#### ECS
+[Entity component system](https://en.wikipedia.org/wiki/Entity_component_system)
+
+
 ### G
 
 #### gameZone
