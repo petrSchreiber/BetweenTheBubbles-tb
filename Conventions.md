@@ -3,7 +3,7 @@
 ## Collaboration model
 
 The `master` branch should be left untouched and we can contribute to its changes from separate branches.
-
+a
 ## Branch names conventions
 
 feat_* - for features  
@@ -17,6 +17,11 @@ chore_* - for maintenance stuff
 Feedback and discussions are shared with the [ThinBasic community](https://www.thinbasic.com/community/forum.php "ThinBasic's community forum")
 
 ## BTB Glossary
+
+### A
+
+#### Ambiance
+A set of world properties that makes it look different from another one. (setting used for map generation, type of foes encountered, aspect of the "decoration": color of the ground, plants (be it on banks or floating) , flowers, snow...)
 
 ### E
 
