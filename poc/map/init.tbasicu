@@ -1,0 +1,68 @@
+﻿
+' Directions
+begin Const
+  %NORTH            = 1
+  %SOUTH            = 2
+  %EAST             = 4
+  %WEST             = 8
+end const
+
+begin Const ' Size ratio
+  %SIZEMINI         = 1
+  %SIZEMICROSCOPIC  = 2
+  %SIZEMINUSCULE    = 3
+  %SIZEDIMINUTIVE   = 4
+  %SIZEMINUTE       = 5
+  %SIZETINY         = 6
+  %SIZEPOCKETSIZED  = 7
+  %SIZEEXIGUOUS     = 8
+  %SIZEMINOR        = 9
+  %SIZEMODEST       = 10
+  %SIZESMALL        = 11
+  %SIZESTANDARD     = 12
+  %SIZELARGE        = 13
+  %SIZEROOMY        = 14
+  %SIZEHUMONGOUS    = 15
+  %SIZEVAST         = 16
+  %SIZEHUGE         = 17
+  %SIZEJUMBO        = 18
+  %SIZEGREAT        = 19
+  %SIZEGIGANTIC     = 20
+  %SIZEASTRONOMICAL = 21
+  %SIZEINSANE       = 22
+  %SIZEMAXI         = 23
+end const
+
+Begin Const ' River depth profiles
+%FLAT         = 1
+%UPSIDEDOWNU  = 2
+%VSHAPED      = 4
+%LYINGE       = 8
+%UNBALANCED   = 16
+%TRIANGULAR   = 32
+%COMBSHAPED   = 64
+End Const
+
+Begin Const ' River width distribution
+%EQUAL        = 1 ' ex: 7,7,7
+%SPLIT        = 2 ' ex: 3,5,13
+%DISTRIBUTED  = 4 ' ex: 5,7,9
+%MOSTLYNARROW = 8 ' ex: 3,3,5,5,5
+%MOSTLYWIDE   = 16' ex: 21
+End Const
+
+
+%SQUARELIMITSRATIO = %SIZESTANDARD ' %SIZESTANDARD : Worlds sides length sizing ratio (gameZones)
+
+'[todo] morph_* Reorganise code & data from 'per property' to 'per world' definition
+' Compromise between procedural generation and story coherence
+%WORLDCOUNT = 8
+$RELATIVESIZEWORLD = "1,3,4,8,4,1,15,20" ' Relative size of each world in ASC world Id order; Size = Relative size * %SQUARELIMITSRATIO
+$HIDDENWORLD = "0,0,0,0,0,1,0,0" ' Which world is secret ?
+$MAXDEPTH = "1,2,2,3,8,1,5,2" ' For each world, how deep can be the water ?
+$WORLDLEVEL = "1,1,2,3,3,3,4,5" ' Which world belongs to what level ?
+$WORLDAMBIANCE = "1,1,2,3,3,3,4,5" ' gameZone styling
+$RIVERARMSCOUNT = "1,1,2,2,3,1,1,5" ' How many river arms does the world count ?
+$ARMSDEPTHPROFILES = "1,1,15,127,20,1,127,38" ' What are allowed depth profiles for generating world's river ?
+$RIVERARMWIDTHSDISTRIBUTION = "1,1,2,16,16,1,1,8" ' How wide are river arms ?
+$MINIMUMTOTALRIVERWIDTH = "3,3,8,8,11,11,11,21" ' Among how many water are divided the arms ?

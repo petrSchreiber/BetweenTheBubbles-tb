@@ -1,0 +1,269 @@
+﻿
+uses "console"
+Uses "TBGL"
+Uses "UI"
+
+#include "init.tbasicu"
+#include "gameZoneDefinition.tbasicu"
+#Include "https://github.com/DirectuX/logger/raw/master/LOG.tbasicu"
+
+Global logger as tLogThis
+logger.defaultTarget = %LT_ToConsole
+Console_SetScreenBufferSize(120,300)
+
+#region "Definitions"
+
+  Type tRiver
+      minSectorSurface as dWord
+      minHalfWidth as byte
+      maxHalfWidth as byte
+      banksWidth as byte
+      seed as Number
+      meandering as single
+      meander as Single
+End Type
+
+  Type tXY
+      x as DWORD
+      y as DWORD
+End Type
+
+  type tBtbuniverse
+  worldList(%WORLDCOUNT) as tBtbworld
+  squareLimitsRatio as DWord
+  worldCount as DWord
+  
+  Function _Create()
+    dim tempArray() as dword
+    Dim tempDataCount as DWord
+
+    me.worldCount = %WORLDCOUNT
+    logger.wInfo("Registering " & me.worldCount & " worlds.")
+
+    me.squareLimitsRatio = $%SQUARELIMITSRATIO
+    tempDataCount = loadData($RELATIVESIZEWORLD, tempArray)
+  
+    if tempDataCount = me.worldCount Then
+      for i as DWord = 1 to me.worldCount
+        me.worldList(i).sizeInSquaresCount = tempArray(i) * me.squareLimitsRatio
+      Next
+    Else
+      logger.wCrit("$RELATIVESIZEWORLD data count does not match %WORLDCOUNT.")
+      logger.wCrit("Terminating execution... Please, press a key.")
+      Waitkey
+      stop
+    EndIf
+  
+    tempDataCount = loadData($HIDDENWORLD, tempArray)
+  
+    if tempDataCount = me.worldCount Then
+      for i as DWord = 1 to me.worldCount
+        if tempArray(i) = 1 or tempArray(i) = 0 then
+          me.worldList(i).hidden = tempArray(i)
+        Else
+          logger.wCrit("$HIDDENWORLD data values must be 0 OR 1 only.")
+          logger.wCrit("Terminating execution... Please, press a key.")
+          Waitkey
+          stop
+        endif
+      Next
+    Else
+      logger.wCrit("$HIDDENWORLD data count does not match %WORLDCOUNT.")
+      logger.wCrit("Terminating execution... Please, press a key.")
+      Waitkey
+      stop
+    EndIf
+    
+    tempDataCount = loadData($MAXDEPTH, tempArray)
+  
+    if tempDataCount = me.worldCount Then
+      for i as DWord = 1 to me.worldCount
+          me.worldList(i).maxDepth = tempArray(i)
+      Next
+    Else
+      logger.wCrit("$MAXDEPTH data count does not match %WORLDCOUNT.")
+      logger.wCrit("Terminating execution... Please, press a key.")
+      Waitkey
+      stop
+    EndIf
+    
+     tempDataCount = loadData($WORLDLEVEL, tempArray)
+  
+    if tempDataCount = me.worldCount Then
+      for i as DWord = 1 to me.worldCount
+        if tempArray(i) <= me.worldCount AND tempArray(i) > 0 then
+          me.worldList(i).level = tempArray(i)
+          
+          if i > 1 Then
+            if me.worldList(i).level = me.worldList(i-1).level Then
+              me.worldList(i).orderInLevel = me.worldList(i-1).orderInLevel + 1
+            Else
+            me.worldList(i).orderInLevel = 1
+            EndIf
+          Else
+            me.worldList(i).orderInLevel = 1
+          EndIf
+          
+        Else
+          logger.wCrit("$WORLDLEVEL data values must be between 1 and  %WORLDCOUNT inclusive.")
+          logger.wCrit("Terminating execution... Please, press a key.")
+          Waitkey
+          stop
+        endif
+      Next
+    Else
+      logger.wCrit("$WORLDLEVEL data count does not match %WORLDCOUNT.")
+      logger.wCrit("Terminating execution... Please, press a key.")
+      Waitkey
+      stop
+    EndIf
+    
+    tempDataCount = loadData($WORLDAMBIANCE, tempArray)
+  
+    if tempDataCount = me.worldCount Then
+      for i as DWord = 1 to me.worldCount
+          me.worldList(i).ambiance = tempArray(i)
+      Next
+    Else
+      logger.wCrit("$WORLDAMBIANCE data count does not match %WORLDCOUNT.")
+      logger.wCrit("Terminating execution... Please, press a key.")
+      Waitkey
+      stop
+    EndIf
+    
+    tempDataCount = loadData($RIVERARMSCOUNT, tempArray)
+  
+    if tempDataCount = me.worldCount Then
+      for i as DWord = 1 to me.worldCount
+          me.worldList(i).riverArmsCount = tempArray(i)
+      Next
+    Else
+      logger.wCrit("$RIVERARMSCOUNT data count does not match %WORLDCOUNT.")
+      logger.wCrit("Terminating execution... Please, press a key.")
+      Waitkey
+      stop
+    EndIf
+    
+    tempDataCount = loadData($ARMSDEPTHPROFILES, tempArray)
+  
+    if tempDataCount = me.worldCount Then
+      for i as DWord = 1 to me.worldCount
+          me.worldList(i).armsDepthProfiles = tempArray(i)
+      Next
+    Else
+      logger.wCrit("$ARMSDEPTHPROFILES data count does not match %WORLDCOUNT.")
+      logger.wCrit("Terminating execution... Please, press a key.")
+      Waitkey
+      stop
+    EndIf
+    
+    tempDataCount = loadData($RIVERARMWIDTHSDISTRIBUTION, tempArray)
+  
+    if tempDataCount = me.worldCount Then
+      for i as DWord = 1 to me.worldCount
+          me.worldList(i).riverArmWidthDistribution = tempArray(i)
+      Next
+    Else
+      logger.wCrit("$RIVERARMWIDTHSDISTRIBUTION data count does not match %WORLDCOUNT.")
+      logger.wCrit("Terminating execution... Please, press a key.")
+      Waitkey
+      stop
+    EndIf
+    
+    tempDataCount = loadData($MINIMUMTOTALRIVERWIDTH, tempArray)
+  
+    if tempDataCount = me.worldCount Then
+      for i as DWord = 1 to me.worldCount
+          me.worldList(i).minimumTotalRiverWidth = tempArray(i)
+      Next
+    Else
+      logger.wCrit("$MINIMUMTOTALRIVERWIDTH data count does not match %WORLDCOUNT.")
+      logger.wCrit("Terminating execution... Please, press a key.")
+      Waitkey
+      stop
+    EndIf
+  
+  End Function
+end Type
+
+  type tBtbworld
+      sizeInSquaresCount as dword
+      ambiance as dword
+      riverArmsCount as DWord
+      armsDepthProfiles as Dword
+      riverArmWidthDistribution as dword
+      minimumTotalRiverWidth as DWord
+      NWlimit as tXY
+      SElimit as tXY
+      conditionsToComplete() as dword
+      maxDepth as DWord
+      level as DWord
+      orderInLevel as DWord
+      hidden As Dword
+End Type
+
+  type tBtbGameZone
+      distanceFromSource as DWord
+      distanceFromMiddle as DWord
+      nature as DWord
+      riverWidth as DWord
+      depth as dword
+      flowDirection as DWord
+      flowStrength as Dword ' to be calculated according to river depth to river width ratio
+      '[] https://github.com/petrSchreiber/BetweenTheBubbles-tb/issues/46
+      foeDensity as DWord ' Foe density is to understand as an overall value of threat rather than foe count. Something like: Foe density = foe count * individual foe strength
+End Type
+
+  #EndRegion
+
+function loadData(sourceString as String, byref storeArray() as dword)
+'Local ndata as DWord = PARSECOUNT(sourceString, "")
+'redim storeArray(ndata)
+  Return Parse(sourceString, storeArray)
+End Function
+
+Function TBMain()
+
+  logger.defaultTitle = Function_Name
+  logger.wInfo("Logger loaded")
+
+  call parametersSetting ' Sets initial variables
+  Call initDisplay ' Create the windows for map display
+  Call initWorldMap ' Build straight river
+  Call stirWorldMap
+  CAll sleepDisplay ' Final loop to keep displaying map
+
+End Function
+
+function parametersSetting()
+
+  logger.defaultTitle = Function_Name
+
+  global displayWindowSize as tXY
+  global hWnd AS DWORD
+
+  Global btbuniverse as tBtbuniverse
+
+  'For overlay ?
+  Global btblevel as tBtblevel
+  Global btbworld as tBtbworld
+  
+  
+
+End Function
+
+function initDisplay()
+
+  DESKTOP GET CLIENT TO displayWindowSize.x, displayWindowSize.y
+
+  MsgBox 0, str$(displayWindowSize.x) & " x " & str$(displayWindowSize.y),,"Desktop resolution"
+
+  int32 posX   = -15 + displayWindowSize.x - min(mapDimensions.x, displayWindowSize.x / 2)
+  int32 posY   = 0
+  int32 width  = mapDimensions.x' min(mapDimensions.x, displayWindowSize.x / 2)
+  int32 height = mapDimensions.y' min(mapDimensions.y, displayWindowSize.y) + 100
+
+  hWnd = Canvas_Window("press ESC to quit", posX, posY, width, height)
+  Canvas_Attach(hWnd, 0, True)
+
+End Function
