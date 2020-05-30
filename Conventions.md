@@ -3,7 +3,7 @@
 ## Collaboration model
 
 The `master` branch should be left untouched and we can contribute to its changes from separate branches.
-a
+
 ## Branch names conventions
 
 feat_* - for features  
