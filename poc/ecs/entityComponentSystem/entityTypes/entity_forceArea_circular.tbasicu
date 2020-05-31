@@ -10,6 +10,8 @@ type tEntity_ForceArea_Circular
   centralIntensity  as float32 ' 0..1
   borderIntensity   as float32 ' 0..1
   
+  debugable         as tDebugBase
+  
   function Initialize(force as float32, radius as float32, centralIntensity as float32, borderIntensity as float32)
     me.areaType         = %ECS_FORCEAREA_CIRCULAR
     me.typeName         = remain$(typeof(me), ".") ' Cuts the udt. start
@@ -19,6 +21,8 @@ type tEntity_ForceArea_Circular
     me.radius           = radius
     me.centralIntensity = centralIntensity
     me.borderIntensity  = borderIntensity
+    
+    me.debugable.funcDebugRender = me.typeName + "_DebugRender"
   End Function
   
   function GetForceContribution(distance as float32, byref out_x as float32, byref out_y as float32)
@@ -28,24 +32,27 @@ type tEntity_ForceArea_Circular
     out_x = cos(DegToRad(me.rotation)) * forceGiven
     out_y = sin(DegToRad(me.rotation)) * forceGiven
   end function
+
+
 end type
 
 function tEntity_ForceArea_Circular_DebugRender(entityPtr as dword)
-  dim forceCircular as tEntity_ForceArea_Circular at entityPtr
 
+  dim forceArea as tEntity_ForceArea_Circular at entityPtr
+  
   tbgl_pushpolygonLook %GL_LINE
-    tbgl_nGon(0, 0, forceCircular.Radius, 36)
+    tbgl_nGon(0, 0, forceArea.Radius, 36)
   tbgl_popPolygonLook
 
   ' "arrow"
   tbgl_beginPoly %TBGL_LINES
-    tbgl_vertex -forceCircular.radius * 0.75, 0
-    tbgl_vertex  forceCircular.radius * 0.75, 0
+    tbgl_vertex -forceArea.radius * 0.75, 0
+    tbgl_vertex  forceArea.radius * 0.75, 0
 
-    tbgl_vertex  forceCircular.radius * 0.75, 0
-    tbgl_vertex  forceCircular.radius * 0.55, forceCircular.radius * 0.20
+    tbgl_vertex  forceArea.radius * 0.75, 0
+    tbgl_vertex  forceArea.radius * 0.55, forceArea.radius * 0.20
 
-    tbgl_vertex  forceCircular.radius * 0.75, 0
-    tbgl_vertex  forceCircular.radius * 0.55,-forceCircular.radius * 0.20
+    tbgl_vertex  forceArea.radius * 0.75, 0
+    tbgl_vertex  forceArea.radius * 0.55,-forceArea.radius * 0.20
   tbgl_endPoly
 end function

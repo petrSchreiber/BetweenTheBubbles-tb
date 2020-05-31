@@ -1,22 +1,26 @@
 ﻿#include once "entity_baseTypes.tbasicu"
 
 type tEntity_Player extends tEntityBase
-  physics    as tPhysicsBase
-  collider   as tBoundingCircle
+  physicsable  as tPhysicsBase
+  collidable   as tBoundingCircle
+  renderable   as tRenderBase
   
   function Initialize()
     me.typeName        = remain$(typeof(me), ".") ' Cuts the udt. start
     me.entityAbility   = %ECS_RENDERABLE | %ECS_PHYSICSABLE | %ECS_COLLIDABLE
 
-    me.collider.Initialize(0.5) ' Radius
-    me.collider.bounciness = 1
+    me.collidable.Initialize(0.5) ' Radius
+    me.collidable.bounciness = 1
     
-    me.physics.Initialize(3)    ' Mass
+    me.physicsable.Initialize(3)    ' Mass
+    
+    me.renderable.funcRender = me.typeName + "_Render"
   End Function
-
+  
 end type
 
-function tEntity_Player_Render(playerPtr as DWord)
-  dim player as tEntity_Player at playerPtr
-	tbgl_nGon(0, 0, player.collider.radius, 36)
+function tEntity_Player_Render(entityPtr as dword)
+  dim player as tEntity_Player at entityPtr
+  
+  tbgl_nGon(0, 0, player.collidable.radius, 36)
 End Function

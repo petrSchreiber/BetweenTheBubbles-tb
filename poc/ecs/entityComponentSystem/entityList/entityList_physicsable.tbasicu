@@ -6,7 +6,7 @@ type tEntityList_Physicsable
   function Process(frameRate as float32)
     if me.count = 0 then exit function
     
-    dim pointersToPhysicsable(me.count) as tEntityList_Descriptor at me.pData ' Retrieving pData
+    dim entityDescriptor(me.count) as tEntityList_Descriptor at me.pData ' Retrieving pData
 
     dim entityBase    as tEntityBase at 0
     dim entityPhysics as tPhysicsBase at 0
@@ -16,8 +16,8 @@ type tEntityList_Physicsable
 
     int32 i
     for i = 1 to me.count
-      setAt(entityBase   , pointersToPhysicsable(i).pEntity)
-      setAt(entityPhysics, pointersToPhysicsable(i).pAbility(%ECS_PHYSICSABLE_INDEX))
+      setAt(entityBase   , entityDescriptor(i).pEntity)
+      setAt(entityPhysics, entityDescriptor(i).pAbility(%ECS_PHYSICSABLE_INDEX))
       
       ' EFFECT
       entityBase.position.x += (entityPhysics.force.x / entityPhysics.mass) / frameRate

@@ -22,6 +22,7 @@ type tEntityBase
   function hasAbility(ability as int32) as int32
     return Bit_get(me.entityAbility, Log2(ability)) 
   end function
+
 end type
 
 ' --
@@ -37,18 +38,6 @@ type TEntity_ForceArea_Base
   areaData  as dword
   baseForce as float32
 end type
-
-' --
-
-type tPhysicsBase
-  mass     as float32   '[todo] Incorporate to physics/collision calculations
-  force    as tVector2
-  spin     as float32
-  
-  function Initialize(mass as float32)
-    me.mass = mass
-  end function
-End type
 
 ' --
 
@@ -69,3 +58,30 @@ type tBoundingCircle
     me.radius   = radius
   End Function
 End Type
+
+' --
+
+type tPhysicsBase
+  mass     as float32   '[todo] Incorporate to physics/collision calculations
+  force    as tVector2
+  spin     as float32
+  
+  function Initialize(mass as float32)
+    me.mass = mass
+  end function
+End type
+
+' --
+
+type tRenderBase
+  funcRender  as string
+  
+  texture(2)  as int32
+  model(2)    as int32
+end type
+
+' --
+
+type tDebugBase
+  funcDebugRender  as string
+end type

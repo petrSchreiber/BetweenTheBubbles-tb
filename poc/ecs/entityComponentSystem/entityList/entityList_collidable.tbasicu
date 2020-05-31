@@ -13,7 +13,7 @@ type tEntityList_Collidable
     if me.physicsablePtr = 0 then exit function
     if me.count < 2          then exit function ' It needs at least 2 to collide :)
     
-    dim collidablePtr(me.count) as tEntityList_Descriptor at me.pData
+    dim entityDescriptor(me.count) as tEntityList_Descriptor at me.pData
     
     dim dummyPhysicsable as tEntityList at me.physicsablePtr
     dim pointersToPhysicsable(dummyPhysicsable.count) as tEntityList_Descriptor at peek(dword, me.physicsablePtr) ' Retrieving pData
@@ -86,16 +86,16 @@ type tEntityList_Collidable
       
       #region "circle to circle collision"
       ' -- Getting the info about position from base interface
-      SetAt(entityA, collidablePtr(indexOfColliderA).pEntity)
-      SetAt(entityB, collidablePtr(indexOfColliderB).pEntity)
+      SetAt(entityA, entityDescriptor(indexOfColliderA).pEntity)
+      SetAt(entityB, entityDescriptor(indexOfColliderB).pEntity)
 
       dx = entityB.position.x - entityA.position.x
       dy = entityB.position.y - entityA.position.y
       distance = sqr(dx*dx + dy*dy)
       
       ' -- Getting the info about radius/bounciness from collidable interface
-      SetAt(circleColliderA, collidablePtr(indexOfColliderA).pAbility(%ECS_COLLIDABLE_INDEX))
-      SetAt(circleColliderB, collidablePtr(indexOfColliderB).pAbility(%ECS_COLLIDABLE_INDEX))
+      SetAt(circleColliderA, entityDescriptor(indexOfColliderA).pAbility(%ECS_COLLIDABLE_INDEX))
+      SetAt(circleColliderB, entityDescriptor(indexOfColliderB).pAbility(%ECS_COLLIDABLE_INDEX))
       
       intersection = (circleColliderA.radius + circleColliderB.radius) - distance
       
@@ -118,7 +118,7 @@ type tEntityList_Collidable
         end if
         spin*= sqr(speedX*speedX + speedY*speedY) * 30
         
-        physicsAPtr = collidablePtr(indexOfColliderA).pAbility(%ECS_PHYSICSABLE_INDEX)
+        physicsAPtr = entityDescriptor(indexOfColliderA).pAbility(%ECS_PHYSICSABLE_INDEX)
         if physicsAPtr then
           if circleColliderA.bounciness > 0 then
             Setat(physicsA, physicsAPtr)
@@ -128,7 +128,7 @@ type tEntityList_Collidable
           end if
         end if
       
-        physicsBPtr = collidablePtr(indexOfColliderB).pAbility(%ECS_PHYSICSABLE_INDEX)
+        physicsBPtr = entityDescriptor(indexOfColliderB).pAbility(%ECS_PHYSICSABLE_INDEX)
         if physicsBPtr then
           if circleColliderB.bounciness > 0 then
             Setat(physicsB, physicsBPtr)

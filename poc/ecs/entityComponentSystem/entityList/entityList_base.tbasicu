@@ -1,7 +1,7 @@
 ﻿type tEntityList_Descriptor
   pEntity         as dword
 
-  pAbility(5) as dword  '[!] Number of elements must match the number of items in %ECS_*ABLE
+  pAbility(5)     as dword  '[!] Number of elements must match the number of items in %ECS_*ABLE
 end Type
 
 type tEntityList

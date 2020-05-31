@@ -13,7 +13,7 @@ type tEntityList_ForceArea
     if me.physicsablePtr = 0 then exit function
     if me.count = 0          then exit function
     
-    dim pointers(me.count) as tEntityList_Descriptor at me.pData
+    dim entityDescriptor(me.count) as tEntityList_Descriptor at me.pData
     
     dim dummyPhysicsable as tEntityList at me.physicsablePtr
 
@@ -28,10 +28,10 @@ type tEntityList_ForceArea
     int32 i, j
     float32 distance, fx, fy
     for i = 1 to me.count
-      SetAt(forceAreaBase, pointers(i).pEntity)
+      SetAt(forceAreaBase, entityDescriptor(i).pEntity)
       
       if forceAreaBase.areaType = %ECS_FORCEAREA_CIRCULAR then
-        setAt(forceAreaCircularEntity, pointers(i).pEntity)
+        setAt(forceAreaCircularEntity, entityDescriptor(i).pEntity)
         
         for j = 1 to dummyPhysicsable.count
           setAt(entityBase, pointersToPhysicsable(j).pEntity)

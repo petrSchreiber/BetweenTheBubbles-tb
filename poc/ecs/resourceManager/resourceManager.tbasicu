@@ -1,0 +1,38 @@
+﻿uses "dictionary"
+
+#include once "https://raw.githubusercontent.com/petrSchreiber/SmartTexture/master/smartTexture.tbasicu"
+
+type ResourceManager
+  dResources as dword
+
+  function _create()
+    me.dResources = Dictionary_Create(1024)
+  end function
+  
+  function _destroy()
+    if me.dResources then Dictionary_Delete(me.dResources)
+  end function
+  
+  ' --
+  
+  function GetTexture(fileName as string) as int32
+    fileName = ucase$(fileName)
+    string key = "_TXR_" + fileName
+
+    if Dictionary_Exists(me.dResources, key) then
+
+      return val(Dictionary_Find(me.dResources, key))
+      
+    else
+      int32 textureId = tally(Dictionary_ListKeys(me.dResources, ","), "_TXR_") + 1
+      Dictionary_Add(me.dResources, "_TXR_"+fileName, textureId)
+      
+      dim temp as SmartTexture()
+      temp.fromFile(fileName)
+      temp.make(textureId, %TBGL_TEX_LINEAR)
+
+      return textureId
+    end if
+  end function
+  
+end type

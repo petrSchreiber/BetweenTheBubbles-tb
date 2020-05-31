@@ -7,18 +7,20 @@ type tEntityList_Debugable
   
     if me.count = 0 then exit function
     
-    dim pointers(me.count) as tEntityList_Descriptor at me.pData
+    dim entityDescriptor(me.count) as tEntityList_Descriptor at me.pData
     dim entityBase as tEntityBase at 0
+    dim debugable as tDebugBase at 0
     
     int32 i
     for i = 1 to me.count
-      SetAt(entityBase, pointers(i).pEntity)
+      SetAt(entityBase, entityDescriptor(i).pEntity)
+      SetAt(debugable, entityDescriptor(i).pAbility(%ECS_DEBUGABLE_INDEX))
       
       tbgl_pushMatrix
         tbgl_translate entityBase.position.x, entityBase.position.y
         tbgl_rotate entityBase.rotation
         
-        call entityBase.typeName + "_DebugRender"(pointers(i).pEntity)
+        call ""+debugable.funcDebugRender(varptr(entityBase))
       tbgl_popMatrix
 
     next

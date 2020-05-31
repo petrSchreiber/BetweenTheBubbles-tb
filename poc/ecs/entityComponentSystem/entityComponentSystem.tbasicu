@@ -7,11 +7,11 @@ begin const
   %ECS_RENDERABLE  = 8
   %ECS_DEBUGABLE   = 16
   
-  %ECS_FORCEAREA_INDEX   = log2(%ECS_FORCEAREA)
-  %ECS_COLLIDABLE_INDEX  = log2(%ECS_COLLIDABLE)
-  %ECS_PHYSICSABLE_INDEX = log2(%ECS_PHYSICSABLE)
-  %ECS_RENDERABLE_INDEX  = log2(%ECS_RENDERABLE)
-  %ECS_DEBUGABLE_INDEX   = log2(%ECS_DEBUGABLE)
+  %ECS_FORCEAREA_INDEX   = log2(%ECS_FORCEAREA)+1
+  %ECS_COLLIDABLE_INDEX  = log2(%ECS_COLLIDABLE)+1
+  %ECS_PHYSICSABLE_INDEX = log2(%ECS_PHYSICSABLE)+1
+  %ECS_RENDERABLE_INDEX  = log2(%ECS_RENDERABLE)+1
+  %ECS_DEBUGABLE_INDEX   = log2(%ECS_DEBUGABLE)+1
 end const
 
 #include "entityList/entityList_forcearea.tbasicu"
@@ -107,9 +107,9 @@ type tEntityComponentSystem
       entityDescriptorPtr = me.collidable.addEntityPtr(entityPtr)
 
       SetAt(entityDescriptor, entityDescriptorPtr)
-      entityDescriptor.pAbility(%ECS_COLLIDABLE_INDEX) = entityPtr+UDT_ElementOffset(entity.collider.typeName)
+      entityDescriptor.pAbility(%ECS_COLLIDABLE_INDEX) = entityPtr+UDT_ElementOffset(entity.collidable.typeName)
       if entity.hasAbility(%ECS_PHYSICSABLE) then
-        entityDescriptor.pAbility(%ECS_PHYSICSABLE_INDEX) = entityPtr+UDT_ElementOffset(entity.physics.mass)
+        entityDescriptor.pAbility(%ECS_PHYSICSABLE_INDEX) = entityPtr+UDT_ElementOffset(entity.physicsable.mass)
       end if
     end if
 
@@ -118,17 +118,23 @@ type tEntityComponentSystem
       entityDescriptorPtr = me.physicsable.addEntityPtr(entityPtr)
 
       SetAt(entityDescriptor, entityDescriptorPtr)
-      entityDescriptor.pAbility(%ECS_PHYSICSABLE_INDEX) = entityPtr+UDT_ElementOffset(entity.physics.mass)
+      entityDescriptor.pAbility(%ECS_PHYSICSABLE_INDEX) = entityPtr+UDT_ElementOffset(entity.physicsable.mass)
     end if
 
     if entity.hasAbility(%ECS_RENDERABLE) then
       printl entityBase.typeName + " is renderable"
-      me.renderable.addEntityPtr(entityPtr)
+      entityDescriptorPtr = me.renderable.addEntityPtr(entityPtr)
+      
+      SetAt(entityDescriptor, entityDescriptorPtr)
+      entityDescriptor.pAbility(%ECS_RENDERABLE_INDEX) = entityPtr+UDT_ElementOffset(entity.renderable.funcRender)
     end if
 
     if entity.hasAbility(%ECS_DEBUGABLE) then
       printl entityBase.typeName + " is debugable"
-      me.debugable.addEntityPtr(entityPtr)
+      entityDescriptorPtr = me.debugable.addEntityPtr(entityPtr)
+
+      SetAt(entityDescriptor, entityDescriptorPtr)
+      entityDescriptor.pAbility(%ECS_DEBUGABLE_INDEX) = entityPtr+UDT_ElementOffset(entity.debugable.funcDebugRender)
     end if
     #endregion
     
