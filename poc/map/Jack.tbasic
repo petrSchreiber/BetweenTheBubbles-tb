@@ -11,27 +11,13 @@ Global logger as tLogThis
 logger.defaultTarget = %LT_ToConsole
 Console_SetScreenBufferSize(120,300)
 
-#region "Definitions"
 
-  Type tRiver
-      minSectorSurface as dWord
-      minHalfWidth as byte
-      maxHalfWidth as byte
-      banksWidth as byte
-      seed as Number
-      meandering as single
-      meander as Single
-End Type
-
-  Type tXY
-      x as DWORD
-      y as DWORD
-End Type
 
   type tBtbuniverse
   worldList(%WORLDCOUNT) as tBtbworld
   squareLimitsRatio as DWord
   worldCount as DWord
+  maxTheoreticalMapSize as Dword
   
   Function _Create()
     dim tempArray() as dword
@@ -46,6 +32,7 @@ End Type
     if tempDataCount = me.worldCount Then
       for i as DWord = 1 to me.worldCount
         me.worldList(i).sizeInSquaresCount = tempArray(i) * me.squareLimitsRatio
+        me.maxTheoreticalMapSize += me.worldList(i).sizeInSquaresCount
       Next
     Else
       logger.wCrit("$RELATIVESIZEWORLD data count does not match %WORLDCOUNT.")
@@ -182,39 +169,11 @@ End Type
       Waitkey
       stop
     EndIf
+    
+    Global map(me.maxTheoreticalMapSize,me.maxTheoreticalMapSize) as tBtbGameZone
   
   End Function
 end Type
-
-  type tBtbworld
-      sizeInSquaresCount as dword
-      ambiance as dword
-      riverArmsCount as DWord
-      armsDepthProfiles as Dword
-      riverArmWidthDistribution as dword
-      minimumTotalRiverWidth as DWord
-      NWlimit as tXY
-      SElimit as tXY
-      conditionsToComplete() as dword
-      maxDepth as DWord
-      level as DWord
-      orderInLevel as DWord
-      hidden As Dword
-End Type
-
-  type tBtbGameZone
-      distanceFromSource as DWord
-      distanceFromMiddle as DWord
-      nature as DWord
-      riverWidth as DWord
-      depth as dword
-      flowDirection as DWord
-      flowStrength as Dword ' to be calculated according to river depth to river width ratio
-      '[] https://github.com/petrSchreiber/BetweenTheBubbles-tb/issues/46
-      foeDensity as DWord ' Foe density is to understand as an overall value of threat rather than foe count. Something like: Foe density = foe count * individual foe strength
-End Type
-
-  #EndRegion
 
 function loadData(sourceString as String, byref storeArray() as dword)
 'Local ndata as DWord = PARSECOUNT(sourceString, "")
