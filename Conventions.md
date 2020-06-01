@@ -23,6 +23,13 @@ Feedback and discussions are shared with the [ThinBasic community](https://www.t
 #### Ambiance
 A set of world properties that makes it look different from another one. (setting used for map generation, type of foes encountered, aspect of the "decoration": color of the ground, plants (be it on banks or floating) , flowers, snow...)
 
+
+### B
+
+#### brook
+A one gameZone-wide water flow
+
+
 ### E
 
 #### ECS
@@ -51,6 +58,19 @@ A level is an aera composed by _minimum_ one world. The player must have achieve
 
 #### Pilgrim
 The Pilgrim is the main character controlled by the player.
+
+
+### R
+
+#### river
+A strictly more than one gameZone-wide water flow.
+
+
+### S
+
+#### stream
+Same as a river but usually narrower. Useful when comparing two river arms in the same context.
+
 
 
 ### T
