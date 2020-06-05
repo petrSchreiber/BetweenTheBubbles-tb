@@ -1,51 +1,4 @@
-﻿Type tXY
-  x as DWORD
-  y as DWORD
-End Type
-
-Type tBtbAmbiance
-  gameZoneStyling as String
-  relativeSizeWorld as DWord
-  hidden As Dword
-  riverArmsCount as DWord
-  maxDepth as DWord
-  armsDepthProfiles as Dword
-  riverArmWidthDistribution as dword
-End Type
-
-type tBtbWorld
-  ambiance as tBtbAmbiance
-  sizeInSquaresCount as dword
-  minimumTotalRiverWidth as DWord
-  NWlimit as tXY
-  SElimit as tXY
-  conditionsToComplete() as dword
-  level as DWord
-  orderInLevel as DWord
-End Type
-
-  Type tRiver
-  minSectorSurface as dWord
-  minHalfWidth as byte
-  maxHalfWidth as byte
-  banksWidth as byte
-  seed as Number
-  meandering as single
-  meander as Single
-End Type
-
-  type tBtbGameZone
-  distanceFromSource as DWord
-  distanceFromMiddle as DWord
-  nature as DWord
-  riverWidth as DWord
-  depth as dword
-  flowDirection as DWord
-  flowStrength as Dword ' to be calculated according to river depth to river width ratio
-  '[] https://github.com/petrSchreiber/BetweenTheBubbles-tb/issues/46
-  foeDensity as DWord ' Foe density is to understand as an overall value of threat rather than foe count. Something like: Foe density = foe count * individual foe strength
-End Type
-
+﻿
 ' Directions
 begin Const
   %NORTH            = 1
@@ -103,109 +56,190 @@ Begin Const
 %HIDDEN       = 1
 End Const
 
+Begin Const ' How is the world connected to others ?
+%ONMAINSTREAM = 0
+%DEADEND      = 1
+%SIDELOOP     = 2
+End Const
+
+%RNDSEED = 1234
+
 %SQUARELIMITSRATIO = %SIZESTANDARD ' %SIZESTANDARD : Worlds sides length sizing ratio (gameZones)
 
-' Compromise between procedural generation and story coherence
 %WORLDCOUNT = 8
 
+$WORLDSSEQUENCE = "1,2,3,4,5,6,7,8"
 $WORLDLEVEL = "1,1,2,3,3,3,4,5" ' Which world belongs to what level ?
-
 $MINIMUMTOTALRIVERWIDTH = "3,3,7,9,11,11,11,21" ' Among how many water are divided the arms ?
+
+%MAXARMSCOUNTPERWORLD = 21 ' = max($MINIMUMTOTALRIVERWIDTH)
+%BANKSWIDTH = 3 ' Each side of the water, in gameZones.
+
+Type tXY
+  x as DWORD
+  y as DWORD
+End Type
+
+Type tBtbAmbiance
+  gameZoneStyling as String
+  relativeSizeWorld as DWord
+  hidden As Dword
+  deadEnd as DWord
+  riverArmsCount as DWord
+  maxDepth as DWord
+  armsDepthProfiles as Dword
+  riverArmWidthDistribution as dword
+End Type
+
+  Type tArm
+  width as Dword
+  depthProfile as DWord
+End Type
+
+type tBtbWorld
+  ambiance as tBtbAmbiance
+  sizeInSquaresCount as dword
+  minimumTotalRiverWidth as DWord
+  NWlimit as tXY
+  SElimit as tXY
+  '[todo] Open a Github issue to discuss needs in terms of conditions
+  conditionsToComplete(3) as dword
+  level as DWord
+  '[] https://thinbasic.github.io/book-thinbasic_user_defined_types/chapter_01-01-01-dynamic-array-elements.html
+  arms(%MAXARMSCOUNTPERWORLD) as tArm
+End Type
+
+  type tBtbGameZone
+  distanceFromSource as DWord
+  distanceFromMiddle as DWord
+  nature as DWord
+  riverWidth as DWord
+  depth as dword
+  flowDirection as DWord
+  flowStrength as Dword ' to be calculated according to river depth to river width ratio
+  '[] https://github.com/petrSchreiber/BetweenTheBubbles-tb/issues/46
+  foeDensity as DWord ' Foe density is to understand as an overall value of threat rather than foe count. Something like: Foe density = foe count * individual foe strength
+End Type
+
 
 
 Function setAmbiance#001(byRef aWorldAmbiance as tBtbAmbiance)
 
-aWorld.gameZoneStyling = "CalmPool"
-aWorld.relativeSizeWorld = %SIZEMINI
-aWorld.hidden = %VISIBLE
-aWorld.riverArmsCount = 1
-aWorld.maxDepth = 1
-aWorld.armsDepthProfiles = %FLAT
-aWorld.riverArmWidthDistribution = %EQUAL
+aWorldAmbiance.gameZoneStyling = "CalmPool"
+aWorldAmbiance.relativeSizeWorld = %SIZEMINI
+aWorldAmbiance.hidden = %VISIBLE
+aWorldAmbiance.deadEnd = %ONMAINSTREAM
+aWorldAmbiance.riverArmsCount = 1
+aWorldAmbiance.maxDepth = 1
+aWorldAmbiance.armsDepthProfiles = %FLAT
+aWorldAmbiance.riverArmWidthDistribution = %EQUAL
+
+Return %TRUE
 
 End Function
 
 Function setAmbiance#002(byRef aWorldAmbiance as tBtbAmbiance)
 
-aWorld.gameZoneStyling = "CalmPool"
-aWorld.relativeSizeWorld = %SIZEMINUSCULE
-aWorld.hidden = %VISIBLE
-aWorld.riverArmsCount = 1
-aWorld.maxDepth = 2
-aWorld.armsDepthProfiles = %FLAT
-aWorld.riverArmWidthDistribution = %EQUAL
+aWorldAmbiance.gameZoneStyling = "CalmPool"
+aWorldAmbiance.relativeSizeWorld = %SIZEMINUSCULE
+aWorldAmbiance.hidden = %VISIBLE
+aWorldAmbiance.deadEnd = %ONMAINSTREAM
+aWorldAmbiance.riverArmsCount = 1
+aWorldAmbiance.maxDepth = 2
+aWorldAmbiance.armsDepthProfiles = %FLAT
+aWorldAmbiance.riverArmWidthDistribution = %EQUAL
+
+Return %TRUE
 
 End Function
 
 Function setAmbiance#003(byRef aWorldAmbiance as tBtbAmbiance)
 
-aWorld.gameZoneStyling = "SlowStream"
-aWorld.relativeSizeWorld = %SIZEDIMINUTIVE
-aWorld.hidden = %VISIBLE
-aWorld.riverArmsCount = 2
-aWorld.maxDepth = 2
-aWorld.armsDepthProfiles = %LYINGE + %VSHAPED + %UPSIDEDOWNU + %FLAT
-aWorld.riverArmWidthDistribution = %SPLIT
+aWorldAmbiance.gameZoneStyling = "SlowStream"
+aWorldAmbiance.relativeSizeWorld = %SIZEDIMINUTIVE
+aWorldAmbiance.hidden = %VISIBLE
+aWorldAmbiance.deadEnd = %ONMAINSTREAM
+aWorldAmbiance.riverArmsCount = 2
+aWorldAmbiance.maxDepth = 2
+aWorldAmbiance.armsDepthProfiles = %LYINGE + %VSHAPED + %UPSIDEDOWNU + %FLAT
+aWorldAmbiance.riverArmWidthDistribution = %SPLIT
+
+Return %TRUE
 
 End Function
 
 Function setAmbiance#004(byRef aWorldAmbiance as tBtbAmbiance)
 
-aWorld.gameZoneStyling = "ThroughTheCity"
-aWorld.relativeSizeWorld = %SIZEEXIGUOUS
-aWorld.hidden = %VISIBLE
-aWorld.riverArmsCount = 2
-aWorld.maxDepth = 3
-aWorld.armsDepthProfiles = %COMBSHAPED + %TRIANGULAR + %UNBALANCED + %LYINGE + %VSHAPED + %UPSIDEDOWNU + %FLAT
-aWorld.riverArmWidthDistribution = %MOSTLYWIDE
+aWorldAmbiance.gameZoneStyling = "ThroughTheCity"
+aWorldAmbiance.relativeSizeWorld = %SIZEEXIGUOUS
+aWorldAmbiance.hidden = %VISIBLE
+aWorldAmbiance.deadEnd = %ONMAINSTREAM
+aWorldAmbiance.riverArmsCount = 2
+aWorldAmbiance.maxDepth = 3
+aWorldAmbiance.armsDepthProfiles = %COMBSHAPED + %TRIANGULAR + %UNBALANCED + %LYINGE + %VSHAPED + %UPSIDEDOWNU + %FLAT
+aWorldAmbiance.riverArmWidthDistribution = %MOSTLYWIDE
+
+Return %TRUE
 
 End Function
 
 Function setAmbiance#005(byRef aWorldAmbiance as tBtbAmbiance)
 
-aWorld.gameZoneStyling = "ThroughTheCity"
-aWorld.relativeSizeWorld = %SIZEDIMINUTIVE
-aWorld.hidden = %VISIBLE
-aWorld.riverArmsCount = 3
-aWorld.maxDepth = 8
-aWorld.armsDepthProfiles = %UNBALANCED + %VSHAPED
-aWorld.riverArmWidthDistribution = %MOSTLYWIDE
+aWorldAmbiance.gameZoneStyling = "ThroughTheCity"
+aWorldAmbiance.relativeSizeWorld = %SIZEDIMINUTIVE
+aWorldAmbiance.hidden = %VISIBLE
+aWorldAmbiance.deadEnd = %ONMAINSTREAM
+aWorldAmbiance.riverArmsCount = 3
+aWorldAmbiance.maxDepth = 8
+aWorldAmbiance.armsDepthProfiles = %UNBALANCED + %VSHAPED
+aWorldAmbiance.riverArmWidthDistribution = %MOSTLYWIDE
+
+Return %TRUE
 
 End Function
 
 Function setAmbiance#006(byRef aWorldAmbiance as tBtbAmbiance)
 
-aWorld.gameZoneStyling = "Break"
-aWorld.relativeSizeWorld = %SIZEMINI
-aWorld.hidden = %HIDDEN
-aWorld.riverArmsCount = 1
-aWorld.maxDepth = 1
-aWorld.armsDepthProfiles = %FLAT
-aWorld.riverArmWidthDistribution = %EQUAL
+aWorldAmbiance.gameZoneStyling = "Break"
+aWorldAmbiance.relativeSizeWorld = %SIZEMINI
+aWorldAmbiance.hidden = %HIDDEN
+aWorldAmbiance.deadEnd = %SIDELOOP
+aWorldAmbiance.riverArmsCount = 1
+aWorldAmbiance.maxDepth = 1
+aWorldAmbiance.armsDepthProfiles = %FLAT
+aWorldAmbiance.riverArmWidthDistribution = %EQUAL
+
+Return %TRUE
 
 End Function
 
 Function setAmbiance#007(byRef aWorldAmbiance as tBtbAmbiance)
 
-aWorld.gameZoneStyling = "RainyDay"
-aWorld.relativeSizeWorld = %SIZEHUMONGOUS
-aWorld.hidden = %VISIBLE
-aWorld.riverArmsCount = 1
-aWorld.maxDepth = 5
-aWorld.armsDepthProfiles = %COMBSHAPED + %TRIANGULAR + %UNBALANCED + %LYINGE + %VSHAPED + %UPSIDEDOWNU + %FLAT
-aWorld.riverArmWidthDistribution = %EQUAL
+aWorldAmbiance.gameZoneStyling = "RainyDay"
+aWorldAmbiance.relativeSizeWorld = %SIZEHUMONGOUS
+aWorldAmbiance.hidden = %VISIBLE
+aWorldAmbiance.deadEnd = %ONMAINSTREAM
+aWorldAmbiance.riverArmsCount = 1
+aWorldAmbiance.maxDepth = 5
+aWorldAmbiance.armsDepthProfiles = %COMBSHAPED + %TRIANGULAR + %UNBALANCED + %LYINGE + %VSHAPED + %UPSIDEDOWNU + %FLAT
+aWorldAmbiance.riverArmWidthDistribution = %EQUAL
+
+Return %TRUE
 
 End Function
 
 Function setAmbiance#008(byRef aWorldAmbiance as tBtbAmbiance)
 
-aWorld.gameZoneStyling = "Marsh"
-aWorld.relativeSizeWorld = %SIZEGIGANTIC
-aWorld.hidden = %VISIBLE
-aWorld.riverArmsCount = 5
-aWorld.maxDepth = 2
-aWorld.armsDepthProfiles = %TRIANGULAR + %VSHAPED + %UPSIDEDOWNU
-aWorld.riverArmWidthDistribution = %MOSTLYNARROW
+aWorldAmbiance.gameZoneStyling = "Marsh"
+aWorldAmbiance.relativeSizeWorld = %SIZEGIGANTIC
+aWorldAmbiance.hidden = %VISIBLE
+aWorldAmbiance.deadEnd = %ONMAINSTREAM
+aWorldAmbiance.riverArmsCount = 5
+aWorldAmbiance.maxDepth = 2
+aWorldAmbiance.armsDepthProfiles = %TRIANGULAR + %VSHAPED + %UPSIDEDOWNU
+aWorldAmbiance.riverArmWidthDistribution = %MOSTLYNARROW
+
+Return %TRUE
 
 End Function
 
