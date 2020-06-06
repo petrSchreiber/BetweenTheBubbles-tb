@@ -1,0 +1,292 @@
+﻿
+uses "console"
+Uses "TBGL"
+Uses "UI"
+
+#include "init.tbasicu"
+#include "gameZoneDefinition.tbasicu"
+#Include "https://github.com/DirectuX/logger/raw/master/LOG.tbasicu"
+
+Global logger as tLogThis
+logger.defaultTarget = %LT_ToConsole
+Console_SetScreenBufferSize(120,300) ' /!\ No way to set the console window width, or shrink font size ?
+Console_ShowWindow(%Console_SW_SHOWMAXIMIZED)
+
+
+  type tBtbuniverse
+  worldList(%WORLDCOUNT) as tBtbworld
+  squareLimitsRatio as DWord
+  worldCount as DWord
+  
+  
+  Function _Create()
+    dim tempArray() as dword
+    Dim tempDataCount as DWord
+    Dim prepareFunction as String
+    Dim isSuccess as Boolean
+    Dim previousLevel as DWord
+    
+    Dim randomValue as DWord
+    Dim widthList() as DWord
+    
+    Dim maxTheoreticalMapSize as tXY
+    Dim minimumWorldSideSize as DWord
+    Dim worldSizes(%WORLDCOUNT) as dword
+    Dim maxSizeIndex as dword = 1
+    Dim actualSide as Dword
+    DIm bottomLeft as DWord
+    Dim bottomRight as Dword
+    Dim mapCentreX as Dword
+    
+
+#Region "Load init data"
+
+    me.worldCount = %WORLDCOUNT
+    logger.write(%LT_ToConsole, "", "", %TAG_NOTAG)
+    logger.wInfo("Registering " & me.worldCount & " worlds.")
+    logger.write(%LT_ToConsole, "", "", %TAG_NOTAG)
+
+    me.squareLimitsRatio = %SQUARELIMITSRATIO
+    
+    tempDataCount = loadData($WORLDSSEQUENCE, tempArray)
+    
+    if tempDataCount = me.worldCount Then
+      For i as Integer = 1 to me.worldCount
+        prepareFunction = "setAmbiance#" & Format$(tempArray(i),"000")
+        Call_IfExists prepareFunction(me.worldList(i).ambiance) to isSuccess
+        if not isSuccess Then
+          logger.wCrit("Function " & prepareFunction & " has an error or does not exists")
+          logger.wCrit("Terminating execution... Please, press a key.")
+          Waitkey
+          stop
+        Else
+          logger.wInfo("World N" & chr$(248) & i & " ambiance set to " & me.worldList(i).ambiance.gameZoneStyling)
+          isSuccess = %FALSE
+        endif
+      Next
+    Else
+      logger.wCrit("$WORLDSSEQUENCE data count does not match %WORLDCOUNT.")
+      logger.wCrit("Terminating execution... Please, press a key.")
+      Waitkey
+      stop
+    EndIf
+    
+    tempDataCount = loadData($MINIMUMTOTALRIVERWIDTH, tempArray)
+  
+    if tempDataCount = me.worldCount Then
+      for i as DWord = 1 to me.worldCount
+          me.worldList(i).minimumTotalRiverWidth = tempArray(i)
+      Next
+    Else
+      logger.wCrit("$MINIMUMTOTALRIVERWIDTH data count does not match %WORLDCOUNT.")
+      logger.wCrit("Terminating execution... Please, press a key.")
+      Waitkey
+      stop
+    EndIf
+    
+    tempDataCount = loadData($WORLDLEVEL, tempArray)
+    
+    if tempDataCount = me.worldCount Then
+      For i as Integer = 1 to me.worldCount
+        if tempArray(i) = previousLevel or tempArray(i) = previousLevel + 1 Then
+          if tempArray(i) = previousLevel + 1 and (me.worldList(i).ambiance.hidden <> %VISIBLE or me.worldList(i).ambiance.deadEnd <> %ONMAINSTREAM) Then
+            logger.wCrit("First world of each level must be visible and on main stream.")
+            logger.wCrit("Terminating execution... Please, press a key.")
+          endif
+          me.worldList(i).level = tempArray(i)
+          previousLevel = tempArray(i)
+        Else
+          logger.wCrit("$WORLDLEVEL data must contain consecutive numbers.")
+          logger.wCrit("Terminating execution... Please, press a key.")
+          Waitkey
+          stop
+        endif
+      next
+    Else
+      logger.wCrit("$WORLDLEVEL data count does not match %WORLDCOUNT.")
+      logger.wCrit("Terminating execution... Please, press a key.")
+      Waitkey
+      stop
+    EndIf
+    
+    logger.write(%LT_ToConsole, "", "", %TAG_NOTAG)
+    logger.wInfo("Sucessfully registered " & me.worldCount & " worlds in " & previousLevel & " levels.")
+    logger.write(%LT_ToConsole, "", "", %TAG_NOTAG)
+  
+#EndRegion
+
+#Region "River properties"
+
+  for i as Integer = 1 to me.worldCount
+  
+    Redim widthList(me.worldList(i).ambiance.riverArmsCount)
+  
+    select case me.worldList(i).ambiance.riverArmWidthDistribution
+    	Case %EQUAL
+        for u as integer = 1 to me.worldList(i).ambiance.riverArmsCount
+          widthList(u) = ceil(me.worldList(i).minimumTotalRiverWidth / me.worldList(i).ambiance.riverArmsCount)
+        Next
+    	Case %SPLIT
+    	
+    	Case %DISTRIBUTED
+    	
+    	Case %MOSTLYNARROW
+    	
+    	Case %MOSTLYWIDE
+    	
+    End Select
+  
+    for j as integer = 1 to me.worldList(i).ambiance.riverArmsCount
+      'Random depth profile
+      randomValue = RND(1,bitCount(me.worldList(i).ambiance.armsDepthProfiles))
+      me.worldList(i).arms(j).depthProfile = getFlag(randomValue, me.worldList(i).ambiance.armsDepthProfiles)
+      
+      'Random width
+      me.worldList(i).arms(j).width = widthList(j)
+    next
+  Next
+  
+  
+  
+#EndRegion
+
+    
+#Region "Map dimensioning"
+
+    minimumWorldSideSize = 3 + 2 * %BANKSWIDTH
+    
+    for i as Integer = 1 to me.worldCount
+      me.worldList(i).sizeInSquaresCount = minimumWorldSideSize * me.squareLimitsRatio * me.worldList(i).ambiance.relativeSizeWorld
+
+'[t] be careful if more than a 'special' world per mainStream world or special world bigger than parent world
+      if me.worldList(i).ambiance.hidden <> %VISIBLE or me.worldList(i).ambiance.deadEnd <> %ONMAINSTREAM then
+        worldSizes(i) = me.worldList(i).sizeInSquaresCount + worldSizes(i-1)
+      Else
+        worldSizes(i) = me.worldList(i).sizeInSquaresCount
+      EndIf
+
+      if worldSizes(maxSizeIndex) <= worldSizes(i) Then
+        maxSizeIndex = i
+      endif
+    Next
+    
+    mapCentreX = worldSizes(maxSizeIndex) + 1
+    maxTheoreticalMapSize.X = 2 * worldSizes(maxSizeIndex) + 1
+    
+    ' First world at left (actualSide = 0)
+    me.worldList(1).NWlimit.Y = 1
+    me.worldList(1).SElimit.Y = me.worldList(1).sizeInSquaresCount
+    bottomLeft = me.worldList(1).SElimit.Y
+    
+    me.worldList(1).SElimit.X = mapCentreX
+    me.worldList(1).NWlimit.X = mapCentreX - me.worldList(1).sizeInSquaresCount
+    
+    for i as Integer = 2 to me.worldCount
+      
+      if me.worldList(i).ambiance.hidden <> %VISIBLE or me.worldList(i).ambiance.deadEnd <> %ONMAINSTREAM then
+        
+        Else
+          if actualSide = 0 Then
+          '[todo] Compute river properties before that
+          
+            'if bottomLeft > bottomRight + 2 * %BANKSWIDTH 
+          Else
+          
+          endif
+      End If
+    	
+    Next
+    
+    Global map(maxTheoreticalMapSize.X,maxTheoreticalMapSize.Y) as tBtbGameZone
+    
+#Endregion
+
+
+
+  
+  End Function
+end Type
+
+function getFlag(id as Dword, storage as Long)
+  dim i as Long = -1
+  do
+    incr i
+    if isFlagSet(storage, pow(2,i)) Then
+      decr id
+    endif
+  loop while id > 0
+  Return Pow(2,i)
+End Function
+
+function loadData(sourceString as String, byref storeArray() as dword)
+'Local ndata as DWord = PARSECOUNT(sourceString, "")
+'redim storeArray(ndata)
+  Return Parse(sourceString, storeArray,",")
+End Function
+
+Function TBMain()
+
+  logger.defaultTitle = Function_Name
+  logger.wInfo("Logger loaded")
+
+  call parametersSetting ' Sets initial variables
+  Call initDisplay ' Create the windows for map display
+  Call initWorldMap ' Build straight river
+  Call stirWorldMap
+  CAll sleepDisplay ' Final loop to keep displaying map
+
+End Function
+
+function parametersSetting()
+
+  logger.defaultTitle = Function_Name
+
+  global displayWindowSize as tXY
+  global hWnd AS DWORD
+  
+  Randomize(%RNDSEED)
+
+  Global btbuniverse as tBtbuniverse
+
+  'For overlay ?
+  Global btblevel as tBtblevel
+  Global btbworld as tBtbworld
+  
+  
+
+End Function
+
+function initDisplay()
+
+  DESKTOP GET CLIENT TO displayWindowSize.x, displayWindowSize.y
+
+  MsgBox 0, str$(displayWindowSize.x) & " x " & str$(displayWindowSize.y),,"Desktop resolution"
+
+  int32 posX   = -15 + displayWindowSize.x - min(mapDimensions.x, displayWindowSize.x / 2)
+  int32 posY   = 0
+  int32 width  = mapDimensions.x' min(mapDimensions.x, displayWindowSize.x / 2)
+  int32 height = mapDimensions.y' min(mapDimensions.y, displayWindowSize.y) + 100
+
+  hWnd = Canvas_Window("press ESC to quit", posX, posY, width, height)
+  Canvas_Attach(hWnd, 0, True)
+
+End Function
+
+Function bitCount(storage as Long) as Long
+  Return Tally(bin$(Storage), "1")
+End Function
+
+function isFlagSet(storage as long, flag as long) as long
+  return bit_get(storage, log2(flag))
+end function
+
+function getFlag(id as Dword, storage as Long)
+  dim i as Long = -1
+  do
+    incr i
+    if isFlagSet(storage, pow(2,i)) Then
+      decr id
+    endif
+  loop while id > 0
+  Return Pow(2,i)
+End Function
