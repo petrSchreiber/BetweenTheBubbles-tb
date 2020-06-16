@@ -56,6 +56,11 @@ Begin Const
 %HIDDEN       = 1
 End Const
 
+Begin Const
+%LEFTSIDE      = 0
+%RIGHTSIDE     = 1
+End Const
+
 Begin Const ' How is the world connected to others ?
 %ONMAINSTREAM = 0
 %DEADEND      = 1
@@ -107,6 +112,7 @@ type tBtbWorld
   level as DWord
   '[] https://thinbasic.github.io/book-thinbasic_user_defined_types/chapter_01-01-01-dynamic-array-elements.html
   arms(%MAXARMSCOUNTPERWORLD) as tArm
+  widestArmWidth as dword
 End Type
 
   type tBtbGameZone
