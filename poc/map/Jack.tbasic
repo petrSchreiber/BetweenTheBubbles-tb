@@ -137,6 +137,151 @@ Console_ShowWindow(%Console_SW_SHOWMAXIMIZED)
 #EndRegion
 
 #Region "River properties"
+'
+'  for i as Integer = 1 to me.worldCount
+'  
+'    
+'    If i < me.worldCount Then
+'      me.worldList(i).streamsOutCount = min(me.worldList(i+1).ambiance.riverArmsCount, me.worldList(i).ambiance.riverArmsCount)
+'    endif
+'    
+'    if me.worldList(i).ambiance.riverArmsCount = 1 then me.worldList(i).ambiance.riverArmWidthDistribution = %EQUAL
+'  
+'    select case me.worldList(i).ambiance.riverArmWidthDistribution
+'    
+'    	Case %EQUAL
+'    	
+'        if me.worldList(i).ambiance.riverArmsCount = 1 Then
+'          equalWidth = me.worldList(i).minimumTotalRiverWidth
+'        else
+'          equalWidth = 1 + 2 * Ceil(((me.worldList(i).minimumTotalRiverWidth - me.worldList(i).ambiance.riverArmsCount)/me.worldList(i).ambiance.riverArmsCount)/2)
+'        endif
+'        me.worldList(i).widestArmWidth = equalWidth
+'        for j as integer = 1 to me.worldList(i).ambiance.riverArmsCount
+'          'Width
+'          me.worldList(i).arms(j).width = equalWidth
+'          'Random depth profile
+'          me.worldList(i).arms(j).depthProfile = getRandomFlag(me.worldList(i).ambiance.armsDepthProfiles)
+'        Next
+'        
+'    	Case %SPLIT
+'        
+'        splitWidthValue1 = me.worldList(i).minimumTotalRiverWidth / max(me.worldList(i).ambiance.riverArmsCount, 3)
+'        splitWidthValue2 = (max(me.worldList(i).ambiance.riverArmsCount, 3) - 1) * splitWidthValue1
+'        splitArmValue1 = me.worldList(i).ambiance.riverArmsCount / 2
+'          
+'        if splitArmValue1 <> assign(ceil(splitArmValue1), splitArmValue2) then Decr splitArmValue1
+'        
+'        for j as integer = 1 to me.worldList(i).ambiance.riverArmsCount
+'          'Width
+'          if splitArmValue1 > 2 and splitWidthValue1 >=8 then
+'            me.worldList(i).arms(j).width = 5
+'            splitWidthValue1 -= 5
+'            decr splitArmValue1
+'            me.worldList(i).widestArmWidth = max(me.worldList(i).widestArmWidth, me.worldList(i).arms(j).width)
+'            Iterate for
+'          elseif splitArmValue1 > 0 and splitWidthValue1 >= 3 then
+'            me.worldList(i).arms(j).width = 3
+'            splitWidthValue1 -= 3
+'            decr splitArmValue1
+'            me.worldList(i).widestArmWidth = max(me.worldList(i).widestArmWidth, me.worldList(i).arms(j).width)
+'            Iterate for
+'          endif
+'          
+'          splitArmValue1 = 0
+'          splitWidthValue2 += splitWidthValue1
+'          splitWidthValue1 = 0
+'            
+'          if splitArmValue2 = 1 Then
+'          	me.worldList(i).arms(j).width = 1 + 2 * ceil(splitWidthValue2 / 2)
+'          	me.worldList(i).widestArmWidth = max(me.worldList(i).widestArmWidth, me.worldList(i).arms(j).width)
+'          	Iterate for
+'          Else
+'            me.worldList(i).arms(j).width = 1 + 2 * ceil((splitWidthValue2 - splitArmValue2) / splitArmValue2) / 2
+'          End If
+'          
+'          me.worldList(i).widestArmWidth = max(me.worldList(i).widestArmWidth, me.worldList(i).arms(j).width)
+'          
+'          'Random depth profile
+'          me.worldList(i).arms(j).depthProfile = getRandomFlag(me.worldList(i).ambiance.armsDepthProfiles)
+'        Next
+'        
+'    	Case %DISTRIBUTED
+'    	
+'    	distributedBase = (me.worldList(i).minimumTotalRiverWidth /(( me.worldList(i).ambiance.riverArmsCount + 1 ) / 2)) / me.worldList(i).ambiance.riverArmsCount
+'    	distributedTotal = 0
+'
+'      for j as integer = 1 to me.worldList(i).ambiance.riverArmsCount
+'        'Width
+'        if j = me.worldList(i).ambiance.riverArmsCount Then
+'          me.worldList(i).arms(j).width += iseven(assign(me.worldList(i).minimumTotalRiverWidth - distributedTotal, me.worldList(i).arms(j).width))
+'        Else
+'          me.worldList(i).arms(j).width += iseven(assign(Round(distributedBase * j,0),me.worldList(i).arms(j).width))
+'          distributedTotal += me.worldList(i).arms(j).width
+'        endif
+'        
+'        me.worldList(i).widestArmWidth = max(me.worldList(i).widestArmWidth, me.worldList(i).arms(j).width)
+'        
+'        'Random depth profile
+'        me.worldList(i).arms(j).depthProfile = getRandomFlag(me.worldList(i).ambiance.armsDepthProfiles)
+'      Next
+'        
+'    	Case %MOSTLYNARROW
+'    	
+'        narrowCount = 0
+'        narrowCurrent = 3
+'        narrowTotal = 0
+'        
+'        for j as integer = 1 to me.worldList(i).ambiance.riverArmsCount
+'          incr narrowCount
+'          if narrowCount > 3 then
+'          	narrowCount = 0
+'          	narrowCurrent += 2
+'          End If
+'          'Width
+'          if j = me.worldList(i).ambiance.riverArmsCount Then
+'            me.worldList(i).arms(j).width += iseven(assign(me.worldList(i).minimumTotalRiverWidth - narrowTotal, me.worldList(i).arms(j).width))
+'          else
+'            me.worldList(i).arms(j).width = narrowCurrent
+'            narrowTotal += narrowCurrent
+'          endif
+'          
+'          me.worldList(i).widestArmWidth = max(me.worldList(i).widestArmWidth, me.worldList(i).arms(j).width)
+'          
+'          'Random depth profile
+'          me.worldList(i).arms(j).depthProfile = getRandomFlag(me.worldList(i).ambiance.armsDepthProfiles)
+'        Next
+'        
+'    	Case %MOSTLYWIDE
+'    	
+'        wideTotal = 0
+'        
+'        for j as integer = 1 to me.worldList(i).ambiance.riverArmsCount
+'          'Width
+'          if j = me.worldList(i).ambiance.riverArmsCount Then
+'            me.worldList(i).arms(j).width += iseven(assign(me.worldList(i).minimumTotalRiverWidth - wideTotal, me.worldList(i).arms(j).width))
+'          Else
+'            me.worldList(i).arms(j).width += iseven(assign(ceil(me.worldList(i).minimumTotalRiverWidth / (me.worldList(i).ambiance.riverArmsCount + j - 1)), me.worldList(i).arms(j).width))
+'            wideTotal += me.worldList(i).arms(j).width
+'          endif
+'          
+'          me.worldList(i).widestArmWidth = max(me.worldList(i).widestArmWidth, me.worldList(i).arms(j).width)
+'          
+'          'Random depth profile
+'          me.worldList(i).arms(j).depthProfile = getRandomFlag(me.worldList(i).ambiance.armsDepthProfiles)
+'        Next
+'        
+'    End Select
+'    
+'    '[todo] <Something to do here>
+'    ' Here sorting me.worldList(i).arms(j).width wide to narrow ; how array sort ?
+'    
+'  Next
+'  
+#EndRegion
+
+
+#Region "Workaround version River properties"
 
   for i as Integer = 1 to me.worldCount
   
@@ -214,9 +359,9 @@ Console_ShowWindow(%Console_SW_SHOWMAXIMIZED)
       for j as integer = 1 to me.worldList(i).ambiance.riverArmsCount
         'Width
         if j = me.worldList(i).ambiance.riverArmsCount Then
-          me.worldList(i).arms(j).width += iseven(assign(me.worldList(i).minimumTotalRiverWidth - distributedTotal, me.worldList(i).arms(j).width))
+          me.worldList(i).arms(j).width += iseven(assign2(me.worldList(i).minimumTotalRiverWidth - distributedTotal, varptr(me.worldList(i).arms(j).width)))
         Else
-          me.worldList(i).arms(j).width += iseven(assign(Round(distributedBase * j,0),me.worldList(i).arms(j).width))
+          me.worldList(i).arms(j).width += iseven(assign2(Round(distributedBase * j,0),varptr(me.worldList(i).arms(j).width)))
           distributedTotal += me.worldList(i).arms(j).width
         endif
         
@@ -240,7 +385,7 @@ Console_ShowWindow(%Console_SW_SHOWMAXIMIZED)
           End If
           'Width
           if j = me.worldList(i).ambiance.riverArmsCount Then
-            me.worldList(i).arms(j).width += iseven(assign(me.worldList(i).minimumTotalRiverWidth - narrowTotal, me.worldList(i).arms(j).width))
+            me.worldList(i).arms(j).width += iseven(assign2(me.worldList(i).minimumTotalRiverWidth - narrowTotal, varptr(me.worldList(i).arms(j).width)))
           else
             me.worldList(i).arms(j).width = narrowCurrent
             narrowTotal += narrowCurrent
@@ -259,9 +404,9 @@ Console_ShowWindow(%Console_SW_SHOWMAXIMIZED)
         for j as integer = 1 to me.worldList(i).ambiance.riverArmsCount
           'Width
           if j = me.worldList(i).ambiance.riverArmsCount Then
-            me.worldList(i).arms(j).width += iseven(assign(me.worldList(i).minimumTotalRiverWidth - wideTotal, me.worldList(i).arms(j).width))
+            me.worldList(i).arms(j).width += iseven(assign2(me.worldList(i).minimumTotalRiverWidth - wideTotal, varptr(me.worldList(i).arms(j).width)))
           Else
-            me.worldList(i).arms(j).width += iseven(assign(ceil(me.worldList(i).minimumTotalRiverWidth / (me.worldList(i).ambiance.riverArmsCount + j - 1)), me.worldList(i).arms(j).width))
+            me.worldList(i).arms(j).width += iseven(assign2(ceil(me.worldList(i).minimumTotalRiverWidth / (me.worldList(i).ambiance.riverArmsCount + j - 1)), varptr(me.worldList(i).arms(j).width)))
             wideTotal += me.worldList(i).arms(j).width
           endif
           
@@ -280,7 +425,7 @@ Console_ShowWindow(%Console_SW_SHOWMAXIMIZED)
   
 #EndRegion
 
-    
+
 #Region "Map dimensioning"
 
     minimumWorldSideSize = 3 + 2 * %BANKSWIDTH
@@ -317,11 +462,11 @@ Console_ShowWindow(%Console_SW_SHOWMAXIMIZED)
         
       Else
           if actualSide = %LEFTSIDE Then
-            if bottomLeft > (bottomRight + 2 * %BANKSWIDTH + me.worldList(i-1).widestArmWidth)) then
+            if bottomLeft > (bottomRight + 2 * %BANKSWIDTH + me.worldList(i-1).widestArmWidth) then
               actualSide = %RIGHTSIDE
             End If
           Else
-            if bottomRight > (bottomLeft + 2 * %BANKSWIDTH + me.worldList(i-1).widestArmWidth)) then
+            if bottomRight > (bottomLeft + 2 * %BANKSWIDTH + me.worldList(i-1).widestArmWidth) then
               actualSide = %LEFTSIDE
             End If
           endif
@@ -444,3 +589,12 @@ Function getRandomFlag(storage as Long)
   Local randomValue as Long = RND(1,bitCount(storage))
   Return getFlag(randomValue, storage)
 End Function
+
+#Region " Part of workaround "
+  function Assign2(what as number, where as Number) as number 'error
+	dim whereVar as DWord at where
+	whereVar = what
+  Return whereVar
+End Function
+#EndRegion
+
