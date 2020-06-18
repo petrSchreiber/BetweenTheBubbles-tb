@@ -34,7 +34,6 @@ Console_ShowWindow(%Console_SW_SHOWMAXIMIZED)
     Dim narrowCount, narrowTotal, narrowCurrent as DWord
     Dim wideTotal as dword
     
-    Dim maxTheoreticalMapSize as tXY
     Dim minimumWorldSideSize as DWord
     Dim worldSizes(%WORLDCOUNT) as dword
     Dim maxSizeIndex as dword = 1
@@ -141,6 +140,11 @@ Console_ShowWindow(%Console_SW_SHOWMAXIMIZED)
 
   for i as Integer = 1 to me.worldCount
   
+    
+    If i < me.worldCount Then
+      me.worldList(i).streamsOutCount = min(me.worldList(i+1).ambiance.riverArmsCount, me.worldList(i).ambiance.riverArmsCount)
+    endif
+    
     if me.worldList(i).ambiance.riverArmsCount = 1 then me.worldList(i).ambiance.riverArmWidthDistribution = %EQUAL
   
     select case me.worldList(i).ambiance.riverArmWidthDistribution
@@ -268,6 +272,10 @@ Console_ShowWindow(%Console_SW_SHOWMAXIMIZED)
         Next
         
     End Select
+    
+    '[todo] <Something to do here>
+    ' Here sorting me.worldList(i).arms(j).width wide to narrow ; how array sort ?
+    
   Next
   
 #EndRegion
@@ -305,6 +313,7 @@ Console_ShowWindow(%Console_SW_SHOWMAXIMIZED)
     for i as Integer = 2 to me.worldCount
       
       if me.worldList(i).ambiance.hidden <> %VISIBLE or me.worldList(i).ambiance.deadEnd <> %ONMAINSTREAM then
+      '[todo] <Something to do here>
         
       Else
           if actualSide = %LEFTSIDE Then
@@ -336,9 +345,10 @@ Console_ShowWindow(%Console_SW_SHOWMAXIMIZED)
     	
     Next
     
-    maxTheoreticalMapSize.X = 2 * worldSizes(maxSizeIndex) + 1
-    maxTheoreticalMapSize.Y = max(bottomRight, bottomLeft)
-    Global map(maxTheoreticalMapSize.X,maxTheoreticalMapSize.Y) as tBtbGameZone
+    mapDimensions.X = 2 * worldSizes(maxSizeIndex) + 1
+    mapDimensions.Y = max(bottomRight, bottomLeft)
+    
+    Global map(mapDimensions.X,mapDimensions.Y) as tBtbGameZone
     
 #Endregion
 
@@ -375,15 +385,24 @@ function parametersSetting()
   global hWnd AS DWORD
   
   Randomize(%RNDSEED)
-
+  
+  Global mapDimensions as TXY
+  Global displayWindowSize as tXY
+  
   Global btbuniverse as tBtbuniverse
 
   'For overlay ?
-'  Global btblevel as tBtblevel
+  'Global btblevel as tBtblevel
   Global btbworld as tBtbworld
-  
-  
 
+End Function
+
+Function initWorldMap()
+
+  for i = 1 to btbuniverse.worldCount
+    ' set streamStart and streamStop for each arm
+  Next
+  
 End Function
 
 function initDisplay()

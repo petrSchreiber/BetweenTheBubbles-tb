@@ -57,14 +57,21 @@ Begin Const
 End Const
 
 Begin Const
-%LEFTSIDE      = 0
-%RIGHTSIDE     = 1
+%LEFTSIDE     = 0
+%RIGHTSIDE    = 1
 End Const
 
 Begin Const ' How is the world connected to others ?
 %ONMAINSTREAM = 0
 %DEADEND      = 1
 %SIDELOOP     = 2
+End Const
+
+Begin Const ' Nature of gameZone
+%VOID         = 0
+%WORLD        = 1
+%WATER        = 2
+%BANK         = 3
 End Const
 
 %RNDSEED = 1234
@@ -99,6 +106,8 @@ End Type
   Type tArm
   width as Dword
   depthProfile as DWord
+  streamStart as tXY
+  streamstop as tXY
 End Type
 
 type tBtbWorld
@@ -113,6 +122,7 @@ type tBtbWorld
   '[] https://thinbasic.github.io/book-thinbasic_user_defined_types/chapter_01-01-01-dynamic-array-elements.html
   arms(%MAXARMSCOUNTPERWORLD) as tArm
   widestArmWidth as dword
+  streamsOutCount as dword
 End Type
 
   type tBtbGameZone
@@ -126,6 +136,8 @@ End Type
   '[] https://github.com/petrSchreiber/BetweenTheBubbles-tb/issues/46
   foeDensity as DWord ' Foe density is to understand as an overall value of threat rather than foe count. Something like: Foe density = foe count * individual foe strength
 End Type
+
+
 
 
 
