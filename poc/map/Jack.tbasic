@@ -54,7 +54,7 @@ Console_ShowWindow(%Console_SW_SHOWMAXIMIZED)
       stop
     End If
     logger.write(%LT_ToConsole, "", "", %TAG_NOTAG)
-    logger.wInfo("Registering " & me.worldCount & " worlds.")
+    logger.wInfo("Registering " & me.worldCount & " worlds...")
     logger.write(%LT_ToConsole, "", "", %TAG_NOTAG)
 
     me.squareLimitsRatio = %SQUARELIMITSRATIO
@@ -135,6 +135,11 @@ Console_ShowWindow(%Console_SW_SHOWMAXIMIZED)
     logger.write(%LT_ToConsole, "", "", %TAG_NOTAG)
   
 #EndRegion
+
+logger.write(%LT_ToConsole, "", "", %TAG_NOTAG)
+logger.wInfo("Setting river properties...")
+logger.write(%LT_ToConsole, "", "", %TAG_NOTAG)
+    
 
 #Region "River properties"
 '
@@ -275,7 +280,22 @@ Console_ShowWindow(%Console_SW_SHOWMAXIMIZED)
 '    
 '    '[todo] <Something to do here>
 '    ' Here sorting me.worldList(i).arms(j).width wide to narrow ; how array sort ?
-'    
+'   #Region " Sort arms by width descending"
+'    Dim sorted as Boolean
+'    DIm tempArm as tArm
+'      '[breakpoint] <Any note here. Breakpoint will be set to line following this statement>
+'    Do
+'      sorted = %TRUE
+'      for j = 2 to me.worldList(i).ambiance.riverArmsCount
+'        if me.worldList(i).arms(j).width > me.worldList(i).arms(j-1).width Then
+'        	sorted = %False
+'        	tempArm = me.worldList(i).arms(j).width
+'        	me.worldList(i).arms(j-1).width = me.worldList(i).arms(j).width
+'        	me.worldList(i).arms(j).width = tempArm
+'        End If
+'      Next
+'    loop until sorted = %TRUE
+'   #EndRegion 
 '  Next
 '  
 #EndRegion
@@ -284,7 +304,6 @@ Console_ShowWindow(%Console_SW_SHOWMAXIMIZED)
 #Region "Workaround version River properties"
 
   for i as Integer = 1 to me.worldCount
-  
     
     If i < me.worldCount Then
       me.worldList(i).streamsOutCount = min(me.worldList(i+1).ambiance.riverArmsCount, me.worldList(i).ambiance.riverArmsCount)
@@ -418,13 +437,35 @@ Console_ShowWindow(%Console_SW_SHOWMAXIMIZED)
         
     End Select
     
+
     '[todo] <Something to do here>
     ' Here sorting me.worldList(i).arms(j).width wide to narrow ; how array sort ?
-    
+   #Region " Sort arms by width descending"
+    Dim sorted as Boolean
+    DIm tempArm as tArm
+      '[breakpoint] <Any note here. Breakpoint will be set to line following this statement>
+    Do
+      sorted = %TRUE
+      for j = 2 to me.worldList(i).ambiance.riverArmsCount
+        if me.worldList(i).arms(j).width > me.worldList(i).arms(j-1).width Then
+        	sorted = %False
+        	tempArm = me.worldList(i).arms(j).width
+        	me.worldList(i).arms(j-1).width = me.worldList(i).arms(j).width
+        	me.worldList(i).arms(j).width = tempArm
+        End If
+      Next
+    loop until sorted = %TRUE
+   #EndRegion 
+logger.write(%LT_ToConsole, "", "", %TAG_NOTAG)
+logger.wInfo("Setting river properties...")
+logger.write(%LT_ToConsole, "", "", %TAG_NOTAG)
   Next
   
 #EndRegion
 
+    logger.write(%LT_ToConsole, "", "", %TAG_NOTAG)
+    logger.wInfo("River properties set.")
+    logger.write(%LT_ToConsole, "", "", %TAG_NOTAG)
 
 #Region "Map dimensioning"
 
@@ -495,6 +536,10 @@ Console_ShowWindow(%Console_SW_SHOWMAXIMIZED)
     
     Global map(mapDimensions.X,mapDimensions.Y) as tBtbGameZone
     
+    logger.write(%LT_ToConsole, "", "", %TAG_NOTAG)
+    logger.wInfo("Map dimmensionned to X: " & str$(mapDimensions.X) & " x Y: " & str$(mapDimensions.Y))
+    logger.write(%LT_ToConsole, "", "", %TAG_NOTAG)
+    
 #Endregion
 
   
@@ -544,9 +589,9 @@ End Function
 
 Function initWorldMap()
 
-  for i = 1 to btbuniverse.worldCount
+  'for i = 1 to btbuniverse.worldCount
     ' set streamStart and streamStop for each arm
-  Next
+  'Next
   
 End Function
 
