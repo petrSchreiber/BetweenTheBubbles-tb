@@ -522,7 +522,7 @@ logger.write(%LT_ToConsole, "", "", %TAG_NOTAG)
           	Case %RIGHTSIDE
               me.worldList(i).NWlimit.Y = bottomRight + 1
               me.worldList(i).SElimit.Y = bottomRight + me.worldList(i).sizeInSquaresCount
-              bottomRight = me.worldList(1).SElimit.Y
+              bottomRight = me.worldList(i).SElimit.Y
               me.worldList(i).SElimit.X = mapCentreX + 1 + me.worldList(i).sizeInSquaresCount
               me.worldList(i).NWlimit.X = mapCentreX + 1
           End Select
@@ -531,8 +531,8 @@ logger.write(%LT_ToConsole, "", "", %TAG_NOTAG)
     	
     Next
     
-    mapDimensions.X = 2 * worldSizes(maxSizeIndex) + 1
-    mapDimensions.Y = max(bottomRight, bottomLeft)
+    mapDimensions.X = 2 * worldSizes(maxSizeIndex) + 2
+    mapDimensions.Y = max(bottomRight, bottomLeft) + 1
     
     Global map(mapDimensions.X,mapDimensions.Y) as tBtbGameZone
     
@@ -562,7 +562,7 @@ Function TBMain()
   call parametersSetting ' Sets initial variables
   Call initDisplay ' Create the windows for map display
   Call initWorldMap ' Build straight river
-  Call stirWorldMap
+  'Call stirWorldMap
   CAll sleepDisplay ' Final loop to keep displaying map
 
 End Function
@@ -589,10 +589,84 @@ End Function
 
 Function initWorldMap()
 
-  'for i = 1 to btbuniverse.worldCount
+    logger.defaultTitle = Function_Name
+    logger.write(%LT_ToConsole, "", "", %TAG_NOTAG)
+    logger.wInfo("Now filling map...")
+
+  for i as dword = 1 to btbuniverse.worldCount
     ' set streamStart and streamStop for each arm
-  'Next
+    if btbuniverse.worldList(i).ambiance.hidden <> %VISIBLE or btbuniverse.worldList(i).ambiance.deadEnd <> %ONMAINSTREAM then Iterate for 
+    ' set world gameZones
+    For u as dword = btbuniverse.worldList(i).NWlimit.X to btbuniverse.worldList(i).SElimit.X
+    	For v as dword = btbuniverse.worldList(i).NWlimit.Y to btbuniverse.worldList(i).SElimit.Y
+        if u = btbuniverse.worldList(i).NWlimit.X or u = btbuniverse.worldList(i).SElimit.X or v = btbuniverse.worldList(i).NWlimit.Y or v = btbuniverse.worldList(i).SElimit.Y Then
+          map(u,v).nature = %WORLDLIMIT
+        else
+          map(u,v).nature = %WORLD
+        End If
+    	Next
+    Next
+  Next
   
+    logger.wInfo("Mapping done.")
+    logger.write(%LT_ToConsole, "", "", %TAG_NOTAG)
+  
+End Function
+
+function sleepDisplay()
+
+    logger.defaultTitle = Function_Name
+    logger.write(%LT_ToConsole, "", "", %TAG_NOTAG)
+    logger.wInfo("Drawing...")
+
+    call drawing
+
+    logger.defaultTitle = Function_Name
+    logger.write(%LT_ToConsole, "", "", %TAG_NOTAG)
+    logger.wInfo("Now sleeping.")
+    logger.wInfo("Press ESC. to output picture to file and quit.")
+
+' -- Main loop
+  While IsWindow(hWnd)
+    call drawing
+    
+    if asc(Canvas_Inkey)=  27 Then Exit While
+  Wend
+
+  Canvas_BitmapSaveImageFile("result.png")
+  Canvas_Window end
+
+End Function
+
+
+Function drawing()
+
+' -- Set the resolution and the coordinate system
+  Canvas_Scale pixels'( 1,mapDimensions.y, mapDimensions.x,1)
+  Canvas_clear
+
+' -- Draw river map
+  for i as dword = 1 to mapDimensions.x
+    for j as dword = 1 to mapDimensions.y
+      Select case map(i,j).nature
+      case %VOID
+        Iterate For
+      Case %BANK
+        Canvas_Color(rgb(64, 255, 128))
+      Case %WATER
+        Canvas_Color(rgb(64, 128, 255))
+      CAse %WORLD
+        Canvas_Color(rgb(64, 64, 64))
+      CAse %WORLDLIMIT
+        Canvas_Color(rgb(32, 32, 32))
+      end select
+      Canvas_SetPixel(i,j)
+    next
+  next
+
+'Show the rendered stuff to the public :)
+  Canvas_Redraw
+
 End Function
 
 function initDisplay()
