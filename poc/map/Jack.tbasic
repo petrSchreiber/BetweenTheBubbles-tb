@@ -446,7 +446,8 @@ logger.write(%LT_ToConsole, "", "", %TAG_NOTAG)
       '[breakpoint] <Any note here. Breakpoint will be set to line following this statement>
     Do
       sorted = %TRUE
-      for j = 2 to me.worldList(i).ambiance.riverArmsCount
+      if me.worldList(i).ambiance.riverArmsCount = 1 then exit do
+      for j = 2 to me.worldList(i).ambiance.riverArmsCount ' should be " AS integer " but I have a bug there
         if me.worldList(i).arms(j).width > me.worldList(i).arms(j-1).width Then
         	sorted = %False
         	tempArm = me.worldList(i).arms(j).width
@@ -500,7 +501,16 @@ logger.write(%LT_ToConsole, "", "", %TAG_NOTAG)
       
       if me.worldList(i).ambiance.hidden <> %VISIBLE or me.worldList(i).ambiance.deadEnd <> %ONMAINSTREAM then
       '[todo] <Something to do here>
-        
+        me.worldList(i).NWlimit.Y = me.worldList(i-1).NWlimit.Y
+        me.worldList(i).SElimit.Y = me.worldList(i).NWlimit.Y + me.worldList(i).sizeInSquaresCount
+        select case actualSide
+          Case %LEFTSIDE
+            me.worldList(i).SElimit.X = me.worldList(i-1).NWlimit.X - 1
+            me.worldList(i).NWlimit.X = me.worldList(i).SElimit.X - me.worldList(i).sizeInSquaresCount - 1
+          Case %RIGHTSIDE
+            me.worldList(i).SElimit.X = me.worldList(i).SElimit.X + me.worldList(i).sizeInSquaresCount + 1
+            me.worldList(i).NWlimit.X = me.worldList(i).SElimit.X + 1
+        End Select
       Else
           if actualSide = %LEFTSIDE Then
             if bottomLeft > (bottomRight + 2 * %BANKSWIDTH + me.worldList(i-1).widestArmWidth) then
@@ -595,17 +605,28 @@ Function initWorldMap()
 
   for i as dword = 1 to btbuniverse.worldCount
     ' set streamStart and streamStop for each arm
-    if btbuniverse.worldList(i).ambiance.hidden <> %VISIBLE or btbuniverse.worldList(i).ambiance.deadEnd <> %ONMAINSTREAM then Iterate for 
+    if btbuniverse.worldList(i).ambiance.hidden <> %VISIBLE or btbuniverse.worldList(i).ambiance.deadEnd <> %ONMAINSTREAM then
+      For u as dword = btbuniverse.worldList(i).NWlimit.X to btbuniverse.worldList(i).SElimit.X
+        For v as dword = btbuniverse.worldList(i).NWlimit.Y to btbuniverse.worldList(i).SElimit.Y
+          if u = btbuniverse.worldList(i).NWlimit.X or u = btbuniverse.worldList(i).SElimit.X or v = btbuniverse.worldList(i).NWlimit.Y or v = btbuniverse.worldList(i).SElimit.Y Then
+            map(u,v).nature = %WORLDLIMIT
+          else
+            map(u,v).nature = %WORLDHIDDEN
+          End If
+        Next
+      Next
+    Else
     ' set world gameZones
-    For u as dword = btbuniverse.worldList(i).NWlimit.X to btbuniverse.worldList(i).SElimit.X
-    	For v as dword = btbuniverse.worldList(i).NWlimit.Y to btbuniverse.worldList(i).SElimit.Y
-        if u = btbuniverse.worldList(i).NWlimit.X or u = btbuniverse.worldList(i).SElimit.X or v = btbuniverse.worldList(i).NWlimit.Y or v = btbuniverse.worldList(i).SElimit.Y Then
-          map(u,v).nature = %WORLDLIMIT
-        else
-          map(u,v).nature = %WORLD
-        End If
-    	Next
-    Next
+      For u as dword = btbuniverse.worldList(i).NWlimit.X to btbuniverse.worldList(i).SElimit.X
+        For v as dword = btbuniverse.worldList(i).NWlimit.Y to btbuniverse.worldList(i).SElimit.Y
+          if u = btbuniverse.worldList(i).NWlimit.X or u = btbuniverse.worldList(i).SElimit.X or v = btbuniverse.worldList(i).NWlimit.Y or v = btbuniverse.worldList(i).SElimit.Y Then
+            map(u,v).nature = %WORLDLIMIT
+          else
+            map(u,v).nature = %WORLD
+          End If
+        Next
+      Next
+    Endif
   Next
   
     logger.wInfo("Mapping done.")
@@ -628,8 +649,8 @@ function sleepDisplay()
 
 ' -- Main loop
   While IsWindow(hWnd)
-    call drawing
-    
+    'call drawing
+    Canvas_Redraw
     if asc(Canvas_Inkey)=  27 Then Exit While
   Wend
 
@@ -657,6 +678,8 @@ Function drawing()
         Canvas_Color(rgb(64, 128, 255))
       CAse %WORLD
         Canvas_Color(rgb(64, 64, 64))
+      Case %WORLDHIDDEN
+        Canvas_Color(rgb(205, 133, 63))
       CAse %WORLDLIMIT
         Canvas_Color(rgb(32, 32, 32))
       end select

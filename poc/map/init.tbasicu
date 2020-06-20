@@ -70,9 +70,10 @@ End Const
 Begin Const ' Nature of gameZone
 %VOID         = 0
 %WORLD        = 1
-%WORLDLIMIT   = 2
-%WATER        = 3
-%BANK         = 4
+%WORLDHIDDEN  = 2
+%WORLDLIMIT   = 3
+%WATER        = 4
+%BANK         = 5
 End Const
 
 %RNDSEED = 1234
