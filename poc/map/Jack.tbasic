@@ -34,6 +34,8 @@ Console_ShowWindow(%Console_SW_SHOWMAXIMIZED)
     Dim narrowCount, narrowTotal, narrowCurrent as DWord
     Dim wideTotal as dword
     
+    Dim streamsOutWidth as DWord
+    
     Dim minimumWorldSideSize as DWord
     Dim worldSizes(%WORLDCOUNT) as dword
     Dim maxSizeIndex as dword = 1
@@ -62,7 +64,7 @@ Console_ShowWindow(%Console_SW_SHOWMAXIMIZED)
     tempDataCount = loadData($WORLDSSEQUENCE, tempArray)
     
     if tempDataCount = me.worldCount Then
-      For i as Integer = 1 to me.worldCount
+      For i as dword = 1 to me.worldCount
         prepareFunction = "setAmbiance#" & Format$(tempArray(i),"000")
         Call_IfExists prepareFunction(me.worldList(i).ambiance) to isSuccess
         if not isSuccess Then
@@ -108,7 +110,7 @@ Console_ShowWindow(%Console_SW_SHOWMAXIMIZED)
     tempDataCount = loadData($WORLDLEVEL, tempArray)
     
     if tempDataCount = me.worldCount Then
-      For i as Integer = 1 to me.worldCount
+      For i as dword = 1 to me.worldCount
         if tempArray(i) = previousLevel or tempArray(i) = previousLevel + 1 Then
           if tempArray(i) = previousLevel + 1 and (me.worldList(i).ambiance.hidden <> %VISIBLE or me.worldList(i).ambiance.deadEnd <> %ONMAINSTREAM) Then
             logger.wCrit("First world of each level must be visible and on main stream.")
@@ -303,7 +305,7 @@ logger.write(%LT_ToConsole, "", "", %TAG_NOTAG)
 
 #Region "Workaround version River properties"
 
-  for i as Integer = 1 to me.worldCount
+  for i as dword = 1 to me.worldCount
     
     If i < me.worldCount Then
       me.worldList(i).streamsOutCount = min(me.worldList(i+1).ambiance.riverArmsCount, me.worldList(i).ambiance.riverArmsCount)
@@ -320,8 +322,8 @@ logger.write(%LT_ToConsole, "", "", %TAG_NOTAG)
         else
           equalWidth = 1 + 2 * Ceil(((me.worldList(i).minimumTotalRiverWidth - me.worldList(i).ambiance.riverArmsCount)/me.worldList(i).ambiance.riverArmsCount)/2)
         endif
-        me.worldList(i).widestArmWidth = equalWidth
-        for j as integer = 1 to me.worldList(i).ambiance.riverArmsCount
+        'me.worldList(i).widestArmWidth = equalWidth
+        for j as dword = 1 to me.worldList(i).ambiance.riverArmsCount
           'Width
           me.worldList(i).arms(j).width = equalWidth
           'Random depth profile
@@ -336,19 +338,19 @@ logger.write(%LT_ToConsole, "", "", %TAG_NOTAG)
           
         if splitArmValue1 <> assign(ceil(splitArmValue1), splitArmValue2) then Decr splitArmValue1
         
-        for j as integer = 1 to me.worldList(i).ambiance.riverArmsCount
+        for j as dword = 1 to me.worldList(i).ambiance.riverArmsCount
           'Width
           if splitArmValue1 > 2 and splitWidthValue1 >=8 then
             me.worldList(i).arms(j).width = 5
             splitWidthValue1 -= 5
             decr splitArmValue1
-            me.worldList(i).widestArmWidth = max(me.worldList(i).widestArmWidth, me.worldList(i).arms(j).width)
+            'me.worldList(i).widestArmWidth = max(me.worldList(i).widestArmWidth, me.worldList(i).arms(j).width)
             Iterate for
           elseif splitArmValue1 > 0 and splitWidthValue1 >= 3 then
             me.worldList(i).arms(j).width = 3
             splitWidthValue1 -= 3
             decr splitArmValue1
-            me.worldList(i).widestArmWidth = max(me.worldList(i).widestArmWidth, me.worldList(i).arms(j).width)
+            'me.worldList(i).widestArmWidth = max(me.worldList(i).widestArmWidth, me.worldList(i).arms(j).width)
             Iterate for
           endif
           
@@ -358,13 +360,13 @@ logger.write(%LT_ToConsole, "", "", %TAG_NOTAG)
             
           if splitArmValue2 = 1 Then
           	me.worldList(i).arms(j).width = 1 + 2 * ceil(splitWidthValue2 / 2)
-          	me.worldList(i).widestArmWidth = max(me.worldList(i).widestArmWidth, me.worldList(i).arms(j).width)
+          	'me.worldList(i).widestArmWidth = max(me.worldList(i).widestArmWidth, me.worldList(i).arms(j).width)
           	Iterate for
           Else
             me.worldList(i).arms(j).width = 1 + 2 * ceil((splitWidthValue2 - splitArmValue2) / splitArmValue2) / 2
           End If
           
-          me.worldList(i).widestArmWidth = max(me.worldList(i).widestArmWidth, me.worldList(i).arms(j).width)
+          'me.worldList(i).widestArmWidth = max(me.worldList(i).widestArmWidth, me.worldList(i).arms(j).width)
           
           'Random depth profile
           me.worldList(i).arms(j).depthProfile = getRandomFlag(me.worldList(i).ambiance.armsDepthProfiles)
@@ -375,7 +377,7 @@ logger.write(%LT_ToConsole, "", "", %TAG_NOTAG)
     	distributedBase = (me.worldList(i).minimumTotalRiverWidth /(( me.worldList(i).ambiance.riverArmsCount + 1 ) / 2)) / me.worldList(i).ambiance.riverArmsCount
     	distributedTotal = 0
 
-      for j as integer = 1 to me.worldList(i).ambiance.riverArmsCount
+      for j as dword = 1 to me.worldList(i).ambiance.riverArmsCount
         'Width
         if j = me.worldList(i).ambiance.riverArmsCount Then
           me.worldList(i).arms(j).width += iseven(assign2(me.worldList(i).minimumTotalRiverWidth - distributedTotal, varptr(me.worldList(i).arms(j).width)))
@@ -384,7 +386,7 @@ logger.write(%LT_ToConsole, "", "", %TAG_NOTAG)
           distributedTotal += me.worldList(i).arms(j).width
         endif
         
-        me.worldList(i).widestArmWidth = max(me.worldList(i).widestArmWidth, me.worldList(i).arms(j).width)
+        'me.worldList(i).widestArmWidth = max(me.worldList(i).widestArmWidth, me.worldList(i).arms(j).width)
         
         'Random depth profile
         me.worldList(i).arms(j).depthProfile = getRandomFlag(me.worldList(i).ambiance.armsDepthProfiles)
@@ -396,7 +398,7 @@ logger.write(%LT_ToConsole, "", "", %TAG_NOTAG)
         narrowCurrent = 3
         narrowTotal = 0
         
-        for j as integer = 1 to me.worldList(i).ambiance.riverArmsCount
+        for j as dword = 1 to me.worldList(i).ambiance.riverArmsCount
           incr narrowCount
           if narrowCount > 3 then
           	narrowCount = 0
@@ -410,7 +412,7 @@ logger.write(%LT_ToConsole, "", "", %TAG_NOTAG)
             narrowTotal += narrowCurrent
           endif
           
-          me.worldList(i).widestArmWidth = max(me.worldList(i).widestArmWidth, me.worldList(i).arms(j).width)
+          'me.worldList(i).widestArmWidth = max(me.worldList(i).widestArmWidth, me.worldList(i).arms(j).width)
           
           'Random depth profile
           me.worldList(i).arms(j).depthProfile = getRandomFlag(me.worldList(i).ambiance.armsDepthProfiles)
@@ -420,7 +422,7 @@ logger.write(%LT_ToConsole, "", "", %TAG_NOTAG)
     	
         wideTotal = 0
         
-        for j as integer = 1 to me.worldList(i).ambiance.riverArmsCount
+        for j as dword = 1 to me.worldList(i).ambiance.riverArmsCount
           'Width
           if j = me.worldList(i).ambiance.riverArmsCount Then
             me.worldList(i).arms(j).width += iseven(assign2(me.worldList(i).minimumTotalRiverWidth - wideTotal, varptr(me.worldList(i).arms(j).width)))
@@ -429,7 +431,7 @@ logger.write(%LT_ToConsole, "", "", %TAG_NOTAG)
             wideTotal += me.worldList(i).arms(j).width
           endif
           
-          me.worldList(i).widestArmWidth = max(me.worldList(i).widestArmWidth, me.worldList(i).arms(j).width)
+          'me.worldList(i).widestArmWidth = max(me.worldList(i).widestArmWidth, me.worldList(i).arms(j).width)
           
           'Random depth profile
           me.worldList(i).arms(j).depthProfile = getRandomFlag(me.worldList(i).ambiance.armsDepthProfiles)
@@ -456,10 +458,11 @@ logger.write(%LT_ToConsole, "", "", %TAG_NOTAG)
         End If
       Next
     loop until sorted = %TRUE
-   #EndRegion 
-logger.write(%LT_ToConsole, "", "", %TAG_NOTAG)
-logger.wInfo("Setting river properties...")
-logger.write(%LT_ToConsole, "", "", %TAG_NOTAG)
+   #EndRegion
+donothing()
+'logger.write(%LT_ToConsole, "", "", %TAG_NOTAG)
+'logger.wInfo("Setting river properties...")
+'logger.write(%LT_ToConsole, "", "", %TAG_NOTAG)
   Next
   
 #EndRegion
@@ -472,7 +475,7 @@ logger.write(%LT_ToConsole, "", "", %TAG_NOTAG)
 
     minimumWorldSideSize = 3 + 2 * %BANKSWIDTH
     
-    for i as Integer = 1 to me.worldCount
+    for i as dword = 1 to me.worldCount
       me.worldList(i).sizeInSquaresCount = minimumWorldSideSize * me.squareLimitsRatio * me.worldList(i).ambiance.relativeSizeWorld
 
 '[t] be careful if more than a 'special' world per mainStream world or special world bigger than parent world
@@ -497,7 +500,7 @@ logger.write(%LT_ToConsole, "", "", %TAG_NOTAG)
     me.worldList(1).SElimit.X = mapCentreX
     me.worldList(1).NWlimit.X = mapCentreX - me.worldList(1).sizeInSquaresCount
     
-    for i as Integer = 2 to me.worldCount
+    for i as dword = 2 to me.worldCount
       
       if me.worldList(i).ambiance.hidden <> %VISIBLE or me.worldList(i).ambiance.deadEnd <> %ONMAINSTREAM then
       '[todo] <Something to do here>
@@ -512,12 +515,17 @@ logger.write(%LT_ToConsole, "", "", %TAG_NOTAG)
             me.worldList(i).NWlimit.X = me.worldList(i).SElimit.X + 1
         End Select
       Else
+          streamsOutWidth = 0
+          
+          for narm as DWord = 1 to me.worldList(i-1).streamsOutCount
+          	streamsOutWidth += me.worldList(i-1).arms(narm).width
+          Next
           if actualSide = %LEFTSIDE Then
-            if bottomLeft > (bottomRight + 2 * %BANKSWIDTH + me.worldList(i-1).widestArmWidth) then
+            if bottomLeft > (bottomRight + 2 * %BANKSWIDTH * me.worldList(i-1).streamsOutCount + streamsOutWidth) then
               actualSide = %RIGHTSIDE
             End If
           Else
-            if bottomRight > (bottomLeft + 2 * %BANKSWIDTH + me.worldList(i-1).widestArmWidth) then
+            if bottomRight > (bottomLeft + 2 * %BANKSWIDTH * me.worldList(i-1).streamsOutCount + streamsOutWidth) then
               actualSide = %LEFTSIDE
             End If
           endif
@@ -604,7 +612,8 @@ Function initWorldMap()
     logger.wInfo("Now filling map...")
 
   for i as dword = 1 to btbuniverse.worldCount
-    ' set streamStart and streamStop for each arm
+    
+' set world gameZones
     if btbuniverse.worldList(i).ambiance.hidden <> %VISIBLE or btbuniverse.worldList(i).ambiance.deadEnd <> %ONMAINSTREAM then
       For u as dword = btbuniverse.worldList(i).NWlimit.X to btbuniverse.worldList(i).SElimit.X
         For v as dword = btbuniverse.worldList(i).NWlimit.Y to btbuniverse.worldList(i).SElimit.Y
@@ -616,7 +625,6 @@ Function initWorldMap()
         Next
       Next
     Else
-    ' set world gameZones
       For u as dword = btbuniverse.worldList(i).NWlimit.X to btbuniverse.worldList(i).SElimit.X
         For v as dword = btbuniverse.worldList(i).NWlimit.Y to btbuniverse.worldList(i).SElimit.Y
           if u = btbuniverse.worldList(i).NWlimit.X or u = btbuniverse.worldList(i).SElimit.X or v = btbuniverse.worldList(i).NWlimit.Y or v = btbuniverse.worldList(i).SElimit.Y Then
@@ -627,11 +635,28 @@ Function initWorldMap()
         Next
       Next
     Endif
+    
+        ' set streamStart and streamStop for each arm
+    'call digRiver(u1,v1,u2,v2)
+        
   Next
   
     logger.wInfo("Mapping done.")
     logger.write(%LT_ToConsole, "", "", %TAG_NOTAG)
   
+End Function
+
+Function digRiver (u1 as DWord, v1 as DWord, u1 as DWord, v2 as DWord)
+
+  'work in progress
+  call enlargeRiver()
+	
+End Function
+
+Function enlargeRiver()
+
+'work in progress
+  DoEvents
 End Function
 
 function sleepDisplay()
@@ -679,9 +704,13 @@ Function drawing()
       CAse %WORLD
         Canvas_Color(rgb(64, 64, 64))
       Case %WORLDHIDDEN
-        Canvas_Color(rgb(205, 133, 63))
+        Canvas_Color(rgb(245, 222, 179))
       CAse %WORLDLIMIT
         Canvas_Color(rgb(32, 32, 32))
+      Case %WATERENTRANCE
+        Canvas_Color(rgb(128, 255, 255))
+      case %WATEREXIT
+        Canvas_Color(rgb(255, 128, 255))
       end select
       Canvas_SetPixel(i,j)
     next
@@ -696,8 +725,12 @@ function initDisplay()
 
   DESKTOP GET CLIENT TO displayWindowSize.x, displayWindowSize.y
 
-  MsgBox 0, str$(displayWindowSize.x) & " x " & str$(displayWindowSize.y),,"Desktop resolution"
-
+  'MsgBox 0, str$(displayWindowSize.x) & " x " & str$(displayWindowSize.y),,"Desktop resolution"
+  logger.defaultTitle = Function_Name
+  logger.write(%LT_ToConsole, "", "", %TAG_NOTAG)
+  logger.wInfo(" Desktop resolution is : " & str$(displayWindowSize.x) & " x " & str$(displayWindowSize.y))
+  logger.write(%LT_ToConsole, "", "", %TAG_NOTAG)
+  
   int32 posX   = -15 + displayWindowSize.x - min(mapDimensions.x, displayWindowSize.x / 2)
   int32 posY   = 0
   int32 width  = mapDimensions.x' min(mapDimensions.x, displayWindowSize.x / 2)
@@ -740,3 +773,6 @@ End Function
 End Function
 #EndRegion
 
+function donothing()
+dim something as DWord = 1
+end Function

@@ -68,12 +68,14 @@ Begin Const ' How is the world connected to others ?
 End Const
 
 Begin Const ' Nature of gameZone
-%VOID         = 0
-%WORLD        = 1
-%WORLDHIDDEN  = 2
-%WORLDLIMIT   = 3
-%WATER        = 4
-%BANK         = 5
+%VOID          = 0
+%WORLD         = 1
+%WORLDHIDDEN   = 2
+%WORLDLIMIT    = 3
+%WATER         = 4
+%BANK          = 5
+%WATERENTRANCE = 6
+%WATEREXIT     = 7
 End Const
 
 %RNDSEED = 1234
@@ -123,7 +125,7 @@ type tBtbWorld
   level as DWord
   '[] https://thinbasic.github.io/book-thinbasic_user_defined_types/chapter_01-01-01-dynamic-array-elements.html
   arms(%MAXARMSCOUNTPERWORLD) as tArm
-  widestArmWidth as dword
+  'widestArmWidth as dword
   streamsOutCount as dword
 End Type
 
